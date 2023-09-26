@@ -1,0 +1,39 @@
+MEDIS DL ACD
+mean LVED[ml]:	141.2
+stdv LVED[ml]:	41.1
+mean LVES[ml]:	64.7
+stdv LVES[ml]:	20.1
+mean diff LVED[ml]:	6.0
+stdv diff LVED[ml]:	5.4
+mean diff LVES[ml]:	5.4
+stdv diff LVES[ml]:	4.9
+mean LVED rel[%]:	4.7
+stdv LVED rel[%]:	6.1
+mean LVES rel[%]:	8.1
+stdv LVES rel[%]:	5.8
+mean EF[%]:	53.7
+stdv EF[%]:	7.6
+mean diff EF[%]:	4.0
+stdv diff EF[%]:	5.4
+mean EF rel[%]:	7.4
+stdv EF rel[%]:	10.2
+
+nnU-Net
+mean LVED[ml]:	140.8
+stdv LVED[ml]:	37.8
+mean LVES[ml]:	61.7
+stdv LVES[ml]:	17.6
+mean diff LVED[ml]:	2.9
+stdv diff LVED[ml]:	2.1
+mean diff LVES[ml]:	3.5
+stdv diff LVES[ml]:	3.6
+mean LVED rel[%]:	2.4
+stdv LVED rel[%]:	2.4
+mean LVES rel[%]:	6.7
+stdv LVES rel[%]:	10.2
+mean EF[%]:	55.9
+stdv EF[%]:	6.3
+mean diff EF[%]:	2.6
+stdv diff EF[%]:	2.6
+mean EF rel[%]:	4.5
+stdv EF rel[%]:	4.3

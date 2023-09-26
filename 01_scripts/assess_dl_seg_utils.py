@@ -152,7 +152,7 @@ def masks_and_parameters_from_file(txt_string:str, img_shape:list, mp_number=8):
 
 #---Bland-Altman plot---
 
-def plot_bland_altman_multi(setA:list, setB:list, header:str="", save_path:str="", lower_bound:float=None, upper_bound:float=None, point_size:float=10,
+def plot_bland_altman_multi(setA:list, setB:list, header:str="", save_paths:list=[], lower_bound:float=None, upper_bound:float=None, point_size:float=10,
 	check:bool=False, scale:float=1, precision:int = 2, plot:bool=True, plt_mode:str="abstract", figlayout="default", ylim = [],
 	labels:list = ["anteroseptal", "inferoseptal", "inferior", "inferolateral", "anterolateral", "anterior"],
 	colors:list = ["royalblue", "dodgerblue", "palegreen", "yellowgreen", "darkorange", "indianred"],
@@ -163,7 +163,7 @@ def plot_bland_altman_multi(setA:list, setB:list, header:str="", save_path:str="
 	:param list setA: List of first set of values
 	:param list setB: List of second set of values
 	:param str header: Title addition for the plot
-	:param str save_path: File path to save plot
+	:param list save_paths: List of file paths (for different file extensions) or single string to save plot
 	:param float lower_bound: Lower bound for value of set A
 	:param float upper_bound: Upper bound for value of set A
 	:param float point_size: Size of points in scatter plot
@@ -253,14 +253,12 @@ def plot_bland_altman_multi(setA:list, setB:list, header:str="", save_path:str="
 		plt.ylim(ylim)
 	plt.legend(loc="upper center", bbox_to_anchor=(0.5, 1.05),
 		ncol=3, fancybox=True, shadow=False, framealpha=framealpha, fontsize=legendsize)
-	if "" != save_path:
-		if "tight" == figlayout:
-			if ".png" in save_path:
-				plt.savefig(save_path, bbox_inches='tight', pad_inches=0.1, dpi=300)
+	if 0 == len(save_paths):
+		for s in save_paths:
+			if ".png" in s:
+				plt.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=300)
 			else:
-				plt.savefig(save_path, bbox_inches='tight', pad_inches=0)
-		else:
-			plt.savefig(save_path)
+				plt.savefig(s, bbox_inches='tight', pad_inches=0)
 	if plot:
 		plt.show()
 	else:
@@ -1043,7 +1041,7 @@ def get_phase_area_from_nnunet(segm_prefix:os.path, plist:list, segm_class:int =
 			if os.path.isfile(segm_file):
 				img = nnunet.read_nnunet_segm(segm_file)
 			else:
-				img = nnunet.read_nnunet_segm(segm_prefix+str(slice).zfill(2)+".nii.gz")[:,:,p[1]]
+				img = nnunet.read_nnunet_segm(segm_prefix+str(p[0]).zfill(2)+".nii.gz")[:,:,p[1]]
 
 			lv_count = np.count_nonzero(img == segm_class)
 			area.append(lv_count * pixel_spacing * pixel_spacing)
@@ -1180,7 +1178,7 @@ def flip_rot(arr:np.array, flip:int=1, rot:int=1):
 		arr = np.rot90(arr, rot)
 	return arr
 
-def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es", save_path="",
+def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es", save_paths=[],
 			contour_dir=contour_files_dir,
 			img_dir = scanner_reco_dir,
 			seg_dir=nnunet_output_dir, crop_dim=160,
@@ -1192,7 +1190,7 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 	:param bool reverse: Flag for reverse order of indexes of cardiac phase in contour file
 	:param str mask_mode: Mode for optional segmentation mask. Either 'none', 'mc', 'auto' or 'nnunet'
 	:param str phase_mode: Mode for cardiac phase. Either 'es' or 'ed'
-	:param str save_path: Optional file path for saving the plot. Default: "" - plot is not saved
+	:param list save_paths: List of file paths (for different file extensions) or single string to save plot
 	:param str contour_dir: Directory containing contour files of Medis session
 	:param str img_dir: Directory containing reconstructed images in format <img_dir>/<vol>/cine_scanner.{cfl,hdr}, .../rt_scanner.{cfl,hdr}, etc.
 	:param str seg_dir: Directory containing nnU-Net segmentations
@@ -1289,18 +1287,25 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 				ax[enum*columns+num].imshow(masked_plt, cmap=light_jet,interpolation='none', alpha=0.4)
 				ax[enum*columns+num].set_title(second_row_title)
 
-	if "" != save_path:
-		if ".png" in save_path:
-			plt.savefig(save_path, bbox_inches='tight', pad_inches=0.1, dpi=300)
+	if 0 != len(save_paths):
+		if list == type(save_paths):
+			for s in save_paths:
+				if ".png" in s:
+					plt.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=300)
+				else:
+					plt.savefig(s, bbox_inches='tight', pad_inches=0)
 		else:
-			plt.savefig(save_path, bbox_inches='tight', pad_inches=0)
+			if ".png" in s:
+				plt.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=300)
+			else:
+				plt.savefig(s, bbox_inches='tight', pad_inches=0)
 	if plot:
 		plt.show()
 	else:
 		plt.close()
 
 def plot_mc_nnunet(contour_dir, img_dir, seg_dir, rtvol_dict, param_list, flag3d=True, mode = "nnunet",
-			crop_dim=160, contour_suffix = "_cine.txt", save_path="", img_suffix="cine_scanner",
+			crop_dim=160, contour_suffix = "_cine.txt", save_paths=[], img_suffix="cine_scanner",
 			check=False, plot=True):
 	"""
 	Plot a selection of images and segmentation masks for Medis contours and neural network segmentation.
@@ -1315,7 +1320,7 @@ def plot_mc_nnunet(contour_dir, img_dir, seg_dir, rtvol_dict, param_list, flag3d
 	:param str mode: Mode for segmentation. 'nnunet' or 'nnet'
 	:param int crop_dim: Crop dimension for center-cropping images and masks
 	:param str contour_suffix: Suffix for contour files
-	:param str save_path: Path for saving plot
+	:param list save_paths: List of file paths (for different file extensions) or single string to save plot
 	:param str img_suffix: Suffix for image file
 	:param bool check: Sets title of subfigures to slice and phase information
 	:param bool plot: Flag for showing the plot. This way the plot can be saved without showing the plot.
@@ -1396,11 +1401,18 @@ def plot_mc_nnunet(contour_dir, img_dir, seg_dir, rtvol_dict, param_list, flag3d
 		ax[columns+num].imshow(masked_plt, cmap=light_jet,interpolation='none', alpha=0.35, vmin=1, vmax=3)
 		ax[columns+num].set_title(comp_title)
 
-	if "" != save_path:
-		if ".png" in save_path:
-			plt.savefig(save_path, bbox_inches='tight', pad_inches=0.1, dpi=300)
+	if 0 != len(save_paths):
+		if list == type(save_paths):
+			for s in save_paths:
+				if ".png" in s:
+					plt.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=300)
+				else:
+					plt.savefig(s, bbox_inches='tight', pad_inches=0)
 		else:
-			plt.savefig(save_path, bbox_inches='tight', pad_inches=0)
+			if ".png" in s:
+				plt.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=300)
+			else:
+				plt.savefig(s, bbox_inches='tight', pad_inches=0)
 	if plot:
 		plt.show()
 	else:

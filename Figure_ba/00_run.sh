@@ -13,7 +13,7 @@ read -ra param < <(grep -v '^#' assess_dl.env | xargs)
 export "${param[@]}"
 
 export FIGURE_OUT=$FIGURE_DIR/Figure_ba
-export NNUNET_OUTPUT=$RESULTS_FOLDER/output
+export NNUNET_OUTPUT=$NNUNET_DIR/output
 
 if ! [ -f "$FIGURE_OUT"/BA_nnunet_EDV_cine.png ] ; then
 	cmd_array=(	'import sys,os;'

@@ -187,7 +187,7 @@ def calc_DC_and_bpm(rtvol_dict, mode=["nnunet"],
 					d['DC'+"auto"+m+tag] = sum(class_acc[j]) / len(class_acc[j])
 					d['DCstd'+"auto"+m+tag] = np.std(class_acc[j])
 
-def plot_DC_vs_bpm(rtvol_dict, save_path="", contour_mode="nnunet", ylim=[], plot=True, mode="noerror", title=""):
+def plot_DC_vs_bpm(rtvol_dict, save_paths=[], contour_mode="nnunet", ylim=[], plot=True, mode="noerror", title=""):
 	"""
 	Plot Dice's coefficient of a list of input dictionaries.
 
@@ -236,11 +236,18 @@ def plot_DC_vs_bpm(rtvol_dict, save_path="", contour_mode="nnunet", ylim=[], plo
 		plt.ylim(ylim)
 
 	plt.legend(loc="lower left")
-	if "" != save_path:
-		if ".png" in save_path:
-			plt.savefig(save_path, bbox_inches='tight', pad_inches=0.1, dpi=300)
+	if 0 != len(save_paths):
+		if list == type(save_paths):
+			for s in save_paths:
+				if ".png" in s:
+					plt.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=300)
+				else:
+					plt.savefig(s, bbox_inches='tight', pad_inches=0)
 		else:
-			plt.savefig(save_path, bbox_inches='tight', pad_inches=0)
+			if ".png" in s:
+				plt.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=300)
+			else:
+				plt.savefig(s, bbox_inches='tight', pad_inches=0)
 
 	if plot:
 		plt.show()
@@ -515,7 +522,7 @@ def calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=os.path.join(nnunet_output_
 	return (ed_vol_mc, ed_vol_auto, ed_vol_nnunet), (es_vol_mc, es_vol_auto, es_vol_nnunet), (ef_mc, ef_auto, ef_nnunet)
 
 def plot_ba_ef(save_dir, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_Belastung, set_colors=["royalblue", "palegreen", "indianred"],
-	       plot_indexes=[0,1,2], ylim=[], plot_mode=["nnunet", "auto"], plot=True, file_extension=".png"):
+	       plot_indexes=[0,1,2], ylim=[], plot_mode=["nnunet", "auto"], plot=True, file_extensions=["png"]):
 	#Bland-Altman plots for ejection fraction (EF)
 	(ef_mc_cine, ef_auto_cine, ef_nnunet_cine) = ef_tuple_cine
 	(ef_mc_rt, ef_auto_rt, ef_nnunet_rt) = ef_tuple_rt
@@ -535,7 +542,7 @@ def plot_ba_ef(save_dir, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_Belastung, set_
 	else:
 		for i in plot_indexes:
 			save_str += save_labels[i]
-	save_path = os.path.join(save_dir, "BA_nnunet_EF_"+save_str+file_extension)
+	save_paths = [os.path.join(save_dir, "BA_nnunet_EF_"+save_str+"."+f) for f in file_extensions]
 
 	setA, setB, setC = [], [], []
 	labels, colors = [], []
@@ -546,21 +553,17 @@ def plot_ba_ef(save_dir, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_Belastung, set_
 		labels.append(set_labels[i])
 		colors.append(set_colors[i])
 	if "nnunet" in plot_mode:
-		#submyo.plot_bland_altman_multi(setA, setB, save_path=save_path, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
-		#		figlayout="tight", ylim=ylim)
-		assess_utils.plot_bland_altman_multi(setA, setB, save_path=save_path, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
+		assess_utils.plot_bland_altman_multi(setA, setB, save_paths=save_paths, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
 				figlayout="tight", ylim=ylim, plot=plot)
 
 	ylabel="manual contours EF - comDL EF [%]"
-	save_path = os.path.join(save_dir, "BA_comDL_EF_"+save_str+file_extension)
+	save_paths = [os.path.join(save_dir, "BA_comDL_EF_"+save_str+"."+f) for f in file_extensions]
 	if "auto" in plot_mode:
-		#submyo.plot_bland_altman_multi(setA, setC, save_path=save_path, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
-		#		figlayout="tight", ylim=ylim)
-		assess_utils.plot_bland_altman_multi(setA, setC, save_path=save_path, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
+		assess_utils.plot_bland_altman_multi(setA, setC, save_paths=save_paths, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
 				figlayout="tight", ylim=ylim, plot=plot)
 
 def plot_ba_edv(save_dir, ed_tuple_cine, ed_tuple_rt, ed_tuple_rt_Belastung, set_colors=["royalblue", "palegreen", "indianred"],
-		plot_indexes=[0,1,2], ylim=[], plot_mode=["nnunet", "auto"], plot=True, file_extension=".png"):
+		plot_indexes=[0,1,2], ylim=[], plot_mode=["nnunet", "auto"], plot=True, file_extensions=["png"]):
 	#Bland-Altman plots for end-diastolic volume (EDV)
 	(ed_vol_mc_cine, ed_vol_auto_cine, ed_vol_nnunet_cine) = ed_tuple_cine
 	(ed_vol_mc_rt, ed_vol_auto_rt, ed_vol_nnunet_rt) = ed_tuple_rt
@@ -580,7 +583,7 @@ def plot_ba_edv(save_dir, ed_tuple_cine, ed_tuple_rt, ed_tuple_rt_Belastung, set
 	else:
 		for i in plot_indexes:
 			save_str += save_labels[i]
-	save_path = os.path.join(save_dir, "BA_nnunet_EDV_"+save_str+file_extension)
+	save_paths = [os.path.join(save_dir, "BA_nnunet_EDV_"+save_str+"."+f) for f in file_extensions]
 
 	setA, setB, setC = [], [], []
 	labels, colors = [], []
@@ -591,21 +594,17 @@ def plot_ba_edv(save_dir, ed_tuple_cine, ed_tuple_rt, ed_tuple_rt_Belastung, set
 		labels.append(set_labels[i])
 		colors.append(set_colors[i])
 	if "nnunet" in plot_mode:
-		#submyo.plot_bland_altman_multi(setA, setB, save_path=save_path, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
-		#		figlayout="tight", ylim=ylim, scale=0.001)
-		assess_utils.plot_bland_altman_multi(setA, setB, save_path=save_path, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
+		assess_utils.plot_bland_altman_multi(setA, setB, save_paths=save_paths, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
 				figlayout="tight", ylim=ylim, scale=0.001, plot=plot)
 
 	ylabel="manual contours EDV - comDL EDV [ml]"
-	save_path = os.path.join(save_dir, "BA_comDL_EDV_"+save_str+file_extension)
+	save_paths = [os.path.join(save_dir, "BA_comDL_EDV_"+save_str+"."+f) for f in file_extensions]
 	if "auto" in plot_mode:
-		#submyo.plot_bland_altman_multi(setA, setC, save_path=save_path, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
-		#		figlayout="tight", ylim=ylim, scale=0.001)
-		assess_utils.plot_bland_altman_multi(setA, setC, save_path=save_path, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
+		assess_utils.plot_bland_altman_multi(setA, setC, save_paths=save_paths, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
 				figlayout="tight", ylim=ylim, scale=0.001, plot=plot)
 
 def plot_ba_esv(save_dir, es_tuple_cine, es_tuple_rt, es_tuple_rt_Belastung, set_colors=["royalblue", "palegreen", "indianred"],
-		plot_indexes=[0,1,2], ylim=[], plot_mode=["nnunet", "auto"], plot=True, file_extension=".png"):
+		plot_indexes=[0,1,2], ylim=[], plot_mode=["nnunet", "auto"], plot=True, file_extensions=["png"]):
 	#Bland-Altman plots for end-systolic volume (ESV)
 	(es_vol_mc_cine, es_vol_auto_cine, es_vol_nnunet_cine) = es_tuple_cine
 	(es_vol_mc_rt, es_vol_auto_rt, es_vol_nnunet_rt) = es_tuple_rt
@@ -624,7 +623,7 @@ def plot_ba_esv(save_dir, es_tuple_cine, es_tuple_rt, es_tuple_rt_Belastung, set
 	else:
 		for i in plot_indexes:
 			save_str += save_labels[i]
-	save_path = os.path.join(save_dir, "BA_nnunet_ESV_"+save_str+file_extension)
+	save_paths = [os.path.join(save_dir, "BA_nnunet_ESV_"+save_str+"."+f) for f in file_extensions]
 
 	setA, setB, setC = [], [], []
 	labels, colors = [], []
@@ -635,77 +634,66 @@ def plot_ba_esv(save_dir, es_tuple_cine, es_tuple_rt, es_tuple_rt_Belastung, set
 		labels.append(set_labels[i])
 		colors.append(set_colors[i])
 	if "nnunet" in plot_mode:
-		#submyo.plot_bland_altman_multi(setA, setB, save_path=save_path, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
-		#		figlayout="tight", ylim=ylim, scale=0.001)
-		assess_utils.plot_bland_altman_multi(setA, setB, save_path=save_path, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
+		assess_utils.plot_bland_altman_multi(setA, setB, save_paths=save_paths, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
 				figlayout="tight", ylim=ylim, scale=0.001, plot=plot)
 
 	ylabel="manual contours ESV - comDL ESV [ml]"
-	save_path = os.path.join(save_dir, "BA_comDL_ESV_"+save_str+file_extension)
+	save_paths = [os.path.join(save_dir, "BA_comDL_ESV_"+save_str+"."+f) for f in file_extensions]
 	if "auto" in plot_mode:
-		#submyo.plot_bland_altman_multi(setA, setC, save_path=save_path, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
-		#		figlayout="tight", ylim=ylim, scale=0.001)
-		assess_utils.plot_bland_altman_multi(setA, setC, save_path=save_path, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
+		assess_utils.plot_bland_altman_multi(setA, setC, save_paths=save_paths, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
 				figlayout="tight", ylim=ylim, scale=0.001, plot=plot)
 
-def plot_ba_esv_cine_rt(save_dir, es_tuple_cine, es_tuple_rt, set_colors=["royalblue", "palegreen", "indianred"],
-		plot_indexes=[0,1], ylim=[], plot_mode=["nnunet", "auto"]):
-	#Bland-Altman plots for end-systolic volume (ESV)
-	(es_vol_mc_cine, es_vol_auto_cine, es_vol_nnunet_cine) = es_tuple_cine
-	(es_vol_mc_rt, es_vol_auto_rt, es_vol_nnunet_rt) = es_tuple_rt
-	xlabel="LV end-systolic volume [ml]"
-	ylabel="ESV cine - ESV rt [ml]"
-	set_labels = ["mc", "nnunet"]
-	set_mc = [es_vol_mc_cine, es_vol_mc_cine]
-	set_nnunet = [es_vol_mc_rt, es_vol_nnunet_rt]
-
-	save_str = ""
-	if [0,1] in plot_indexes:
-		save_str = "all"
-	else:
-		for i in plot_indexes:
-			save_str += set_labels[i]
-	save_path = os.path.join(save_dir, "BA_cine_rt_ESV_"+save_str+".pdf")
-
-	setA, setB, setC = [], [], []
-	labels, colors = [], []
-	for i in plot_indexes:
-		setA.append(set_mc[i])
-		setB.append(set_nnunet[i])
-		labels.append(set_labels[i])
-		colors.append(set_colors[i])
-	#submyo.plot_bland_altman_multi(setA, setB, save_path=save_path, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
-	#			figlayout="tight", ylim=ylim, scale=0.001)
-	assess_utils.plot_bland_altman_multi(setA, setB, save_path=save_path, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
-				figlayout="tight", ylim=ylim, scale=0.001)
-
-def write_parameter_files_nnunet_auto(rtvol_dict, out_dir_data):
+def write_parameter_files_nnunet_auto(out_dir, rtvol_dict=rtvol,
+				contour_dir=contour_files_dir,
+				nnunet_output=nnunet_output_dir,
+				exp_dir=end_exp_dir):
 	"""
 	Bland-Altman plots for comparison of manual contours and nnU-Net segmentations with automatic evaluation.
 	"""
-	assess_utils.identify_ED_ES_mc_nnunet(rtvol_dict, restrict_slices=False)
+	assess_utils.identify_ED_ES_mc_nnunet(rtvol_dict, contour_dir=contour_dir, seg_dir=os.path.join(nnunet_output, "rtvol_rt_2d_single_cv/"), exp_dir=exp_dir,
+					restrict_slices=False)
 	edv_mc = [data["edv_mc"] for data in rtvol_dict]
 	esv_mc = [data["esv_mc"] for data in rtvol_dict]
 	ef_mc  = [data["ef_mc"]  for data in rtvol_dict]
 	edv_nnunet = [data["edv_nnunet"] for data in rtvol_dict]
 	esv_nnunet = [data["esv_nnunet"] for data in rtvol_dict]
 	ef_nnunet  = [data["ef_nnunet"]  for data in rtvol_dict]
-	output_file = os.path.join(out_dir_data, "rt_mc_nnunet_auto.txt")
+	output_file = os.path.join(out_dir, "rt_mc_nnunet_auto.txt")
 	write_output_stdv_parameters(output_file, (edv_mc, edv_mc, edv_nnunet), (esv_mc, esv_mc, esv_nnunet),
 					(ef_mc, ef_mc, ef_nnunet), precision=1)
 
-	assess_utils.identify_ED_ES_mc_nnunet(rtvol_dict, restrict_slices=True)
+	assess_utils.identify_ED_ES_mc_nnunet(rtvol_dict, contour_dir=contour_dir, seg_dir=os.path.join(nnunet_output, "rtvol_rt_2d_single_cv/"), exp_dir=exp_dir,
+					restrict_slices=True)
 	edv_mc = [data["edv_mc"] for data in rtvol_dict]
 	esv_mc = [data["esv_mc"] for data in rtvol_dict]
 	ef_mc  = [data["ef_mc"]  for data in rtvol_dict]
 	edv_nnunet = [data["edv_nnunet"] for data in rtvol_dict]
 	esv_nnunet = [data["esv_nnunet"] for data in rtvol_dict]
 	ef_nnunet  = [data["ef_nnunet"]  for data in rtvol_dict]
-	output_file = os.path.join(out_dir_data, "rt_mc_nnunet_auto_restricted_slices.txt")
+	output_file = os.path.join(out_dir, "rt_mc_nnunet_auto_restricted_slices.txt")
 	write_output_stdv_parameters(output_file, (edv_mc, edv_mc, edv_nnunet), (esv_mc, esv_mc, esv_nnunet),
 					(ef_mc, ef_mc, ef_nnunet), precision=1)
 
-def plot_BA_nnunet_auto(rtvol_dict, out_dir_fig, plot=False):
+def write_parameter_files_mc_comdl_nnunet(out_dir, rtvol_dict=rtvol, contour_dir=contour_files_dir, nnunet_output=nnunet_output_dir):
+	"""
+	Bland-Altman plots for comparison of manual contours with comDL and nnU-Net segmentations.
+	"""
+	seg_dir = os.path.join(nnunet_output, "rtvol_cine_2d_single_cv/")
+	output_file = os.path.join(out_dir, "cine_2d_single.txt")
+	_, _, _ = calc_mean_stdv_parameters_cine(rtvol_dict, seg_dir=seg_dir, contour_dir=contour_dir, output_file=output_file,
+									flag3d=False, slice_selection=False, precision=1)
+
+	seg_dir = os.path.join(nnunet_output, "rtvol_rt_2d_single_cv/")
+	output_file = os.path.join(out_dir, "rt_2d_single.txt")
+	_, _, _ = calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=seg_dir, contour_dir=contour_dir, output_file=output_file, precision=1)
+
+	seg_dir = os.path.join(nnunet_output, "rtvol_rt_Belastung_2d_single_cv/")
+	output_file = os.path.join(out_dir, "rt_Belastung_2d_single.txt")
+	_,_,_ = calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=seg_dir, contour_dir=contour_dir, output_file=output_file,
+			session_mc_suffix="_rt_Belastung_manual.con",
+			session_auto_suffix="_rt_Belastung_automatic.con", ed_es_phase_file="_rt_Belastung.txt", precision=1)
+
+def plot_BA_nnunet_auto(rtvol_dict, out_dir_fig, plot=False, file_extensions=["pdf"]):
 	"""
 	Bland-Altman plots for comparison of manual contours and nnU-Net segmentations with automatic evaluation.
 	"""
@@ -721,21 +709,21 @@ def plot_BA_nnunet_auto(rtvol_dict, out_dir_fig, plot=False):
 	ylabel="manual contours - nnU-Net auto [ml]"
 	labels = ["EDV"]
 	ylim=[-60,20]
-	save_path = os.path.join(out_dir_fig, "BA_nnunet_auto_EDV.pdf")
+	save_paths = [os.path.join(out_dir_fig, "BA_nnunet_auto_EDV."+f) for f in file_extensions]
 	assess_utils.plot_bland_altman_multi([edv_mc], [edv_nnunet], labels=labels, ylabel=ylabel, xlabel=xlabel, ylim=ylim, scale=0.001,
-					save_path=save_path, plot=plot)
+					save_paths=save_paths, plot=plot)
 	labels = ["ESV"]
 	ylim=[-20,12]
-	save_path = os.path.join(out_dir_fig, "BA_nnunet_auto_ESV.pdf")
+	save_paths = [os.path.join(out_dir_fig, "BA_nnunet_auto_ESV."+f) for f in file_extensions]
 	assess_utils.plot_bland_altman_multi([esv_mc], [esv_nnunet], labels=labels, ylabel=ylabel, xlabel=xlabel, ylim=ylim, scale=0.001,
-					save_path=save_path, plot=plot)
+					save_paths=save_paths, plot=plot)
 	xlabel="LV ejection fraction [%]"
 	ylabel="manual contours - nnU-Net auto [%]"
 	labels = ["EF"]
 	ylim=[-12,12]
-	save_path = os.path.join(out_dir_fig, "BA_nnunet_auto_EF.pdf")
+	save_paths = [os.path.join(out_dir_fig, "BA_nnunet_auto_EF."+f) for f in file_extensions]
 	assess_utils.plot_bland_altman_multi([ef_mc], [ef_nnunet], labels=labels, ylabel=ylabel, xlabel=xlabel, ylim=ylim,
-					save_path=save_path, plot=plot)
+					save_paths=save_paths, plot=plot)
 
 	assess_utils.identify_ED_ES_mc_nnunet(rtvol_dict, restrict_slices=True)
 	edv_mc = [data["edv_mc"] for data in rtvol_dict]
@@ -749,110 +737,81 @@ def plot_BA_nnunet_auto(rtvol_dict, out_dir_fig, plot=False):
 	ylabel="manual contours - nnU-Net auto [ml]"
 	labels = ["EDV"]
 	ylim=[-60,20]
-	save_path = os.path.join(out_dir_fig, "BA_nnunet_auto_restricted_slices_EDV.pdf")
+	save_paths = [os.path.join(out_dir_fig, "BA_nnunet_auto_restricted_slices_EDV."+f) for f in file_extensions]
 	assess_utils.plot_bland_altman_multi([edv_mc], [edv_nnunet], labels=labels, ylabel=ylabel, xlabel=xlabel, ylim=ylim, scale=0.001,
-					save_path=save_path, plot=plot)
+					save_paths=save_paths, plot=plot)
 	labels = ["ESV"]
 	ylim=[-20,12]
-	save_path = os.path.join(out_dir_fig, "BA_nnunet_auto_restricted_slices_ESV.pdf")
+	save_paths = [os.path.join(out_dir_fig, "BA_nnunet_auto_restricted_slices_ESV."+f) for f in file_extensions]
 	assess_utils.plot_bland_altman_multi([esv_mc], [esv_nnunet], labels=labels, ylabel=ylabel, xlabel=xlabel, ylim=ylim, scale=0.001,
-					save_path=save_path, plot=plot)
+					save_paths=save_paths, plot=plot)
 	xlabel="LV ejection fraction [%]"
 	ylabel="manual contours - nnU-Net auto [%]"
 	labels = ["EF"]
 	ylim=[-12,12]
-	save_path = os.path.join(out_dir_fig, "BA_nnunet_auto_restricted_slices_EF.pdf")
+	save_paths = [os.path.join(out_dir_fig, "BA_nnunet_auto_restricted_slices_EF."+f) for f in file_extensions]
 	assess_utils.plot_bland_altman_multi([ef_mc], [ef_nnunet], labels=labels, ylabel=ylabel, xlabel=xlabel, ylim=ylim,
-					save_path=save_path, plot=plot)
-
-def calc_error_propagation(values, values_std, precision=3):
-	sum_error = 0
-	for e in values_std:
-		sum_error += math.pow(e, 2)
-	print("Mean", round(sum(values) / len(values), precision))
-	print("Propagated error", round(math.sqrt(sum_error) / len(values), precision))
-
-def plot_BA_cine_rt_stress(rtvol_dict):
-	"""
-	Bland-Altman plots of EDV, ESV and EF for entries of rtvol for cine, real-time and real-time stress.
-	"""
-	seg_dir = os.path.join(nnunet_output_dir, "rtvol_cine_2d_single_cv/")
-	output_file = ""
-	ed_tuple_cine, es_tuple_cine, ef_tuple_cine = calc_mean_stdv_parameters_cine(rtvol_dict, seg_dir=seg_dir, output_file=output_file,
-									flag3d=False, slice_selection=False)
-
-	seg_dir = os.path.join(nnunet_output_dir, "rtvol_rt_2d_single_cv/")
-	ed_tuple_rt, es_tuple_rt, ef_tuple_rt = calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=seg_dir, output_file=output_file)
-
-	seg_dir = os.path.join(nnunet_output_dir, "rtvol_rt_Belastung_2d_single_cv/")
-	ed_tuple_rt_Belastung, es_tuple_rt_Belastung, ef_tuple_rt_Belastung = calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=seg_dir,
-							session_mc_suffix="_rt_Belastung_manual.con", session_auto_suffix="_rt_Belastung_automatic.con",
-				exp_dir = end_exp_dir, ed_es_phase_file="_rt_Belastung.txt", output_file=output_file)
-
-	save_dir = "/home/mschi/Pictures/assess_DL/"
-	for i in range(3):
-		plot_ba_ef(save_dir, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_Belastung, plot_indexes=[i], ylim=[-20,20], plot_mode=["nnunet"])
-		plot_ba_edv(save_dir, ed_tuple_cine, ed_tuple_rt, ed_tuple_rt_Belastung, plot_indexes=[i], ylim=[-80,80], plot_mode=["nnunet"])
-		plot_ba_esv(save_dir, es_tuple_cine, es_tuple_rt, es_tuple_rt_Belastung, plot_indexes=[i], ylim=[-18,18], plot_mode=["nnunet"])
-	#for i in range(3):
-	#	plot_ba_ef(save_dir, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_Belastung, plot_indexes=[i], ylim=[-25,25], plot_mode=["auto"])
-	#	plot_ba_edv(save_dir, ed_tuple_cine, ed_tuple_rt, ed_tuple_rt_Belastung, plot_indexes=[i], ylim=[-50,50], plot_mode=["auto"])
-	#	plot_ba_esv(save_dir, es_tuple_cine, es_tuple_rt, es_tuple_rt_Belastung, plot_indexes=[i], ylim=[-18,18], plot_mode=["auto"])
+					save_paths=save_paths, plot=plot)
 
 def save_fig1(out_dir, plot=False, img_dir=scanner_reco_dir,
 			contour_dir=contour_files_dir,
 			seg_dir=os.path.join(nnunet_output_dir, "rtvol_rt_Belastung_2d_single_cv"),
-			file_extension=".pdf"):
+			file_extension="pdf"):
 	"""
 	Parameters for plotting the measurement types in the manuscript.
 	"""
+	file_extensions=file_extension.split(",")
 	vol = "vol80"
 	reverse = True
 	slice_idx=13
 	mask_mode = []
 	phase_mode = "es"
-	save_path = os.path.join(out_dir, "figure_01_measurement_types"+file_extension)
+	save_paths = [os.path.join(out_dir, "figure_01_measurement_types."+f) for f in file_extensions]
 	titles = ["cine", "real-time (76 bpm)", "real-time (115 bpm)", "real-time (162 bpm)"]
-	assess_utils.plot_measurement_types(vol, reverse, slice_idx, mask_mode=mask_mode, phase_mode=phase_mode, save_path=save_path,
+	assess_utils.plot_measurement_types(vol, reverse, slice_idx, mask_mode=mask_mode, phase_mode=phase_mode, save_paths=save_paths,
 				contour_dir=contour_dir,
 				img_dir =img_dir,
 				seg_dir=seg_dir, crop_dim=160, titles =titles, plot=plot)
 
-def save_fig2(out_dir, rtvol_dict=rtvol, plot=False, contour_dir=contour_files_dir, seg_dir=nnunet_output_dir, file_extension=".png"):
+def save_fig2(out_dir, rtvol_dict=rtvol, plot=False, contour_dir=contour_files_dir, seg_dir=nnunet_output_dir, file_extension="png"):
 	# Figures for Dice's coefficient depending on heart rate
+
+	file_extensions=file_extension.split(",")
 	ylim = [0.2,1]
 
 	# nnU-Net
 	calc_DC_and_bpm(rtvol_dict, mode=["nnunet"], contour_dir = contour_dir, seg_dir = seg_dir)
 	contour_mode = "nnunet"
-	save_path = os.path.join(out_dir, "DC_vs_bpm_"+contour_mode+file_extension)
+	save_paths = [os.path.join(out_dir, "DC_vs_bpm_"+contour_mode+"."+f) for f in file_extensions]
 	title="nnU-Net"
-	plot_DC_vs_bpm(rtvol_dict, save_path=save_path, contour_mode=contour_mode, ylim=ylim, plot=plot, title=title)
+	plot_DC_vs_bpm(rtvol_dict, save_paths=save_paths, contour_mode=contour_mode, ylim=ylim, plot=plot, title=title)
 
 	# comDL
 	calc_DC_and_bpm(rtvol_dict, mode=["auto"], contour_dir = contour_dir, seg_dir = seg_dir)
 	contour_mode = "auto"
-	save_path = os.path.join(out_dir, "DC_vs_bpm_"+contour_mode+file_extension)
+	save_paths = [os.path.join(out_dir, "DC_vs_bpm_"+contour_mode+"."+f) for f in file_extensions]
 	title="comDL"
-	plot_DC_vs_bpm(rtvol_dict, save_path=save_path, contour_mode=contour_mode, ylim=ylim, plot=plot, title=title)
+	plot_DC_vs_bpm(rtvol_dict, save_paths=save_paths, contour_mode=contour_mode, ylim=ylim, plot=plot, title=title)
 
 def save_fig3(out_dir, rtvol_dict=rtvol, plot=False, img_dir=scanner_reco_dir,
 			contour_dir=contour_files_dir,
 			seg_dir=os.path.join(nnunet_output_dir, "rtvol_rt_Belastung_2d_single_cv"),
-			file_extension=".pdf"):
+			file_extension="pdf"):
 	"""
 	Plotting limits of neural networks for manuscript.
 	"""
-	save_path = os.path.join(out_dir, "figure_03_nn_limits"+file_extension)
+	file_extensions=file_extension.split(",")
+	save_paths = [os.path.join(out_dir, "figure_03_nn_limits."+f) for f in file_extensions]
 	param_list = [['vol78', 2, 25], ['vol78', 3, 123], ['vol79', 15, 69], ['vol84', 11, 126]]
 	assess_utils.plot_mc_nnunet(contour_dir, img_dir, seg_dir, rtvol_dict, param_list, flag3d=False, mode = "nnunet",
-				crop_dim=160, contour_suffix = "_rt_Belastung_manual.con", img_suffix="rt_Belastung_scanner", save_path=save_path,
+				crop_dim=160, contour_suffix = "_rt_Belastung_manual.con", img_suffix="rt_Belastung_scanner", save_paths=save_paths,
 				check=False, plot=plot)
 
-def save_fig_ba(out_dir, rtvol_dict=rtvol, nnunet_output=nnunet_output_dir, file_extension=".png"):
+def save_fig_ba(out_dir, rtvol_dict=rtvol, nnunet_output=nnunet_output_dir, file_extension="png"):
 	"""
 	Bland-Altman plots of EDV, ESV and EF for entries of rtvol for cine, real-time and real-time stress.
 	"""
+	file_extensions=file_extension.split(",")
 	seg_dir = os.path.join(nnunet_output, "rtvol_cine_2d_single_cv/")
 	output_file = ""
 	ed_tuple_cine, es_tuple_cine, ef_tuple_cine = calc_mean_stdv_parameters_cine(rtvol_dict, seg_dir=seg_dir, output_file=output_file,
@@ -868,19 +827,19 @@ def save_fig_ba(out_dir, rtvol_dict=rtvol, nnunet_output=nnunet_output_dir, file
 
 	for i in range(3):
 		plot_ba_ef(out_dir, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_Belastung,
-			plot_indexes=[i], ylim=[-20,20], plot_mode=["nnunet"], file_extension=file_extension)
+			plot_indexes=[i], ylim=[-20,20], plot_mode=["nnunet"], file_extensions=file_extensions)
 		plot_ba_edv(out_dir, ed_tuple_cine, ed_tuple_rt, ed_tuple_rt_Belastung,
-			plot_indexes=[i], ylim=[-80,80], plot_mode=["nnunet"], file_extension=file_extension)
+			plot_indexes=[i], ylim=[-80,80], plot_mode=["nnunet"], file_extensions=file_extensions)
 		plot_ba_esv(out_dir, es_tuple_cine, es_tuple_rt, es_tuple_rt_Belastung,
-			plot_indexes=[i], ylim=[-18,18], plot_mode=["nnunet"], file_extension=file_extension)
+			plot_indexes=[i], ylim=[-18,18], plot_mode=["nnunet"], file_extensions=file_extensions)
 
 	for i in range(3):
 		plot_ba_ef(out_dir, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_Belastung,
-			plot_indexes=[i], ylim=[-200,200], plot_mode=["auto"], file_extension=file_extension)
+			plot_indexes=[i], ylim=[-200,200], plot_mode=["auto"], file_extensions=file_extensions)
 		plot_ba_edv(out_dir, ed_tuple_cine, ed_tuple_rt, ed_tuple_rt_Belastung,
-			plot_indexes=[i], ylim=[-120,120], plot_mode=["auto"], file_extension=file_extension)
+			plot_indexes=[i], ylim=[-120,120], plot_mode=["auto"], file_extensions=file_extensions)
 		plot_ba_esv(out_dir, es_tuple_cine, es_tuple_rt, es_tuple_rt_Belastung,
-			plot_indexes=[i], ylim=[-25,25], plot_mode=["auto"], file_extension=file_extension)
+			plot_indexes=[i], ylim=[-25,25], plot_mode=["auto"], file_extensions=file_extensions)
 
 def main(out_dir_fig, out_dir_data, plot=False, nnunet_output="/scratch/mschi/nnUnet/"):
 	"""
@@ -902,22 +861,10 @@ def main(out_dir_fig, out_dir_data, plot=False, nnunet_output="/scratch/mschi/nn
 	save_fig3(out_dir_fig, plot=plot, seg_dir=os.path.join(nnunet_output, "output/rtvol_rt_Belastung_2d_single_cv"))
 
 	# Evaluation of cardiac function parameters
-	seg_dir = os.path.join(nnunet_output, "output/rtvol_cine_2d_single_cv/")
-	output_file = os.path.join(out_dir_data, "cine_2d_single.txt")
-	_, _, _ = calc_mean_stdv_parameters_cine(rtvol, seg_dir=seg_dir, output_file=output_file,
-									flag3d=False, slice_selection=False, precision=1)
-
-	seg_dir = os.path.join(nnunet_output, "output/rtvol_rt_2d_single_cv/")
-	output_file = os.path.join(out_dir_data, "rt_2d_single.txt")
-	_, _, _ = calc_mean_stdv_parameters_rt(rtvol, seg_dir=seg_dir, output_file=output_file, precision=1)
-
-	seg_dir = os.path.join(nnunet_output, "output/rtvol_rt_Belastung_2d_single_cv/")
-	output_file = os.path.join(out_dir_data, "rt_Belastung_2d_single.txt")
-	_,_,_ = calc_mean_stdv_parameters_rt(rtvol, seg_dir=seg_dir, output_file=output_file, session_mc_suffix="_rt_Belastung_manual.con",
-			session_auto_suffix="_rt_Belastung_automatic.con", ed_es_phase_file="_rt_Belastung.txt", precision=1)
+	write_parameter_files_mc_comdl_nnunet(out_dir_data=rtvol)
 
 	#Bland-Altman Plot
-	write_parameter_files_nnunet_auto(rtvol, out_dir_data)
+	write_parameter_files_nnunet_auto(out_dir_data, rtvol)
 	plot_BA_nnunet_auto(rtvol, out_dir_fig, plot=plot)
 
 if __name__ == "__main__":
