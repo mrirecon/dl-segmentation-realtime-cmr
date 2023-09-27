@@ -16,6 +16,16 @@ WORKDIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
 trap 'rm -rf "$WORKDIR"' EXIT
 cd "$WORKDIR" || exit
 
+# select pattern for DICOM to CFL transform, e.g. vol80
+DICOM_PATTERN=""
+export DICOM_DIR=$DATA_DIR/dicoms/
+export PARAM_FILE_CINE=$DATA_DIR/dicom_transform/rtvol_cine.txt
+export PARAM_FILE_RT=$DATA_DIR/dicom_transform/rtvol_rt.txt
+export PARAM_FILE_RT_STRESS=$DATA_DIR/dicom_transform/rtvol_rt_stress.txt
+export PARAM_FILE_RT_MAX_STRESS=$DATA_DIR/dicom_transform/rtvol_rt_maxstress.txt
+export CFL_TARGET_DIR=$DATA_DIR/scanner_reco
+export SCRIPT_DIR=$SCRIPT_REPO/01_scripts
+
 FILES=()
 if [ -d "$DICOM_DIR" ] ; then
 	if ! [ "$DICOM_PATTERN" = "" ] ; then
@@ -36,7 +46,7 @@ do
 done
 
 cmd_array=(	'import sys,os;'
-	'sys.path.insert(0,os.environ["PYTHON_SCRIPTS"]);'
+	'sys.path.insert(0,os.environ["SCRIPT_DIR"]);'
 	'import dicom_to_cfl;'
 	'dicom_to_cfl.read_dicom_param_file(param_file=os.environ["PARAM_FILE_CINE"],'
 	'ddir=os.environ["DICOM_DIR"], tdir=os.environ["CFL_TARGET_DIR"], suffix="cine_scanner")')
@@ -44,7 +54,7 @@ cmd="${cmd_array[*]}"
 python3 -c "$cmd"
 
 cmd_array=(	'import sys,os;'
-	'sys.path.insert(0,os.environ["PYTHON_SCRIPTS"]);'
+	'sys.path.insert(0,os.environ["SCRIPT_DIR"]);'
 	'import dicom_to_cfl;'
 	'dicom_to_cfl.read_dicom_param_file(param_file=os.environ["PARAM_FILE_RT"],'
 	'ddir=os.environ["DICOM_DIR"], tdir=os.environ["CFL_TARGET_DIR"], suffix="rt_scanner")')
@@ -52,17 +62,17 @@ cmd="${cmd_array[*]}"
 python3 -c "$cmd"
 
 cmd_array=(	'import sys,os;'
-	'sys.path.insert(0,os.environ["PYTHON_SCRIPTS"]);'
+	'sys.path.insert(0,os.environ["SCRIPT_DIR"]);'
 	'import dicom_to_cfl;'
 	'dicom_to_cfl.read_dicom_param_file(param_file=os.environ["PARAM_FILE_RT_STRESS"],'
-	'ddir=os.environ["DICOM_DIR"], tdir=os.environ["CFL_TARGET_DIR"], suffix="rt_Belastung_scanner")')
+	'ddir=os.environ["DICOM_DIR"], tdir=os.environ["CFL_TARGET_DIR"], suffix="rt_stress_scanner")')
 cmd="${cmd_array[*]}"
 python3 -c "$cmd"
 
 cmd_array=(	'import sys,os;'
-	'sys.path.insert(0,os.environ["PYTHON_SCRIPTS"]);'
+	'sys.path.insert(0,os.environ["SCRIPT_DIR"]);'
 	'import dicom_to_cfl;'
 	'dicom_to_cfl.read_dicom_param_file(param_file=os.environ["PARAM_FILE_RT_MAX_STRESS"],'
-	'ddir=os.environ["DICOM_DIR"], tdir=os.environ["CFL_TARGET_DIR"], suffix="rt_Ausbelastung_scanner")')
+	'ddir=os.environ["DICOM_DIR"], tdir=os.environ["CFL_TARGET_DIR"], suffix="rt_maxstress_scanner")')
 cmd="${cmd_array[*]}"
 python3 -c "$cmd"

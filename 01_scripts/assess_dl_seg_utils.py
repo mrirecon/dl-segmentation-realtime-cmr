@@ -25,10 +25,18 @@ import nnunet_utils as nnunet
 from bart import bart
 import cfl
 
-scanner_reco_dir=os.environ["IMG_DIR"] if "IMG_DIR" in os.environ else ""
-contour_files_dir=os.environ["CONTOUR_DIR"] if "CONTOUR_DIR" in os.environ else ""
-nnunet_output_dir=os.environ["NNUNET_OUTPUT"] if "NNUNET_OUTPUT" in os.environ else ""
-end_exp_dir=os.environ["END_EXP"] if "END_EXP" in os.environ else ""
+if "DATA_DIR" in os.environ:
+	scanner_reco_dir=os.path.join(os.environ["DATA_DIR"], "scanner_reco")
+	contour_files_dir=os.path.join(os.environ["DATA_DIR"], "contour_files")
+	nnunet_output_dir=os.path.join(os.environ["DATA_DIR"], "nnUNet/output")
+	end_exp_dir=os.path.join(os.environ["DATA_DIR"], "end_expiration_indexes")
+else:
+	scanner_reco_dir=""
+	contour_files_dir=""
+	nnunet_output_dir=""
+	end_exp_dir=""
+
+contour_format = ".txt"
 
 #---Analyze Contour file---
 
@@ -253,12 +261,18 @@ def plot_bland_altman_multi(setA:list, setB:list, header:str="", save_paths:list
 		plt.ylim(ylim)
 	plt.legend(loc="upper center", bbox_to_anchor=(0.5, 1.05),
 		ncol=3, fancybox=True, shadow=False, framealpha=framealpha, fontsize=legendsize)
-	if 0 == len(save_paths):
-		for s in save_paths:
-			if ".png" in s:
-				plt.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=300)
+	if 0 != len(save_paths):
+		if list == type(save_paths):
+			for s in save_paths:
+				if ".png" in s:
+					plt.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=300)
+				else:
+					plt.savefig(s, bbox_inches='tight', pad_inches=0)
+		else:
+			if ".png" in save_paths:
+				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=300)
 			else:
-				plt.savefig(s, bbox_inches='tight', pad_inches=0)
+				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0)
 	if plot:
 		plt.show()
 	else:
@@ -276,14 +290,10 @@ def extract_img_params(session:os.path):
 		WHERE
 		list img_shape is [xdim, ydim]
 		list fov is [fov_x, fov_y]
-		int ed_phase is end-diastolic phases
-		int es_phase is end-systolic phases
 		int slices in number of slices
 	"""
 	img_res_marker = "Image_resolution"
 	fov_marker = "Field_of_view"
-	ed_phase_marker = "manual_lv_ed_phase"
-	es_phase_marker = "manual_lv_es_phase"
 	slice_marker = "selection.slice_"
 
 	xdim, ydim = 0, 0
@@ -302,11 +312,6 @@ def extract_img_params(session:os.path):
 					fov_y = float(content[0].split("=")[1].split()[0].split("x")[0])
 					fov_x = float(content[0].split("=")[1].split()[0].split("x")[1])
 
-				if ed_phase_marker in content[0]:
-					ed_phase = int(content[0].split("=")[1])
-				if es_phase_marker in content[0]:
-					es_phase = int(content[0].split("=")[1])
-
 				if slice_marker in content[0]:
 					slice_index = int(content[0].split("_")[1].split("=")[0])
 					number_slices = max([number_slices, slice_index])
@@ -316,7 +321,7 @@ def extract_img_params(session:os.path):
 	fov = [fov_x, fov_y]
 	if 0 == number_slices:
 		print("extraction did not work", session)
-	return img_shape, fov, ed_phase, es_phase, number_slices
+	return img_shape, fov, number_slices
 
 def single_slice_combine_masks_to_list(mask_list, param_list, medis_slice):
 	"""
@@ -454,7 +459,7 @@ def create_nnunet_input_cine(img_file:os.path, output_prefix:os.path, session:os
 	slice_list = []
 
 	if "" != session:
-		img_dims, fov, EDphase, ESphase, slices_new = extract_img_params(session)
+		img_dims, fov, slices_new = extract_img_params(session)
 		mask_list, param_list, ccsf = masks_and_parameters_from_file(session, img_dims)
 		slice_indexes, mlist, plist = combine_masks_multi(mask_list, param_list, slices_new, reverse)
 
@@ -523,7 +528,7 @@ def create_nnunet_input_rt(img_file:os.path, output_prefix:os.path, mode="single
 					output_params.append([s+offset,p])
 		else:
 			reverse = int(reverse_flag)
-			img_dims, fov, EDphase, ESphase, slices = extract_img_params(contour_file)
+			img_dims, fov, slices = extract_img_params(contour_file)
 			param_list, coord_list, ccsf = parameters_from_file(contour_file)
 			plist = [[p[0], p[1]] for p in [*set([(p[0],p[1]) for p in param_list])]]
 			if reverse:
@@ -695,7 +700,7 @@ def get_ed_es_dice_from_session(session:os.path, reverse:bool, segm_input:str, f
 		list ed_dc is Dice's coefficient for end-systolic phases
 		list ed_dict is list of dictionaries containing information about Dice coefficients for ES phases
 	"""
-	img_dims, fov, _,_, slices = extract_img_params(session)
+	img_dims, fov, slices = extract_img_params(session)
 	mask_list, param_list, ccsf = masks_and_parameters_from_file(session, img_dims)
 	slice_indexes, mlist, plist = combine_masks_multi(mask_list, param_list, slices=slices, reverse=reverse)
 
@@ -718,7 +723,7 @@ def get_ed_es_dice_from_session(session:os.path, reverse:bool, segm_input:str, f
 				es_plist.append(p)
 
 	if os.path.isfile(segm_input):
-		img_dims, fov, EDphase, ESphase, slices = extract_img_params(segm_input)
+		img_dims, fov, slices = extract_img_params(segm_input)
 		mask_list, param_list, ccsf = masks_and_parameters_from_file(segm_input, img_dims)
 		slice_list_mc, mlist, plist = combine_masks_multi(mask_list, param_list)
 
@@ -827,7 +832,7 @@ def get_ed_es_dice_from_session_rt(contour_file:os.path, reverse:bool, segm_inpu
 	if not isinstance(reverse, bool):
 		reverse = int(reverse)
 
-	img_dims, fov, EDphase, ESphase, slices = extract_img_params(contour_file)
+	img_dims, fov, slices = extract_img_params(contour_file)
 	mask_list, param_list, ccsf = masks_and_parameters_from_file(contour_file, img_dims)
 	slice_list_mc, mlist, plist = combine_masks_multi(mask_list, param_list, slices=slices, reverse=reverse)
 
@@ -850,7 +855,7 @@ def get_ed_es_dice_from_session_rt(contour_file:os.path, reverse:bool, segm_inpu
 	es_masks_mc = mask_for_param_selection(mlist, plist, es_idx)
 
 	if os.path.isfile(segm_input):
-		img_dims, fov, EDphase, ESphase, slices = extract_img_params(segm_input)
+		img_dims, fov, slices = extract_img_params(segm_input)
 		mask_list, param_list, ccsf = masks_and_parameters_from_file(segm_input, img_dims)
 		slice_list_mc, mlist, plist = combine_masks_multi(mask_list, param_list)
 
@@ -983,7 +988,7 @@ def calc_bpm(contour_file, reverse, time_res=0.03328, centr_slices = 0):
 	:returns: Beats per minute
 	:rtype: float
 	"""
-	img_dims, fov, EDphase, ESphase, slices = extract_img_params(contour_file)
+	img_dims, fov, slices = extract_img_params(contour_file)
 	pixel_spacing = round((fov [0] / img_dims[0] + fov [1] / img_dims[1]) / 2, 3) #1.6 for real-time
 	mask_list, param_list, ccsf = masks_and_parameters_from_file(contour_file, img_dims)
 	slice_list_mc, mlist, plist = combine_masks_multi(mask_list, param_list, slices, reverse=reverse)
@@ -1084,7 +1089,7 @@ def get_ed_es_param_from_session(session:os.path, reverse:bool, pixel_spacing:tu
 		list ed_plist is ED phase parameters in format [slice, phase]
 		list es_plist is ES phase parameters in format [slice, phase]
 	"""
-	img_dims, fov, EDphase, ESphase, slices = extract_img_params(session)
+	img_dims, fov, slices = extract_img_params(session)
 	mask_list, param_list, ccsf = masks_and_parameters_from_file(session, img_dims)
 	slice_indexes, mlist, plist = combine_masks_multi(mask_list, param_list, slices, reverse=reverse)
 	EDphase, ESphase = extract_ED_ES_phase_cine(plist, mlist, segm_class=3)
@@ -1182,6 +1187,7 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 			contour_dir=contour_files_dir,
 			img_dir = scanner_reco_dir,
 			seg_dir=nnunet_output_dir, crop_dim=160,
+			vmax_factor=1,
 			titles = ["cine", "real-time MRI (rest)", "real-time MRI (stress)", "real-time MRI (max stress)"], plot=True):
 	"""
 	Visualize different measurement forms (cine, real-time rest, rt stressm rt max stress) in a combined plot with optional segmentation.
@@ -1200,13 +1206,13 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 	"""
 	slice_select = [slice_idx for i in range(4)]
 
-	img_files = [os.path.join(img_dir, vol, i) for i in ["cine_scanner", "rt_scanner", "rt_Belastung_scanner", "rt_Ausbelastung_scanner"]]
+	img_files = [os.path.join(img_dir, vol, i) for i in ["cine_scanner", "rt_scanner", "rt_stress_scanner", "rt_maxstress_scanner"]]
 
-	sessions = [os.path.join(contour_dir, vol+"_" + s+"_manual.con") for s in ["cine", "rt", "rt_Belastung", "rt_Ausbelastung"]]
+	sessions = [os.path.join(contour_dir, vol+"_" + s+"_manual"+contour_format) for s in ["cine", "rt", "rt_stress", "rt_maxstress"]]
 
 	if 0 != len(mask_mode):
-		auto_sessions = [os.path.join(contour_dir, vol+"_" + s+"_automatic.con") for s in ["cine", "rt", "rt_Belastung", "rt_Ausbelastung"]]
-		seg_subdirs = ["rtvol_cine_2d_single_cv", "rtvol_rt_2d_single_cv","rtvol_rt_Belastung_2d_single_cv", "rtvol_rt_Ausbelastung_2d_single_cv"]
+		auto_sessions = [os.path.join(contour_dir, vol+"_" + s+"_automatic"+contour_format) for s in ["cine", "rt", "rt_stress", "rt_maxstress"]]
+		seg_subdirs = ["rtvol_cine_2d_single_cv", "rtvol_rt_2d_single_cv","rtvol_rt_stress_2d_single_cv", "rtvol_rt_maxstress_2d_single_cv"]
 		seg_dirs = [os.path.join(seg_dir, s, "rtvol_"+vol[3:]) for s in seg_subdirs]
 
 	rows = 1 if 0 == len(mask_mode) else len(mask_mode)
@@ -1218,7 +1224,7 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 
 	for num, contour_file in enumerate(sessions):
 
-		img_dims, fov, EDphase, ESphase, slices = extract_img_params(contour_file)
+		img_dims, fov, slices = extract_img_params(contour_file)
 		mask_list, param_list, ccsf = masks_and_parameters_from_file(contour_file, img_dims)
 		slice_list_mc, mlist, plist = combine_masks_multi(mask_list, param_list, slices=slices, reverse=reverse)
 
@@ -1245,7 +1251,7 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 		img = crop_2darray(img, crop_dim)
 		img = flip_rot(img, -1, 1)
 
-		ax[num].imshow(img, cmap="gray")
+		ax[num].imshow(img, cmap="gray", vmax=np.max(img)*vmax_factor)
 		if 0 != len(titles):
 			ax[num].set_title(titles[num])
 
@@ -1264,7 +1270,7 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 								continue
 				elif "auto" == m:
 					second_row_title = "cDL"
-					img_dims, fov, EDphase, ESphase, slices = extract_img_params(contour_file)
+					img_dims, fov, slices = extract_img_params(contour_file)
 					mask_list, param_list, ccsf = masks_and_parameters_from_file(auto_sessions[num], img_dims)
 					slice_list_auto, mlist, plist = combine_masks_multi(mask_list, param_list, slices, reverse=reverse)
 					for i,ps in enumerate(plist):
@@ -1282,7 +1288,7 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 
 				mask = crop_2darray(mask, crop_dim)
 				mask = flip_rot(mask, -1, 1)
-				ax[enum*columns+num].imshow(img, cmap="gray")
+				ax[enum*columns+num].imshow(img, cmap="gray", vmax=np.max(img)*vmax_factor)
 				masked_plt = np.ma.masked_where(mask == 0, mask)
 				ax[enum*columns+num].imshow(masked_plt, cmap=light_jet,interpolation='none', alpha=0.4)
 				ax[enum*columns+num].set_title(second_row_title)
@@ -1295,10 +1301,10 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 				else:
 					plt.savefig(s, bbox_inches='tight', pad_inches=0)
 		else:
-			if ".png" in s:
-				plt.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=300)
+			if ".png" in save_paths:
+				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=300)
 			else:
-				plt.savefig(s, bbox_inches='tight', pad_inches=0)
+				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0)
 	if plot:
 		plt.show()
 	else:
@@ -1343,7 +1349,7 @@ def plot_mc_nnunet(contour_dir, img_dir, seg_dir, rtvol_dict, param_list, flag3d
 
 		#manual contours
 		session = os.path.join(contour_dir, vol+contour_suffix)
-		img_dims, fov, EDphase, ESphase, slices = extract_img_params(session)
+		img_dims, fov, slices = extract_img_params(session)
 		mask_list, param_list, ccsf = masks_and_parameters_from_file(session, img_dims)
 		slice_indexes, mlist, plist = combine_masks_multi(mask_list, param_list, slices, reverse)
 		for m,ps in enumerate(plist):
@@ -1409,10 +1415,10 @@ def plot_mc_nnunet(contour_dir, img_dir, seg_dir, rtvol_dict, param_list, flag3d
 				else:
 					plt.savefig(s, bbox_inches='tight', pad_inches=0)
 		else:
-			if ".png" in s:
-				plt.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=300)
+			if ".png" in save_paths:
+				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=300)
 			else:
-				plt.savefig(s, bbox_inches='tight', pad_inches=0)
+				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0)
 	if plot:
 		plt.show()
 	else:
@@ -1811,7 +1817,7 @@ def identify_ED_ES_mc_nnunet(rtvol_dict, contour_dir=contour_files_dir,
 	:param float pixel_spacing: Pixel spacing of input in mm, e.g. 1px = 1.6 mm x 1.6 mm --> pixel_spacing = 1.6
 	:param float thickness: Slice thickness [mm]
 	"""
-	manual_contour_suffix="_rt_manual.con"
+	manual_contour_suffix="_rt_manual"+contour_format
 	ed_es_phase_file="_rt.txt"
 	for data in rtvol_dict:
 		vol = data["id"]
@@ -1844,7 +1850,7 @@ def identify_ED_ES_mc_nnunet(rtvol_dict, contour_dir=contour_files_dir,
 		data["ef_nnunet"] = (data["edv_nnunet"] - data["esv_nnunet"]) / data["edv_nnunet"] * 100
 
 		session = os.path.join(contour_dir, vol+manual_contour_suffix)
-		img_dims, fov, EDphase, ESphase, slices = extract_img_params(session)
+		img_dims, fov, slices = extract_img_params(session)
 		mask_list, param_list, ccsf = masks_and_parameters_from_file(session, img_dims)
 		slice_indexes, mlist, plist = combine_masks_multi(mask_list, param_list, slices, reverse=reverse)
 		ed_masks = mask_for_param_selection(mlist, plist, param=data["ed_idx_mc"])
@@ -1876,7 +1882,7 @@ def prepare_nnunet_cine(rtvol, img_dir, contour_dir, nnunet_dir,
 		vol = data["id"]
 		reverse = data["reverse"]
 		img_file = os.path.join(img_dir, vol, "cine_scanner")
-		session = os.path.join(contour_dir, vol + "_cine_manual.con")
+		session = os.path.join(contour_dir, vol + "_cine_manual"+contour_format)
 		if "" != cine_single:
 			if not os.path.isdir(os.path.join(output_dir, cine_single, "imagesTs")):
 				os.makedirs(os.path.join(output_dir, cine_single, "imagesTs"))
@@ -1914,7 +1920,7 @@ def prepare_nnunet_rt(rtvol, img_dir, nnunet_dir, rt_single = "Task511_rtvolrt_s
 			output_prefix = os.path.join(output_dir, rt_slice, "imagesTs", prefix+vol[3:])
 			create_nnunet_input_rt(img_file, output_prefix, mode="slice")
 
-def prepare_nnunet_rt_Belastung(rtvol, img_dir, nnunet_dir, rt_single = "Task512_rtvolrt_Belastung_single", rt_slice = "Task517_rtvolrt_Belastung"):
+def prepare_nnunet_rt_stress(rtvol, img_dir, nnunet_dir, rt_single = "Task512_rtvolrt_stress_single", rt_slice = "Task517_rtvolrt_stress"):
 	""""
 	Pre-process reconstructed images of real-time MRI under stress for application of nnU-Net.
 	Creates directories for single images and a time series within a slice.
@@ -1923,7 +1929,7 @@ def prepare_nnunet_rt_Belastung(rtvol, img_dir, nnunet_dir, rt_single = "Task512
 	prefix = "rtvol_"
 	for data in rtvol:
 		vol = data["id"]
-		img_file = os.path.join(img_dir, vol, "rt_Belastung_scanner")
+		img_file = os.path.join(img_dir, vol, "rt_stress_scanner")
 		if "" != rt_single:
 			if not os.path.isdir(os.path.join(output_dir, rt_single, "imagesTs")):
 				os.makedirs(os.path.join(output_dir, rt_single, "imagesTs"))
@@ -1935,7 +1941,7 @@ def prepare_nnunet_rt_Belastung(rtvol, img_dir, nnunet_dir, rt_single = "Task512
 			output_prefix = os.path.join(output_dir, rt_slice, "imagesTs", prefix+vol[3:])
 			create_nnunet_input_rt(img_file, output_prefix, mode="slice")
 
-def prepare_nnunet_rt_Ausbelastung(rtvol, img_dir, nnunet_dir, rt_single = "Task513_rtvolrt_Ausbelastung_single", rt_slice = "Task518_rtvolrt_Ausbelastung"):
+def prepare_nnunet_rt_maxstress(rtvol, img_dir, nnunet_dir, rt_single = "Task513_rtvolrt_maxstress_single", rt_slice = "Task518_rtvolrt_maxstress"):
 	""""
 	Pre-process reconstructed images of real-time MRI under maximal stress for application of nnU-Net.
 	Creates directories for single images and a time series within a slice.
@@ -1944,7 +1950,7 @@ def prepare_nnunet_rt_Ausbelastung(rtvol, img_dir, nnunet_dir, rt_single = "Task
 	prefix = "rtvol_"
 	for data in rtvol:
 		vol = data["id"]
-		img_file = os.path.join(img_dir, vol, "rt_Ausbelastung_scanner")
+		img_file = os.path.join(img_dir, vol, "rt_maxstress_scanner")
 		if "" != rt_single:
 			if not os.path.isdir(os.path.join(output_dir, rt_single, "imagesTs")):
 				os.makedirs(os.path.join(output_dir, rt_single, "imagesTs"))
@@ -1964,24 +1970,24 @@ def prepare_nnunet(img_dir, contour_dir, nnunet_dir):
 	For real-time: Creates directories for single images and a time series within a slice.
 	"""
 	rtvol = [
-	{"id":"vol60",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":61},
-	{"id":"vol61",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":55},
-	{"id":"vol62",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":64},
-	{"id":"vol64",	"reverse":False	, "flip_rot":[-1,0], "gender":"m", "age":50},
-	{"id":"vol67",	"reverse":False	, "flip_rot":[-1,0], "gender":"m", "age":53},
-	{"id":"vol69",	"reverse":False	, "flip_rot":[-1,0], "gender":"m", "age":67},
-	{"id":"vol70",	"reverse":True	, "flip_rot":[-1,1], "gender":"f", "age":66},
-	{"id":"vol71",	"reverse":True	, "flip_rot":[-1,0], "gender":"m", "age":65},
-	{"id":"vol72",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":50},
-	{"id":"vol78",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":64},
-	{"id":"vol79",	"reverse":True	, "flip_rot":[-1,1], "gender":"m", "age":44},
-	{"id":"vol80",	"reverse":True	, "flip_rot":[-1,1], "gender":"f", "age":56},
-	{"id":"vol82",	"reverse":True	, "flip_rot":[-1,0], "gender":"m", "age":42},
-	{"id":"vol83",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":45},
-	{"id":"vol84",	"reverse":False	, "flip_rot":[-1,0], "gender":"m", "age":49}
+	{"id":"vol01",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":61},
+	{"id":"vol02",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":55},
+	{"id":"vol03",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":64},
+	{"id":"vol04",	"reverse":False	, "flip_rot":[-1,0], "gender":"m", "age":50},
+	{"id":"vol05",	"reverse":False	, "flip_rot":[-1,0], "gender":"m", "age":53},
+	{"id":"vol06",	"reverse":False	, "flip_rot":[-1,0], "gender":"m", "age":67},
+	{"id":"vol07",	"reverse":True	, "flip_rot":[-1,1], "gender":"f", "age":66},
+	{"id":"vol08",	"reverse":True	, "flip_rot":[-1,0], "gender":"m", "age":65},
+	{"id":"vol09",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":50},
+	{"id":"vol10",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":64},
+	{"id":"vol11",	"reverse":True	, "flip_rot":[-1,1], "gender":"m", "age":44},
+	{"id":"vol12",	"reverse":True	, "flip_rot":[-1,1], "gender":"f", "age":56},
+	{"id":"vol13",	"reverse":True	, "flip_rot":[-1,0], "gender":"m", "age":42},
+	{"id":"vol14",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":45},
+	{"id":"vol15",	"reverse":False	, "flip_rot":[-1,0], "gender":"m", "age":49}
 	]
 
 	prepare_nnunet_cine(rtvol, img_dir, contour_dir, nnunet_dir)
 	prepare_nnunet_rt(rtvol, img_dir, nnunet_dir)
-	prepare_nnunet_rt_Belastung(rtvol, img_dir, nnunet_dir)
-	prepare_nnunet_rt_Ausbelastung(rtvol, img_dir, nnunet_dir)
+	prepare_nnunet_rt_stress(rtvol, img_dir, nnunet_dir)
+	prepare_nnunet_rt_maxstress(rtvol, img_dir, nnunet_dir)

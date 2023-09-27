@@ -6,8 +6,13 @@
 # Martin Schilling, 2023, martin.schilling@med.uni-goettingen.de
 #
 
+SCRIPT_REPO="$( cd "$( dirname "$( dirname "${BASH_SOURCE[0]}" )" )" >/dev/null 2>&1 && pwd )"
+cd "$SCRIPT_REPO"/01_scripts || exit
+
 read -ra param < <(grep -v '^#' assess_dl.env | xargs)
 export "${param[@]}"
+
+NNUNET_DIR=$DATA_DIR/nnUNet
 
 export nnUNet_raw_data_base=$NNUNET_DIR
 export nnUNet_preprocessed=$NNUNET_DIR
@@ -88,15 +93,15 @@ if ! [ -d "$OUTPUT_DIRECTORY_2D" ] ; then
 fi
 conda run -n nnUnet nnUNet_predict -i "$INPUT_DIR" -o "$OUTPUT_DIRECTORY_2D" -t 27 --overwrite_existing -m 2d
 
-INPUT_DIR=$nnUNet_raw_data_base/nnUNet_raw_data/Task512_rtvolrt_Belastung_single/imagesTs/
-OUTPUT_DIRECTORY_2D=$RESULTS_FOLDER/output/rtvol_rt_Belastung_2d_single_cv/
+INPUT_DIR=$nnUNet_raw_data_base/nnUNet_raw_data/Task512_rtvolrt_stress_single/imagesTs/
+OUTPUT_DIRECTORY_2D=$RESULTS_FOLDER/output/rtvol_rt_stress_2d_single_cv/
 if ! [ -d "$OUTPUT_DIRECTORY_2D" ] ; then
 	mkdir -p "$OUTPUT_DIRECTORY_2D"
 fi
 conda run -n nnUnet nnUNet_predict -i "$INPUT_DIR" -o "$OUTPUT_DIRECTORY_2D" -t 27 --overwrite_existing -m 2d
 
-INPUT_DIR=$nnUNet_raw_data_base/nnUNet_raw_data/Task513_rtvolrt_Ausbelastung_single/imagesTs/
-OUTPUT_DIRECTORY_2D=$RESULTS_FOLDER/output/rtvol_rt_Ausbelastung_2d_single_cv/
+INPUT_DIR=$nnUNet_raw_data_base/nnUNet_raw_data/Task513_rtvolrt_maxstress_single/imagesTs/
+OUTPUT_DIRECTORY_2D=$RESULTS_FOLDER/output/rtvol_rt_maxstress_2d_single_cv/
 if ! [ -d "$OUTPUT_DIRECTORY_2D" ] ; then
 	mkdir -p "$OUTPUT_DIRECTORY_2D"
 fi
@@ -111,15 +116,15 @@ if ! [ -d "$OUTPUT_DIRECTORY_2D" ] ; then
 fi
 conda run -n nnUnet nnUNet_predict -i "$INPUT_DIR" -o "$OUTPUT_DIRECTORY_2D" -t 27 --overwrite_existing -m 2d
 
-INPUT_DIR=$nnUNet_raw_data_base/nnUNet_raw_data/Task517_rtvolrt_Belastung/imagesTs/
-OUTPUT_DIRECTORY_2D=$RESULTS_FOLDER/rtvol_rt_Belastung_2d_cv/
+INPUT_DIR=$nnUNet_raw_data_base/nnUNet_raw_data/Task517_rtvolrt_stress/imagesTs/
+OUTPUT_DIRECTORY_2D=$RESULTS_FOLDER/rtvol_rt_stress_2d_cv/
 if ! [ -d "$OUTPUT_DIRECTORY_2D" ] ; then
 	mkdir -p "$OUTPUT_DIRECTORY_2D"
 fi
 conda run -n nnUnet nnUNet_predict -i "$INPUT_DIR" -o "$OUTPUT_DIRECTORY_2D" -t 27 --overwrite_existing -m 2d
 
-INPUT_DIR=$nnUNet_raw_data_base/nnUNet_raw_data/Task518_rtvolrt_Ausbelastung/imagesTs/
-OUTPUT_DIRECTORY_2D=$RESULTS_FOLDER/output/rtvol_rt_Ausbelastung_2d_cv/
+INPUT_DIR=$nnUNet_raw_data_base/nnUNet_raw_data/Task518_rtvolrt_maxstress/imagesTs/
+OUTPUT_DIRECTORY_2D=$RESULTS_FOLDER/output/rtvol_rt_maxstress_2d_cv/
 if ! [ -d "$OUTPUT_DIRECTORY_2D" ] ; then
 	mkdir -p "$OUTPUT_DIRECTORY_2D"
 fi

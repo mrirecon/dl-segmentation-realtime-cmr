@@ -9,10 +9,15 @@
 # To be able to activate conda environments,
 # run this script in interactive mode with bash -i assess_dl_nnunet_install.sh
 
+SCRIPT_REPO="$( cd "$( dirname "$( dirname "${BASH_SOURCE[0]}" )" )" >/dev/null 2>&1 && pwd )"
+cd "$SCRIPT_REPO"/01_scripts || exit
+
 read -ra param < <(grep -v '^#' assess_dl.env | xargs)
 export "${param[@]}"
 
 CONDA_ENV="mri_recon_nnUNet"
+export NNUNET_DIR=$DATA_DIR/nnUNet
+
 conda create -n $CONDA_ENV python=3.10.9 anaconda
 
 #Install Pytorch with conda https://pytorch.org/get-started/locally/

@@ -193,7 +193,7 @@ def read_dicom_param_file(param_file:str, ddir:str, tdir:str, suffix:str, meas_i
 						continue
 
 					if not os.path.exists(os.path.join(tdir, subdir_out)):
-						os.mkdir(os.path.join(tdir, subdir_out))
+						os.makedirs(os.path.join(tdir, subdir_out))
 					if not os.path.exists(save_path+".hdr"):
 						print(os.path.join(acc_path, meas))
 

@@ -18,114 +18,41 @@ import argparse
 from inspect import getsourcefile
 
 sys.path.append(os.path.join(os.environ["TOOLBOX_PATH"], "python"))
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(getsourcefile(lambda:0)))), "python"))
+sys.path.append(os.path.dirname(getsourcefile(lambda:0)))
 
 import assess_dl_seg_utils as assess_utils
 import cfl
 
-scanner_reco_dir=os.environ["IMG_DIR"] if "IMG_DIR" in os.environ else ""
-contour_files_dir=os.environ["CONTOUR_DIR"] if "CONTOUR_DIR" in os.environ else ""
-nnunet_output_dir=os.environ["NNUNET_OUTPUT"] if "NNUNET_OUTPUT" in os.environ else ""
-end_exp_dir=os.environ["END_EXP"] if "END_EXP" in os.environ else ""
+if "DATA_DIR" in os.environ:
+	scanner_reco_dir=os.path.join(os.environ["DATA_DIR"], "scanner_reco")
+	contour_files_dir=os.path.join(os.environ["DATA_DIR"], "contour_files")
+	nnunet_output_dir=os.path.join(os.environ["DATA_DIR"], "nnUNet/output")
+	end_exp_dir=os.path.join(os.environ["DATA_DIR"], "end_expiration_indexes")
+else:
+	scanner_reco_dir=""
+	contour_files_dir=""
+	nnunet_output_dir=""
+	end_exp_dir=""
+
+contour_format = ".txt"
 
 rtvol = [
-{"id":"vol60",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":61},
-{"id":"vol61",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":55},
-{"id":"vol62",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":64},
-{"id":"vol64",	"reverse":False	, "flip_rot":[-1,0], "gender":"m", "age":50},
-{"id":"vol67",	"reverse":False	, "flip_rot":[-1,0], "gender":"m", "age":53},
-{"id":"vol69",	"reverse":False	, "flip_rot":[-1,0], "gender":"m", "age":67},
-{"id":"vol70",	"reverse":True	, "flip_rot":[-1,1], "gender":"f", "age":66},
-{"id":"vol71",	"reverse":True	, "flip_rot":[-1,0], "gender":"m", "age":65},
-{"id":"vol72",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":50},
-{"id":"vol78",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":64},
-{"id":"vol79",	"reverse":True	, "flip_rot":[-1,1], "gender":"m", "age":44},
-{"id":"vol80",	"reverse":True	, "flip_rot":[-1,1], "gender":"f", "age":56},
-{"id":"vol82",	"reverse":True	, "flip_rot":[-1,0], "gender":"m", "age":42},
-{"id":"vol83",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":45},
-{"id":"vol84",	"reverse":False	, "flip_rot":[-1,0], "gender":"m", "age":49}
+{"id":"vol01",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":61},
+{"id":"vol02",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":55},
+{"id":"vol03",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":64},
+{"id":"vol04",	"reverse":False	, "flip_rot":[-1,0], "gender":"m", "age":50},
+{"id":"vol05",	"reverse":False	, "flip_rot":[-1,0], "gender":"m", "age":53},
+{"id":"vol06",	"reverse":False	, "flip_rot":[-1,0], "gender":"m", "age":67},
+{"id":"vol07",	"reverse":True	, "flip_rot":[-1,1], "gender":"f", "age":66},
+{"id":"vol08",	"reverse":True	, "flip_rot":[-1,0], "gender":"m", "age":65},
+{"id":"vol09",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":50},
+{"id":"vol10",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":64},
+{"id":"vol11",	"reverse":True	, "flip_rot":[-1,1], "gender":"m", "age":44},
+{"id":"vol12",	"reverse":True	, "flip_rot":[-1,1], "gender":"f", "age":56},
+{"id":"vol13",	"reverse":True	, "flip_rot":[-1,0], "gender":"m", "age":42},
+{"id":"vol14",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":45},
+{"id":"vol15",	"reverse":False	, "flip_rot":[-1,0], "gender":"m", "age":49}
 ]
-
-def dice_coeff(rtvol_dict, rtvol_dict_maxstress, mode="single",
-		contour_dir=contour_files_dir):
-	"""
-	Calculate Dice's coefficient for entries in list of dictionaries for
-	Medis DL ACD (automatic) and nnU-Net contours for cine and real-time
-	measurements at rest, under stress and under max stress.
-	As some measurements are not evaluated at max stress, the list of dictionaries
-	is different.
-
-	:param list rtvol_dict: List of dictionaries with entries ['id'] and ['reverse']
-	:param list rtvol_dict_maxstress: List of dictionaries for maximal stress
-	"""
-
-	# cine
-	if "single" == mode:
-		flag3D = False
-		seg_dir = os.path.join(nnunet_output_dir, "rtvol_cine_2d_single_cv")
-	else:
-		flag3D = True
-		seg_dir = os.path.join(nnunet_output_dir, "rtvol_cine_2d_slice_cv/")
-
-	manual_contour_suffix = "_cine_manual.con"
-	comp_contour_suffix = "_cine_automatic.con"
-
-	phase_select = "combined"
-
-	print("DC for cine")
-	#automatic contours
-	ed_dc_list, es_dc_list, ed_dict_list, es_dict_list = assess_utils.get_ed_es_dice_from_session_multi(contour_dir, rtvol_dict, manual_contour_suffix, comp_contour_suffix=comp_contour_suffix, nnunet_prefix="", phase_select=phase_select,
-			title="automatic contours", flag3d=True, mode="cine")
-	#nnU-Net contours
-	nnunet_prefix = os.path.join(seg_dir, "rtvol_")
-	_,_,_,_ = assess_utils.get_ed_es_dice_from_session_multi(contour_dir, rtvol_dict, manual_contour_suffix, comp_contour_suffix="", nnunet_prefix=nnunet_prefix, phase_select=phase_select,
-			title="nnUNet", flag3d=flag3D, mode="cine")
-
-	#rt
-	print("DC for real-time rest")
-	if "single" == mode:
-		seg_dir = os.path.join(nnunet_output_dir, "rtvol_rt_2d_single_cv/")
-	else:
-		seg_dir = os.path.join(nnunet_output_dir, "rtvol_rt_2d_cv/")
-
-	nnunet_prefix = os.path.join(seg_dir, "rtvol_")
-	manual_contour_suffix = "_rt_manual.con"
-	comp_contour_suffix = "_rt_automatic.con"
-	_,_,_,_ = assess_utils.get_ed_es_dice_from_session_multi(contour_dir, rtvol_dict, manual_contour_suffix, comp_contour_suffix=comp_contour_suffix, nnunet_prefix="", phase_select=phase_select,
-			title="automatic contours", flag3d=False)
-	_,_,_,_ = assess_utils.get_ed_es_dice_from_session_multi(contour_dir, rtvol_dict, manual_contour_suffix, comp_contour_suffix="", nnunet_prefix=nnunet_prefix, phase_select=phase_select,
-			title="nnUNet", flag3d=False)
-
-	print("DC for real-time stress")
-	if "single" == mode:
-		flag3D = False
-		os.path.join(nnunet_output_dir, "rtvol_rt_Belastung_2d_single_cv/")
-	else:
-		flag3D = True
-		seg_dir = os.path.join(nnunet_output_dir, "rtvol_rt_Belastung_2d_cv/")
-
-	nnunet_prefix = os.path.join(seg_dir, "rtvol_")
-	manual_contour_suffix = "_rt_Belastung_manual.con"
-	comp_contour_suffix = "_rt_Belastung_automatic.con"
-	_,_,_,_ = assess_utils.get_ed_es_dice_from_session_multi(contour_dir, rtvol_dict, manual_contour_suffix, comp_contour_suffix=comp_contour_suffix, nnunet_prefix="", phase_select=phase_select,
-			title="automatic contours", flag3d=False)
-	_,_,_,_ = assess_utils.get_ed_es_dice_from_session_multi(contour_dir, rtvol_dict, manual_contour_suffix, comp_contour_suffix="", nnunet_prefix=nnunet_prefix, phase_select=phase_select,
-			title="nnUNet", flag3d=False)
-
-	print("DC for real-time max stress")
-
-	if "single" == mode:
-		seg_dir = os.path.join(nnunet_output_dir, "rtvol_rt_Ausbelastung_2d_single_cv/")
-	else:
-		seg_dir = os.path.join(nnunet_output_dir, "rtvol_rt_Ausbelastung_2d_cv/")
-
-	nnunet_prefix = os.path.join(seg_dir, "rtvol_")
-	manual_contour_suffix = "_rt_Ausbelastung_manual.con"
-	comp_contour_suffix = "_rt_Ausbelastung_automatic.con"
-	_,_,_,_ = assess_utils.get_ed_es_dice_from_session_multi(contour_dir, rtvol_dict_maxstress, manual_contour_suffix, comp_contour_suffix=comp_contour_suffix, nnunet_prefix="", phase_select=phase_select,
-			title="automatic contours", flag3d=False)
-	_,_,_,_ = assess_utils.get_ed_es_dice_from_session_multi(contour_dir, rtvol_dict_maxstress, manual_contour_suffix, comp_contour_suffix="", nnunet_prefix=nnunet_prefix, phase_select=phase_select,
-			title="nnUNet", flag3d=False)
 
 def calc_DC_and_bpm(rtvol_dict, mode=["nnunet"],
 		contour_dir = contour_files_dir,
@@ -136,22 +63,22 @@ def calc_DC_and_bpm(rtvol_dict, mode=["nnunet"],
 
 	:param list rtvol_dict: List of dictionaries with entries ['id'] and ['reverse']
 	:param list mode: List of modes for calculation of Dice's coefficient. Entries can be 'nnunet' and/or 'auto'
-	:param str contour_dir: Path to directory containing contour files in '.con' file format
+	:param str contour_dir: Path to directory containing contour files in '.con' or '.txt' file format
 	:param str seg_dir: Directory containing subdirectories for nnU-Net segmentation outputs
 	"""
 	segm_classes = 3
 	phase_select = "combined"
-	seg_subdirs = ["rtvol_rt_2d_single_cv", "rtvol_rt_Belastung_2d_single_cv", "rtvol_rt_Ausbelastung_2d_single_cv"]
-	modes = ["rt", "rt_Belastung", "rt_Ausbelastung"]
-	manual_contour_suffixes = ["_rt_manual.con", "_rt_Belastung_manual.con", "_rt_Ausbelastung_manual.con"]
-	automatic_contour_suffixes = ["_rt_automatic.con", "_rt_Belastung_automatic.con", "_rt_Ausbelastung_automatic.con"]
+	seg_subdirs = ["rtvol_rt_2d_single_cv", "rtvol_rt_stress_2d_single_cv", "rtvol_rt_maxstress_2d_single_cv"]
+	modes = ["rt", "rt_stress", "rt_maxstress"]
+	manual_contour_suffixes = ["_rt_manual"+contour_format, "_rt_stress_manual"+contour_format, "_rt_maxstress_manual"+contour_format]
+	automatic_contour_suffixes = ["_rt_automatic"+contour_format, "_rt_stress_automatic"+contour_format, "_rt_maxstress_automatic"+contour_format]
 	descr = ["RV", "Myo", "LV"]
 
 	for d in rtvol_dict:
 		vol = d["id"]
 		reverse = d["reverse"]
 		print(vol)
-		sessions = [os.path.join(contour_dir, vol+"_" + s+"_manual.con") for s in modes]
+		sessions = [os.path.join(contour_dir, vol+"_" + s+"_manual"+contour_format) for s in modes]
 		for i,contour_file in enumerate(sessions):
 			if os.path.isfile(contour_file):
 				bpm, bpm_std = assess_utils.calc_bpm(contour_file, reverse, time_res=0.03328, centr_slices=5)
@@ -195,7 +122,7 @@ def plot_DC_vs_bpm(rtvol_dict, save_paths=[], contour_mode="nnunet", ylim=[], pl
 	:param str save_path: Path to save plot. Default: Output is not saved
 	:param str contour_mode: Contour mode for plotting. Either 'nnunet' or 'auto'
 	"""
-	modes = ["rt", "rt_Belastung", "rt_Ausbelastung"]
+	modes = ["rt", "rt_stress", "rt_maxstress"]
 	descr = ["RV", "Myo", "LV"]
 	colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
 	dice_scores = [[] for i in descr]
@@ -244,10 +171,10 @@ def plot_DC_vs_bpm(rtvol_dict, save_paths=[], contour_mode="nnunet", ylim=[], pl
 				else:
 					plt.savefig(s, bbox_inches='tight', pad_inches=0)
 		else:
-			if ".png" in s:
-				plt.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=300)
+			if ".png" in save_paths:
+				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=300)
 			else:
-				plt.savefig(s, bbox_inches='tight', pad_inches=0)
+				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0)
 
 	if plot:
 		plt.show()
@@ -376,7 +303,7 @@ def calc_mean_stdv_parameters_cine(rtvol_dict, seg_dir = os.path.join(nnunet_out
 	for data in rtvol_dict:
 		vol = data["id"]
 		reverse = data["reverse"]
-		session = os.path.join(contour_dir, vol+"_cine_manual.con")
+		session = os.path.join(contour_dir, vol+"_cine_manual"+contour_format)
 		slice_offset = 0
 
 		ed_mc, es_mc, ed_vol, es_vol, ed_plist, es_plist = assess_utils.get_ed_es_param_from_session(session, reverse, pixel_spacing, thickness)
@@ -390,8 +317,8 @@ def calc_mean_stdv_parameters_cine(rtvol_dict, seg_dir = os.path.join(nnunet_out
 		es_vol_mc.append(es_vol)
 		ef_mc.append( (ed_vol - es_vol) / ed_vol * 100)
 
-		session = os.path.join(contour_dir, vol+"_cine_automatic.con")
-		img_dims, fov, EDphase, ESphase, slices = assess_utils.extract_img_params(session)
+		session = os.path.join(contour_dir, vol+"_cine_automatic"+contour_format)
+		img_dims, fov, slices = assess_utils.extract_img_params(session)
 		#mask_list, param_list, ccsf = medis.masks_and_parameters_from_file(session, img_dims, no_duplicates=True)
 		mask_list, param_list, ccsf = assess_utils.masks_and_parameters_from_file(session, img_dims)
 		slice_indexes, mlist, plist = assess_utils.combine_masks_multi(mask_list, param_list, slices, reverse=reverse)
@@ -431,7 +358,7 @@ def calc_mean_stdv_parameters_cine(rtvol_dict, seg_dir = os.path.join(nnunet_out
 
 def calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=os.path.join(nnunet_output_dir, "rtvol_rt_2d_single_cv/"),
 				contour_dir=contour_files_dir, flag3d=False,
-				pixel_spacing=1.6, session_mc_suffix="_rt_manual.con", session_auto_suffix="_rt_automatic.con",
+				pixel_spacing=1.6, session_mc_suffix="_rt_manual"+contour_format, session_auto_suffix="_rt_automatic"+contour_format,
 				exp_dir=end_exp_dir, ed_es_phase_file="_rt.txt", output_file="",
 				precision=1):
 	"""
@@ -521,20 +448,20 @@ def calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=os.path.join(nnunet_output_
 
 	return (ed_vol_mc, ed_vol_auto, ed_vol_nnunet), (es_vol_mc, es_vol_auto, es_vol_nnunet), (ef_mc, ef_auto, ef_nnunet)
 
-def plot_ba_ef(save_dir, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_Belastung, set_colors=["royalblue", "palegreen", "indianred"],
+def plot_ba_ef(save_dir, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_stress, set_colors=["royalblue", "palegreen", "indianred"],
 	       plot_indexes=[0,1,2], ylim=[], plot_mode=["nnunet", "auto"], plot=True, file_extensions=["png"]):
 	#Bland-Altman plots for ejection fraction (EF)
 	(ef_mc_cine, ef_auto_cine, ef_nnunet_cine) = ef_tuple_cine
 	(ef_mc_rt, ef_auto_rt, ef_nnunet_rt) = ef_tuple_rt
-	(ef_mc_rt_Belastung, ef_auto_rt_Belastung, ef_nnunet_rt_Belastung) = ef_tuple_rt_Belastung
+	(ef_mc_rt_stress, ef_auto_rt_stress, ef_nnunet_rt_stress) = ef_tuple_rt_stress
 
 	xlabel="EF [%]"
 	ylabel="manual contours EF - nnU-Net EF [%]"
 	save_labels = ["cine", "rt", "rt_stress"]
 	set_labels = ["cine", "rt", "rt stress"]
-	set_mc = [ef_mc_cine, ef_mc_rt, ef_mc_rt_Belastung]
-	set_nnunet = [ef_nnunet_cine, ef_nnunet_rt, ef_nnunet_rt_Belastung]
-	set_comDL = [ef_auto_cine, ef_auto_rt, ef_auto_rt_Belastung]
+	set_mc = [ef_mc_cine, ef_mc_rt, ef_mc_rt_stress]
+	set_nnunet = [ef_nnunet_cine, ef_nnunet_rt, ef_nnunet_rt_stress]
+	set_comDL = [ef_auto_cine, ef_auto_rt, ef_auto_rt_stress]
 
 	save_str = ""
 	if [0,1,2] in plot_indexes:
@@ -562,20 +489,20 @@ def plot_ba_ef(save_dir, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_Belastung, set_
 		assess_utils.plot_bland_altman_multi(setA, setC, save_paths=save_paths, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
 				figlayout="tight", ylim=ylim, plot=plot)
 
-def plot_ba_edv(save_dir, ed_tuple_cine, ed_tuple_rt, ed_tuple_rt_Belastung, set_colors=["royalblue", "palegreen", "indianred"],
+def plot_ba_edv(save_dir, ed_tuple_cine, ed_tuple_rt, ed_tuple_rt_stress, set_colors=["royalblue", "palegreen", "indianred"],
 		plot_indexes=[0,1,2], ylim=[], plot_mode=["nnunet", "auto"], plot=True, file_extensions=["png"]):
 	#Bland-Altman plots for end-diastolic volume (EDV)
 	(ed_vol_mc_cine, ed_vol_auto_cine, ed_vol_nnunet_cine) = ed_tuple_cine
 	(ed_vol_mc_rt, ed_vol_auto_rt, ed_vol_nnunet_rt) = ed_tuple_rt
-	(ed_vol_mc_rt_Belastung, ed_vol_auto_rt_Belastung, ed_vol_nnunet_rt_Belastung) = ed_tuple_rt_Belastung
+	(ed_vol_mc_rt_stress, ed_vol_auto_rt_stress, ed_vol_nnunet_rt_stress) = ed_tuple_rt_stress
 
 	xlabel="LV end-diastolic volume [ml]"
 	ylabel="manual contours EDV - nnU-Net EDV [ml]"
 	save_labels = ["cine", "rt", "rt_stress"]
 	set_labels = ["cine", "rt", "rt stress"]
-	set_mc = [ed_vol_mc_cine, ed_vol_mc_rt, ed_vol_mc_rt_Belastung]
-	set_nnunet = [ed_vol_nnunet_cine, ed_vol_nnunet_rt, ed_vol_nnunet_rt_Belastung]
-	set_comDL = [ed_vol_auto_cine, ed_vol_auto_rt, ed_vol_auto_rt_Belastung]
+	set_mc = [ed_vol_mc_cine, ed_vol_mc_rt, ed_vol_mc_rt_stress]
+	set_nnunet = [ed_vol_nnunet_cine, ed_vol_nnunet_rt, ed_vol_nnunet_rt_stress]
+	set_comDL = [ed_vol_auto_cine, ed_vol_auto_rt, ed_vol_auto_rt_stress]
 
 	save_str = ""
 	if [0,1,2] in plot_indexes:
@@ -603,19 +530,19 @@ def plot_ba_edv(save_dir, ed_tuple_cine, ed_tuple_rt, ed_tuple_rt_Belastung, set
 		assess_utils.plot_bland_altman_multi(setA, setC, save_paths=save_paths, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
 				figlayout="tight", ylim=ylim, scale=0.001, plot=plot)
 
-def plot_ba_esv(save_dir, es_tuple_cine, es_tuple_rt, es_tuple_rt_Belastung, set_colors=["royalblue", "palegreen", "indianred"],
+def plot_ba_esv(save_dir, es_tuple_cine, es_tuple_rt, es_tuple_rt_stress, set_colors=["royalblue", "palegreen", "indianred"],
 		plot_indexes=[0,1,2], ylim=[], plot_mode=["nnunet", "auto"], plot=True, file_extensions=["png"]):
 	#Bland-Altman plots for end-systolic volume (ESV)
 	(es_vol_mc_cine, es_vol_auto_cine, es_vol_nnunet_cine) = es_tuple_cine
 	(es_vol_mc_rt, es_vol_auto_rt, es_vol_nnunet_rt) = es_tuple_rt
-	(es_vol_mc_rt_Belastung, es_vol_auto_rt_Belastung, es_vol_nnunet_rt_Belastung) = es_tuple_rt_Belastung
+	(es_vol_mc_rt_stress, es_vol_auto_rt_stress, es_vol_nnunet_rt_stress) = es_tuple_rt_stress
 	xlabel="LV end-systolic volume [ml]"
 	ylabel="manual contours ESV - nnU-Net ESV [ml]"
 	save_labels = ["cine", "rt", "rt_stress"]
 	set_labels = ["cine", "rt", "rt stress"]
-	set_mc = [es_vol_mc_cine, es_vol_mc_rt, es_vol_mc_rt_Belastung]
-	set_nnunet = [es_vol_nnunet_cine, es_vol_nnunet_rt, es_vol_nnunet_rt_Belastung]
-	set_comDL = [es_vol_auto_cine, es_vol_auto_rt, es_vol_auto_rt_Belastung]
+	set_mc = [es_vol_mc_cine, es_vol_mc_rt, es_vol_mc_rt_stress]
+	set_nnunet = [es_vol_nnunet_cine, es_vol_nnunet_rt, es_vol_nnunet_rt_stress]
+	set_comDL = [es_vol_auto_cine, es_vol_auto_rt, es_vol_auto_rt_stress]
 
 	save_str = ""
 	if [0,1,2] in plot_indexes:
@@ -687,11 +614,11 @@ def write_parameter_files_mc_comdl_nnunet(out_dir, rtvol_dict=rtvol, contour_dir
 	output_file = os.path.join(out_dir, "rt_2d_single.txt")
 	_, _, _ = calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=seg_dir, contour_dir=contour_dir, output_file=output_file, precision=1)
 
-	seg_dir = os.path.join(nnunet_output, "rtvol_rt_Belastung_2d_single_cv/")
-	output_file = os.path.join(out_dir, "rt_Belastung_2d_single.txt")
+	seg_dir = os.path.join(nnunet_output, "rtvol_rt_stress_2d_single_cv/")
+	output_file = os.path.join(out_dir, "rt_stress_2d_single.txt")
 	_,_,_ = calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=seg_dir, contour_dir=contour_dir, output_file=output_file,
-			session_mc_suffix="_rt_Belastung_manual.con",
-			session_auto_suffix="_rt_Belastung_automatic.con", ed_es_phase_file="_rt_Belastung.txt", precision=1)
+			session_mc_suffix="_rt_stress_manual"+contour_format,
+			session_auto_suffix="_rt_stress_automatic"+contour_format, ed_es_phase_file="_rt_stress.txt", precision=1)
 
 def plot_BA_nnunet_auto(rtvol_dict, out_dir_fig, plot=False, file_extensions=["pdf"]):
 	"""
@@ -755,15 +682,16 @@ def plot_BA_nnunet_auto(rtvol_dict, out_dir_fig, plot=False, file_extensions=["p
 
 def save_fig1(out_dir, plot=False, img_dir=scanner_reco_dir,
 			contour_dir=contour_files_dir,
-			seg_dir=os.path.join(nnunet_output_dir, "rtvol_rt_Belastung_2d_single_cv"),
+			seg_dir=os.path.join(nnunet_output_dir, "rtvol_rt_stress_2d_single_cv"),
 			file_extension="pdf"):
 	"""
 	Parameters for plotting the measurement types in the manuscript.
 	"""
 	file_extensions=file_extension.split(",")
-	vol = "vol80"
+	vol = "vol12"
 	reverse = True
 	slice_idx=13
+	vmax_factor=0.8
 	mask_mode = []
 	phase_mode = "es"
 	save_paths = [os.path.join(out_dir, "figure_01_measurement_types."+f) for f in file_extensions]
@@ -771,7 +699,7 @@ def save_fig1(out_dir, plot=False, img_dir=scanner_reco_dir,
 	assess_utils.plot_measurement_types(vol, reverse, slice_idx, mask_mode=mask_mode, phase_mode=phase_mode, save_paths=save_paths,
 				contour_dir=contour_dir,
 				img_dir =img_dir,
-				seg_dir=seg_dir, crop_dim=160, titles =titles, plot=plot)
+				seg_dir=seg_dir, crop_dim=160, vmax_factor=vmax_factor, titles=titles, plot=plot)
 
 def save_fig2(out_dir, rtvol_dict=rtvol, plot=False, contour_dir=contour_files_dir, seg_dir=nnunet_output_dir, file_extension="png"):
 	# Figures for Dice's coefficient depending on heart rate
@@ -795,16 +723,16 @@ def save_fig2(out_dir, rtvol_dict=rtvol, plot=False, contour_dir=contour_files_d
 
 def save_fig3(out_dir, rtvol_dict=rtvol, plot=False, img_dir=scanner_reco_dir,
 			contour_dir=contour_files_dir,
-			seg_dir=os.path.join(nnunet_output_dir, "rtvol_rt_Belastung_2d_single_cv"),
+			seg_dir=os.path.join(nnunet_output_dir, "rtvol_rt_stress_2d_single_cv"),
 			file_extension="pdf"):
 	"""
 	Plotting limits of neural networks for manuscript.
 	"""
 	file_extensions=file_extension.split(",")
 	save_paths = [os.path.join(out_dir, "figure_03_nn_limits."+f) for f in file_extensions]
-	param_list = [['vol78', 2, 25], ['vol78', 3, 123], ['vol79', 15, 69], ['vol84', 11, 126]]
+	param_list = [['vol10', 2, 25], ['vol10', 3, 123], ['vol11', 15, 69], ['vol15', 11, 126]]
 	assess_utils.plot_mc_nnunet(contour_dir, img_dir, seg_dir, rtvol_dict, param_list, flag3d=False, mode = "nnunet",
-				crop_dim=160, contour_suffix = "_rt_Belastung_manual.con", img_suffix="rt_Belastung_scanner", save_paths=save_paths,
+				crop_dim=160, contour_suffix = "_rt_stress_manual"+contour_format, img_suffix="rt_stress_scanner", save_paths=save_paths,
 				check=False, plot=plot)
 
 def save_fig_ba(out_dir, rtvol_dict=rtvol, nnunet_output=nnunet_output_dir, file_extension="png"):
@@ -820,25 +748,25 @@ def save_fig_ba(out_dir, rtvol_dict=rtvol, nnunet_output=nnunet_output_dir, file
 	seg_dir = os.path.join(nnunet_output, "rtvol_rt_2d_single_cv/")
 	ed_tuple_rt, es_tuple_rt, ef_tuple_rt = calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=seg_dir, output_file=output_file)
 
-	seg_dir = os.path.join(nnunet_output, "rtvol_rt_Belastung_2d_single_cv/")
-	ed_tuple_rt_Belastung, es_tuple_rt_Belastung, ef_tuple_rt_Belastung = calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=seg_dir,
-							session_mc_suffix="_rt_Belastung_manual.con", session_auto_suffix="_rt_Belastung_automatic.con",
-				exp_dir = end_exp_dir, ed_es_phase_file="_rt_Belastung.txt", output_file=output_file)
+	seg_dir = os.path.join(nnunet_output, "rtvol_rt_stress_2d_single_cv/")
+	ed_tuple_rt_stress, es_tuple_rt_stress, ef_tuple_rt_stress = calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=seg_dir,
+							session_mc_suffix="_rt_stress_manual"+contour_format, session_auto_suffix="_rt_stress_automatic"+contour_format,
+				exp_dir = end_exp_dir, ed_es_phase_file="_rt_stress.txt", output_file=output_file)
 
 	for i in range(3):
-		plot_ba_ef(out_dir, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_Belastung,
+		plot_ba_ef(out_dir, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_stress,
 			plot_indexes=[i], ylim=[-20,20], plot_mode=["nnunet"], file_extensions=file_extensions)
-		plot_ba_edv(out_dir, ed_tuple_cine, ed_tuple_rt, ed_tuple_rt_Belastung,
+		plot_ba_edv(out_dir, ed_tuple_cine, ed_tuple_rt, ed_tuple_rt_stress,
 			plot_indexes=[i], ylim=[-80,80], plot_mode=["nnunet"], file_extensions=file_extensions)
-		plot_ba_esv(out_dir, es_tuple_cine, es_tuple_rt, es_tuple_rt_Belastung,
+		plot_ba_esv(out_dir, es_tuple_cine, es_tuple_rt, es_tuple_rt_stress,
 			plot_indexes=[i], ylim=[-18,18], plot_mode=["nnunet"], file_extensions=file_extensions)
 
 	for i in range(3):
-		plot_ba_ef(out_dir, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_Belastung,
+		plot_ba_ef(out_dir, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_stress,
 			plot_indexes=[i], ylim=[-200,200], plot_mode=["auto"], file_extensions=file_extensions)
-		plot_ba_edv(out_dir, ed_tuple_cine, ed_tuple_rt, ed_tuple_rt_Belastung,
+		plot_ba_edv(out_dir, ed_tuple_cine, ed_tuple_rt, ed_tuple_rt_stress,
 			plot_indexes=[i], ylim=[-120,120], plot_mode=["auto"], file_extensions=file_extensions)
-		plot_ba_esv(out_dir, es_tuple_cine, es_tuple_rt, es_tuple_rt_Belastung,
+		plot_ba_esv(out_dir, es_tuple_cine, es_tuple_rt, es_tuple_rt_stress,
 			plot_indexes=[i], ylim=[-25,25], plot_mode=["auto"], file_extensions=file_extensions)
 
 def main(out_dir_fig, out_dir_data, plot=False, nnunet_output="/scratch/mschi/nnUnet/"):
@@ -858,7 +786,7 @@ def main(out_dir_fig, out_dir_data, plot=False, nnunet_output="/scratch/mschi/nn
 	save_fig2(out_dir_fig, plot=plot)
 
 	# Limits of segmentation network
-	save_fig3(out_dir_fig, plot=plot, seg_dir=os.path.join(nnunet_output, "output/rtvol_rt_Belastung_2d_single_cv"))
+	save_fig3(out_dir_fig, plot=plot, seg_dir=os.path.join(nnunet_output, "output/rtvol_rt_stress_2d_single_cv"))
 
 	# Evaluation of cardiac function parameters
 	write_parameter_files_mc_comdl_nnunet(out_dir_data=rtvol)
