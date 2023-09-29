@@ -37,6 +37,7 @@ else:
 	end_exp_dir=""
 
 contour_format = ".txt"
+png_dpi=500
 
 #---Analyze Contour file---
 
@@ -265,12 +266,12 @@ def plot_bland_altman_multi(setA:list, setB:list, header:str="", save_paths:list
 		if list == type(save_paths):
 			for s in save_paths:
 				if ".png" in s:
-					plt.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=300)
+					plt.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 				else:
 					plt.savefig(s, bbox_inches='tight', pad_inches=0)
 		else:
 			if ".png" in save_paths:
-				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=300)
+				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 			else:
 				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0)
 	if plot:
@@ -934,10 +935,10 @@ def get_ed_es_dice_from_session_multi(contour_dir, data_dict, manual_contour_suf
 		manual_contour_file = vol+manual_contour_suffix
 		session = os.path.join(contour_dir, manual_contour_file)
 
-		# automatic contour
+		# comDL contour
 		if "" != comp_contour_suffix:
-			automatic_contour_file = vol+comp_contour_suffix
-			segm_input = os.path.join(contour_dir, automatic_contour_file)
+			comDL_contour_file = vol+comp_contour_suffix
+			segm_input = os.path.join(contour_dir, comDL_contour_file)
 		# nnUNet segmentation
 		elif "" != nnunet_prefix:
 			segm_input = nnunet_prefix+vol[3:]
@@ -1194,7 +1195,7 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 
 	:param str vol: Volunteer string in format vol<id>
 	:param bool reverse: Flag for reverse order of indexes of cardiac phase in contour file
-	:param str mask_mode: Mode for optional segmentation mask. Either 'none', 'mc', 'auto' or 'nnunet'
+	:param str mask_mode: Mode for optional segmentation mask. Either 'none', 'mc', 'comDL' or 'nnunet'
 	:param str phase_mode: Mode for cardiac phase. Either 'es' or 'ed'
 	:param list save_paths: List of file paths (for different file extensions) or single string to save plot
 	:param str contour_dir: Directory containing contour files of Medis session
@@ -1211,7 +1212,7 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 	sessions = [os.path.join(contour_dir, vol+"_" + s+"_manual"+contour_format) for s in ["cine", "rt", "rt_stress", "rt_maxstress"]]
 
 	if 0 != len(mask_mode):
-		auto_sessions = [os.path.join(contour_dir, vol+"_" + s+"_automatic"+contour_format) for s in ["cine", "rt", "rt_stress", "rt_maxstress"]]
+		comDL_sessions = [os.path.join(contour_dir, vol+"_" + s+"_comDL"+contour_format) for s in ["cine", "rt", "rt_stress", "rt_maxstress"]]
 		seg_subdirs = ["rtvol_cine_2d_single_cv", "rtvol_rt_2d_single_cv","rtvol_rt_stress_2d_single_cv", "rtvol_rt_maxstress_2d_single_cv"]
 		seg_dirs = [os.path.join(seg_dir, s, "rtvol_"+vol[3:]) for s in seg_subdirs]
 
@@ -1268,11 +1269,11 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 							if [slice_select[num], phase] == p:
 								mask = mlist[i][j]
 								continue
-				elif "auto" == m:
+				elif "comDL" == m:
 					second_row_title = "cDL"
 					img_dims, fov, slices = extract_img_params(contour_file)
-					mask_list, param_list, ccsf = masks_and_parameters_from_file(auto_sessions[num], img_dims)
-					slice_list_auto, mlist, plist = combine_masks_multi(mask_list, param_list, slices, reverse=reverse)
+					mask_list, param_list, ccsf = masks_and_parameters_from_file(comDL_sessions[num], img_dims)
+					slice_list_comDL, mlist, plist = combine_masks_multi(mask_list, param_list, slices, reverse=reverse)
 					for i,ps in enumerate(plist):
 						for j,p in enumerate(ps):
 							if [slice_select[num], phase] == p:
@@ -1297,12 +1298,12 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 		if list == type(save_paths):
 			for s in save_paths:
 				if ".png" in s:
-					plt.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=300)
+					plt.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 				else:
 					plt.savefig(s, bbox_inches='tight', pad_inches=0)
 		else:
 			if ".png" in save_paths:
-				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=300)
+				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 			else:
 				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0)
 	if plot:
@@ -1411,12 +1412,12 @@ def plot_mc_nnunet(contour_dir, img_dir, seg_dir, rtvol_dict, param_list, flag3d
 		if list == type(save_paths):
 			for s in save_paths:
 				if ".png" in s:
-					plt.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=300)
+					plt.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 				else:
 					plt.savefig(s, bbox_inches='tight', pad_inches=0)
 		else:
 			if ".png" in save_paths:
-				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=300)
+				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 			else:
 				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0)
 	if plot:
