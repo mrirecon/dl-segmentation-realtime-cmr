@@ -1188,7 +1188,7 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 			contour_dir=contour_files_dir,
 			img_dir = scanner_reco_dir,
 			seg_dir=nnunet_output_dir, crop_dim=160,
-			vmax_factor=1,
+			vmax_factor=1, DC=False,
 			titles = ["cine", "real-time MRI (rest)", "real-time MRI (stress)", "real-time MRI (max stress)"], plot=True):
 	"""
 	Visualize different measurement forms (cine, real-time rest, rt stressm rt max stress) in a combined plot with optional segmentation.
@@ -1252,6 +1252,13 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 		img = crop_2darray(img, crop_dim)
 		img = flip_rot(img, -1, 1)
 
+		mask_mc = np.zeros((crop_dim, crop_dim))
+		for i,ps in enumerate(plist):
+			for j,p in enumerate(ps):
+				if [slice_select[num], phase] == p:
+					mask_mc = mlist[i][j]
+					continue
+
 		ax[num].imshow(img, cmap="gray", vmax=np.max(img)*vmax_factor)
 		if 0 != len(titles):
 			ax[num].set_title(titles[num])
@@ -1263,14 +1270,10 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 				second_row_title = ""
 				mask = np.zeros((crop_dim, crop_dim))
 				if "mc" == m:
-					second_row_title = "Manual contours"
-					for i,ps in enumerate(plist):
-						for j,p in enumerate(ps):
-							if [slice_select[num], phase] == p:
-								mask = mlist[i][j]
-								continue
+					second_row_title = "Manually corrected contours"
+					mask = mask_mc.copy()
+
 				elif "comDL" == m:
-					second_row_title = "cDL"
 					img_dims, fov, slices = extract_img_params(contour_file)
 					mask_list, param_list, ccsf = masks_and_parameters_from_file(comDL_sessions[num], img_dims)
 					slice_list_comDL, mlist, plist = combine_masks_multi(mask_list, param_list, slices, reverse=reverse)
@@ -1279,13 +1282,23 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 							if [slice_select[num], phase] == p:
 								mask = mlist[i][j]
 								continue
+					if DC:
+						dice_coeffs, dict_list = calc_dice_coeff(ref=[mask_mc], pred=[mask], segm_classes=4)
+						second_row_title = "DC: LV-"+str(round(dice_coeffs[3],2))+", MYO-"+str(round(dice_coeffs[2],2))+", RV-"+str(round(dice_coeffs[1],2))
+					else:
+						second_row_title = "comDL"
 				elif "nnunet" == m:
-					second_row_title = "nnU-Net"
 					nnunet_file = seg_dirs[num]+str(slice_select[num]).zfill(2)+str(phase).zfill(3)+".nii.gz"
 					if os.path.isfile(nnunet_file):
 						mask = nnunet.read_nnunet_segm(nnunet_file)
 					else:
 						mask = nnunet.read_nnunet_segm(seg_dirs[num]+str(slice_select[num]).zfill(2)+".nii.gz")[:,:,phase]
+
+					if DC:
+						dice_coeffs, dict_list = calc_dice_coeff(ref=[mask_mc], pred=[mask], segm_classes=4)
+						second_row_title = "DC: LV-"+str(round(dice_coeffs[3],2))+", MYO-"+str(round(dice_coeffs[2],2))+", RV-"+str(round(dice_coeffs[1],2))
+					else:
+						second_row_title = "nnU-Net"
 
 				mask = crop_2darray(mask, crop_dim)
 				mask = flip_rot(mask, -1, 1)
@@ -1400,7 +1413,7 @@ def plot_mc_nnunet(contour_dir, img_dir, seg_dir, rtvol_dict, param_list, flag3d
 		if check:
 			ax[num].set_title(vol + " slc" + str(slice) + " phs" + str(phase))
 		else:
-			ax[num].set_title("Manual Contours")
+			ax[num].set_title("Manually corrected contours")
 
 		ax[columns+num].imshow(np.abs(img), cmap="gray")
 		mask_plt = np.abs(mask_dl)

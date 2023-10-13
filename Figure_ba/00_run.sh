@@ -15,7 +15,7 @@ export "${param[@]}"
 export SCRIPT_DIR=$SCRIPT_REPO/01_scripts
 export FIGURE_OUT=$SCRIPT_REPO/Figure_ba
 
-if ! [ -f "$FIGURE_OUT"/BA_nnunet_EDV_cine.png ] ; then
+if ! [ -f "$FIGURE_OUT"/BA_nnunet_EDV_cine22.png ] ; then
 	cmd_array=(	'import sys,os;'
 		'sys.path.insert(0,os.environ["SCRIPT_DIR"]);'
 		'import assess_dl_seg;'

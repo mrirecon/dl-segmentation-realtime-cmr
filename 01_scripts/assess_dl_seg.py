@@ -82,8 +82,8 @@ def calc_DC_and_bpm(rtvol_dict, mode=["nnunet"],
 		sessions = [os.path.join(contour_dir, vol+"_" + s+"_manual"+contour_format) for s in modes]
 		for i,contour_file in enumerate(sessions):
 			if os.path.isfile(contour_file):
-				bpm, bpm_std = assess_utils.calc_bpm(contour_file, reverse, time_res=0.03328, centr_slices=5)
-				#print(contour_file, round(bpm,0))
+				bpm, bpm_std = assess_utils.calc_bpm(contour_file, reverse, time_res=0.03328, centr_slices=3)
+				#print(contour_file, "bpm", round(bpm,0), "bpm_std", round(bpm_std,0))
 				d["bpm"+modes[i]] = int(bpm)
 				d["bpmstd"+modes[i]] = int(bpm_std)
 
@@ -124,8 +124,10 @@ def plot_DC_vs_bpm(rtvol_dict, save_paths=[], contour_mode="nnunet", ylim=[], pl
 	:param str contour_mode: Contour mode for plotting. Either 'nnunet' or 'comDL'
 	"""
 	modes = ["rt", "rt_stress", "rt_maxstress"]
-	descr = ["RV", "Myo", "LV"]
-	colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+	descr = ["LV", "Myo", "RV"]
+	markers = ["o", "s", "D"]
+	colors = ["crimson", "limegreen", "royalblue"]
+	markersize = 15
 	dice_scores = [[] for i in descr]
 	dice_scores_std = [[] for i in descr]
 	heartrates = []
@@ -143,11 +145,11 @@ def plot_DC_vs_bpm(rtvol_dict, save_paths=[], contour_mode="nnunet", ylim=[], pl
 	if "error" == mode:
 		for i, desc in enumerate(descr):
 			plt.errorbar(heartrates, dice_scores[i], xerr=heartrates_std, yerr=dice_scores_std[i], fmt='none',
-			label=desc, markersize=12, ecolor=colors[i])
+			label=desc, markersize=markersize, ecolor=colors[i])
 
 	else:
 			for i, desc in enumerate(descr):
-				plt.scatter(heartrates, dice_scores[i], label=desc, s=12)
+				plt.scatter(heartrates, dice_scores[i], label=desc, s=markersize, c=colors[i], marker=markers[i])
 
 	tick_size="large"
 	label_size="xx-large"
@@ -278,6 +280,35 @@ def write_output_stdv_parameters(output_file, ed_tuple, es_tuple, ef_tuple, scal
 			output.write("stdv EF rel[%]:\t"+str(stdv_rel_nnunet_ef)+"\n")
 	output.close()
 
+def write_output_cardiac_function_parameters(output_file, ed_vol, es_vol, ef, scale = 0.001, precision=1):
+	"""
+	Write output mean and standard deviation parameters.
+
+	:param str output_file: File path to output text file
+	:param tuple ed_tuple: Tuple of lists of LV volume for ED phase for manual contours, comDL contours and nnU-Net contours
+	:param tuple es_tuple: Tuple of lists of LV volume for ES phase for manual contours, comDL contours and nnU-Net contours
+	:param tuple ef_tuple: Tuple of lists of ejection fraction for manual contours, comDL contours and nnU-Net contours
+	:param float scale: Scale for parameters
+	:param int precision: Precision for output data. Default: 3
+	"""
+	if "" != output_file:
+		with open (output_file, 'w', encoding="utf8", errors='ignore') as output:
+			output.write("Manual corrected MEDIS DL ACD\n")
+			output.write("EDV\n")
+			print(len(ed_vol))
+			for num, e in enumerate(ed_vol):
+				output.write("vol"+str(num+1).zfill(2)+"\t"+str(round(e*scale,precision))+"\n")
+			output.write("all"+"\t"+"mean" + "\t" + str(round(sum(ed_vol)*scale / len(ed_vol),precision))+"\t"+"stdv"+"\t"+str(round(np.std(ed_vol)*scale,precision))+"\n")
+			output.write("ESV\n")
+			for num, e in enumerate(es_vol):
+				output.write("vol"+str(num+1).zfill(2)+"\t"+str(round(e*scale,precision))+"\n")
+			output.write("all"+"\t"+"mean" + "\t" + str(round(sum(es_vol)*scale / len(es_vol),precision))+"\t"+"stdv"+"\t"+str(round(np.std(es_vol)*scale,precision))+"\n")
+			output.write("EF\n")
+			for num, e in enumerate(ef):
+				output.write("vol"+str(num+1).zfill(2)+"\t"+str(round(e,precision))+"\n")
+			output.write("all"+"\t"+"mean" + "\t" + str(round(sum(ef) / len(ef),precision))+"\t"+"stdv"+"\t"+str(round(np.std(ef),precision))+"\n")
+		output.close()
+
 def calc_mean_stdv_parameters_cine(rtvol_dict, seg_dir = os.path.join(nnunet_output_dir, "rtvol_cine_2d_single_cv/"),
 				   contour_dir = contour_files_dir, flag3d=False,
 				   pixel_spacing = 1.328125, output_file="", slice_selection=False, precision=1):
@@ -319,37 +350,39 @@ def calc_mean_stdv_parameters_cine(rtvol_dict, seg_dir = os.path.join(nnunet_out
 		ef_mc.append( (ed_vol - es_vol) / ed_vol * 100)
 
 		session = os.path.join(contour_dir, vol+"_cine_comDL"+contour_format)
-		img_dims, fov, slices = assess_utils.extract_img_params(session)
-		#mask_list, param_list, ccsf = medis.masks_and_parameters_from_file(session, img_dims, no_duplicates=True)
-		mask_list, param_list, ccsf = assess_utils.masks_and_parameters_from_file(session, img_dims)
-		slice_indexes, mlist, plist = assess_utils.combine_masks_multi(mask_list, param_list, slices, reverse=reverse)
-		ed_masks = assess_utils.mask_for_param_selection(mlist, plist, param=ed_plist)
-		ed_comDL = []
-		for m in ed_masks:
-			lv_count = np.count_nonzero(m == segm_class)
-			ed_comDL.append(lv_count * pixel_spacing * pixel_spacing)
-		es_masks = assess_utils.mask_for_param_selection(mlist, plist, param=es_plist)
-		es_comDL = []
-		for m in es_masks:
-			lv_count = np.count_nonzero(m == segm_class)
-			es_comDL.append(lv_count * pixel_spacing * pixel_spacing)
-		ed_vol = sum(ed_comDL) * thickness
-		es_vol = sum(es_comDL) * thickness
-		ed_vol_comDL.append(ed_vol)
-		es_vol_comDL.append(es_vol)
-		ef_comDL.append( (ed_vol - es_vol) / ed_vol * 100)
+		if os.path.isfile(session):
+			img_dims, fov, slices = assess_utils.extract_img_params(session)
+			#mask_list, param_list, ccsf = medis.masks_and_parameters_from_file(session, img_dims, no_duplicates=True)
+			mask_list, param_list, ccsf = assess_utils.masks_and_parameters_from_file(session, img_dims)
+			slice_indexes, mlist, plist = assess_utils.combine_masks_multi(mask_list, param_list, slices, reverse=reverse)
+			ed_masks = assess_utils.mask_for_param_selection(mlist, plist, param=ed_plist)
+			ed_comDL = []
+			for m in ed_masks:
+				lv_count = np.count_nonzero(m == segm_class)
+				ed_comDL.append(lv_count * pixel_spacing * pixel_spacing)
+			es_masks = assess_utils.mask_for_param_selection(mlist, plist, param=es_plist)
+			es_comDL = []
+			for m in es_masks:
+				lv_count = np.count_nonzero(m == segm_class)
+				es_comDL.append(lv_count * pixel_spacing * pixel_spacing)
+			ed_vol = sum(ed_comDL) * thickness
+			es_vol = sum(es_comDL) * thickness
+			ed_vol_comDL.append(ed_vol)
+			es_vol_comDL.append(es_vol)
+			ef_comDL.append( (ed_vol - es_vol) / ed_vol * 100)
 
 		segm_prefix = os.path.join(seg_dir, "rtvol_" + vol[3:])
-		#for single nnUNet images, ed_plist is list of parameters, for 3D images, it is only the phase value
-		ed_nnunet = assess_utils.get_phase_area_from_nnunet(segm_prefix, ed_plist, segm_class = 3, pixel_spacing = pixel_spacing,
-						      flag3d=flag3d, slice_offset=slice_offset)
-		es_nnunet = assess_utils.get_phase_area_from_nnunet(segm_prefix, es_plist, segm_class = 3, pixel_spacing = pixel_spacing,
-						      flag3d=flag3d, slice_offset=slice_offset)
-		ed_vol = sum(ed_nnunet) * thickness
-		es_vol = sum(es_nnunet) * thickness
-		ed_vol_nnunet.append(ed_vol)
-		es_vol_nnunet.append(es_vol)
-		ef_nnunet.append( (ed_vol - es_vol) / ed_vol * 100)
+		if os.path.isdir(seg_dir):
+			#for single nnUNet images, ed_plist is list of parameters, for 3D images, it is only the phase value
+			ed_nnunet = assess_utils.get_phase_area_from_nnunet(segm_prefix, ed_plist, segm_class = 3, pixel_spacing = pixel_spacing,
+							flag3d=flag3d, slice_offset=slice_offset)
+			es_nnunet = assess_utils.get_phase_area_from_nnunet(segm_prefix, es_plist, segm_class = 3, pixel_spacing = pixel_spacing,
+							flag3d=flag3d, slice_offset=slice_offset)
+			ed_vol = sum(ed_nnunet) * thickness
+			es_vol = sum(es_nnunet) * thickness
+			ed_vol_nnunet.append(ed_vol)
+			es_vol_nnunet.append(es_vol)
+			ef_nnunet.append( (ed_vol - es_vol) / ed_vol * 100)
 
 	if "" != output_file:
 		write_output_stdv_parameters(output_file, (ed_vol_mc, ed_vol_comDL, ed_vol_nnunet), (es_vol_mc, es_vol_comDL, es_vol_nnunet),
@@ -413,35 +446,37 @@ def calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=os.path.join(nnunet_output_
 		ef_mc.append( (ed_vol - es_vol) / ed_vol * 100)
 
 		session = os.path.join(contour_dir, vol+session_comDL_suffix)
-		img_dims, fov, slices = assess_utils.extract_img_params(session)
-		#mask_list, param_list, ccsf = medis.masks_and_parameters_from_file(session, img_dims, no_duplicates=True)
-		mask_list, param_list, ccsf = assess_utils.masks_and_parameters_from_file(session, img_dims)
-		slice_indexes, mlist, plist = assess_utils.combine_masks_multi(mask_list, param_list, slices, reverse=reverse)
-		ed_masks = assess_utils.mask_for_param_selection(mlist, plist, param=ed_plist)
-		ed_comDL = []
-		for m in ed_masks:
-			lv_count = np.count_nonzero(m == segm_class)
-			ed_comDL.append(lv_count * pixel_spacing * pixel_spacing)
-		es_masks = assess_utils.mask_for_param_selection(mlist, plist, param=es_plist)
-		es_comDL = []
-		for m in es_masks:
-			lv_count = np.count_nonzero(m == segm_class)
-			es_comDL.append(lv_count * pixel_spacing * pixel_spacing)
-		ed_vol = sum(ed_comDL) * thickness
-		es_vol = sum(es_comDL) * thickness
-		ed_vol_comDL.append(ed_vol)
-		es_vol_comDL.append(es_vol)
-		ef_comDL.append( (ed_vol - es_vol) / ed_vol * 100)
+		if os.path.isfile(session):
+			img_dims, fov, slices = assess_utils.extract_img_params(session)
+			#mask_list, param_list, ccsf = medis.masks_and_parameters_from_file(session, img_dims, no_duplicates=True)
+			mask_list, param_list, ccsf = assess_utils.masks_and_parameters_from_file(session, img_dims)
+			slice_indexes, mlist, plist = assess_utils.combine_masks_multi(mask_list, param_list, slices, reverse=reverse)
+			ed_masks = assess_utils.mask_for_param_selection(mlist, plist, param=ed_plist)
+			ed_comDL = []
+			for m in ed_masks:
+				lv_count = np.count_nonzero(m == segm_class)
+				ed_comDL.append(lv_count * pixel_spacing * pixel_spacing)
+			es_masks = assess_utils.mask_for_param_selection(mlist, plist, param=es_plist)
+			es_comDL = []
+			for m in es_masks:
+				lv_count = np.count_nonzero(m == segm_class)
+				es_comDL.append(lv_count * pixel_spacing * pixel_spacing)
+			ed_vol = sum(ed_comDL) * thickness
+			es_vol = sum(es_comDL) * thickness
+			ed_vol_comDL.append(ed_vol)
+			es_vol_comDL.append(es_vol)
+			ef_comDL.append( (ed_vol - es_vol) / ed_vol * 100)
 
 		segm_prefix = os.path.join(seg_dir, "rtvol_" + vol[3:])
-		#for single nnUNet images, ed_plist is list of parameters, for 3D images, it is only the phase value
-		ed_nnet = assess_utils.get_phase_area_from_nnunet(segm_prefix, ed_plist, segm_class = 3, pixel_spacing = pixel_spacing, flag3d=flag3d)
-		es_nnet = assess_utils.get_phase_area_from_nnunet(segm_prefix, es_plist, segm_class = 3, pixel_spacing = pixel_spacing, flag3d=flag3d)
-		ed_vol = sum(ed_nnet) * thickness
-		es_vol = sum(es_nnet) * thickness
-		ed_vol_nnunet.append(ed_vol)
-		es_vol_nnunet.append(es_vol)
-		ef_nnunet.append( (ed_vol - es_vol) / ed_vol * 100)
+		if os.path.isdir(seg_dir):
+			#for single nnUNet images, ed_plist is list of parameters, for 3D images, it is only the phase value
+			ed_nnet = assess_utils.get_phase_area_from_nnunet(segm_prefix, ed_plist, segm_class = 3, pixel_spacing = pixel_spacing, flag3d=flag3d)
+			es_nnet = assess_utils.get_phase_area_from_nnunet(segm_prefix, es_plist, segm_class = 3, pixel_spacing = pixel_spacing, flag3d=flag3d)
+			ed_vol = sum(ed_nnet) * thickness
+			es_vol = sum(es_nnet) * thickness
+			ed_vol_nnunet.append(ed_vol)
+			es_vol_nnunet.append(es_vol)
+			ef_nnunet.append( (ed_vol - es_vol) / ed_vol * 100)
 
 	if "" != output_file:
 		write_output_stdv_parameters(output_file, (ed_vol_mc, ed_vol_comDL, ed_vol_nnunet), (es_vol_mc, es_vol_comDL, es_vol_nnunet),
@@ -684,7 +719,7 @@ def plot_BA_nnunet_auto(rtvol_dict, out_dir_fig, plot=False, file_extensions=["p
 def save_fig1(out_dir, plot=False, img_dir=scanner_reco_dir,
 			contour_dir=contour_files_dir,
 			seg_dir=os.path.join(nnunet_output_dir, "rtvol_rt_stress_2d_single_cv"),
-			file_extension="pdf"):
+			file_extension="png"):
 	"""
 	Parameters for plotting the measurement types in the manuscript.
 	"""
@@ -694,13 +729,35 @@ def save_fig1(out_dir, plot=False, img_dir=scanner_reco_dir,
 	slice_idx=13
 	vmax_factor=0.8
 	mask_mode = []
-	phase_mode = "es"
-	save_paths = [os.path.join(out_dir, "figure_01_measurement_types."+f) for f in file_extensions]
+	phase_mode = "ed"
+	save_paths = [os.path.join(out_dir, "figure_01_a."+f) for f in file_extensions]
 	titles = ["cine", "real-time (76 bpm)", "real-time (115 bpm)", "real-time (162 bpm)"]
 	assess_utils.plot_measurement_types(vol, reverse, slice_idx, mask_mode=mask_mode, phase_mode=phase_mode, save_paths=save_paths,
 				contour_dir=contour_dir,
 				img_dir =img_dir,
-				seg_dir=seg_dir, crop_dim=160, vmax_factor=vmax_factor, titles=titles, plot=plot)
+				seg_dir=seg_dir, crop_dim=80, vmax_factor=vmax_factor, titles=titles, plot=plot)
+
+	mask_mode = ["mc"]
+	phase_mode = "ed"
+	save_paths = [os.path.join(out_dir, "figure_01_b."+f) for f in file_extensions]
+	assess_utils.plot_measurement_types(vol, reverse, slice_idx, mask_mode=mask_mode, phase_mode=phase_mode, save_paths=save_paths,
+				contour_dir=contour_dir,
+				img_dir =img_dir,
+				seg_dir=seg_dir, crop_dim=80, vmax_factor=vmax_factor, titles=titles, plot=plot)
+	mask_mode = []
+	phase_mode = "es"
+	save_paths = [os.path.join(out_dir, "figure_01_c."+f) for f in file_extensions]
+	assess_utils.plot_measurement_types(vol, reverse, slice_idx, mask_mode=mask_mode, phase_mode=phase_mode, save_paths=save_paths,
+				contour_dir=contour_dir,
+				img_dir =img_dir,
+				seg_dir=seg_dir, crop_dim=80, vmax_factor=vmax_factor, titles=titles, plot=plot)
+	mask_mode = ["mc"]
+	phase_mode = "es"
+	save_paths = [os.path.join(out_dir, "figure_01_d."+f) for f in file_extensions]
+	assess_utils.plot_measurement_types(vol, reverse, slice_idx, mask_mode=mask_mode, phase_mode=phase_mode, save_paths=save_paths,
+				contour_dir=contour_dir,
+				img_dir =img_dir,
+				seg_dir=seg_dir, crop_dim=80, vmax_factor=vmax_factor, titles=titles, plot=plot)
 
 def save_fig2(out_dir, rtvol_dict=rtvol, plot=False, contour_dir=contour_files_dir, seg_dir=nnunet_output_dir, file_extension="png"):
 	# Figures for Dice's coefficient depending on heart rate
@@ -709,18 +766,18 @@ def save_fig2(out_dir, rtvol_dict=rtvol, plot=False, contour_dir=contour_files_d
 	ylim = [0.2,1]
 
 	# nnU-Net
-	calc_DC_and_bpm(rtvol_dict, mode=["nnunet"], contour_dir = contour_dir, seg_dir = seg_dir)
-	contour_mode = "nnunet"
-	save_paths = [os.path.join(out_dir, "DC_vs_bpm_"+contour_mode+"."+f) for f in file_extensions]
-	title="nnU-Net"
-	plot_DC_vs_bpm(rtvol_dict, save_paths=save_paths, contour_mode=contour_mode, ylim=ylim, plot=plot, title=title)
+	#calc_DC_and_bpm(rtvol_dict, mode=["nnunet"], contour_dir = contour_dir, seg_dir = seg_dir)
+	#contour_mode = "nnunet"
+	#save_paths = [os.path.join(out_dir, "DC_vs_bpm_"+contour_mode+"."+f) for f in file_extensions]
+	#title="nnU-Net"
+	#plot_DC_vs_bpm(rtvol_dict, save_paths=save_paths, contour_mode=contour_mode, ylim=ylim, plot=plot, title=title)
 
 	# comDL
 	calc_DC_and_bpm(rtvol_dict, mode=["comDL"], contour_dir = contour_dir, seg_dir = seg_dir)
-	contour_mode = "comDL"
-	save_paths = [os.path.join(out_dir, "DC_vs_bpm_"+contour_mode+"."+f) for f in file_extensions]
-	title="comDL"
-	plot_DC_vs_bpm(rtvol_dict, save_paths=save_paths, contour_mode=contour_mode, ylim=ylim, plot=plot, title=title)
+	#contour_mode = "comDL"
+	#save_paths = [os.path.join(out_dir, "DC_vs_bpm_"+contour_mode+"."+f) for f in file_extensions]
+	#title="comDL"
+	#plot_DC_vs_bpm(rtvol_dict, save_paths=save_paths, contour_mode=contour_mode, ylim=ylim, plot=plot, title=title)
 
 def save_fig3(out_dir, rtvol_dict=rtvol, plot=False, img_dir=scanner_reco_dir,
 			contour_dir=contour_files_dir,
@@ -736,19 +793,47 @@ def save_fig3(out_dir, rtvol_dict=rtvol, plot=False, img_dir=scanner_reco_dir,
 				crop_dim=160, contour_suffix = "_rt_stress_manual"+contour_format, img_suffix="rt_stress_scanner", save_paths=save_paths,
 				check=False, plot=plot)
 
+def save_figdc(out_dir, plot=False, img_dir=scanner_reco_dir,
+			contour_dir=contour_files_dir,
+			seg_dir=os.path.join(nnunet_output_dir, "rtvol_rt_stress_2d_single_cv"),
+			file_extension="png"):
+	file_extensions=file_extension.split(",")
+	vol = "vol12"
+	reverse = True
+	slice_idx=13
+	vmax_factor=0.8
+	crop_dim=80
+	mask_mode = ["mc"]
+	phase_mode = "es"
+	save_paths = [os.path.join(out_dir, "figure_dc_a."+f) for f in file_extensions]
+	titles = ["cine", "real-time (76 bpm)", "real-time (115 bpm)", "real-time (162 bpm)"]
+	assess_utils.plot_measurement_types(vol, reverse, slice_idx, mask_mode=mask_mode, phase_mode=phase_mode, save_paths=save_paths,
+				contour_dir=contour_dir,
+				img_dir =img_dir, DC=False,
+				seg_dir=seg_dir, crop_dim=crop_dim, vmax_factor=vmax_factor, titles=titles, plot=plot)
+	mask_mode = ["comDL"]
+	phase_mode = "es"
+	save_paths = [os.path.join(out_dir, "figure_dc_b."+f) for f in file_extensions]
+	assess_utils.plot_measurement_types(vol, reverse, slice_idx, mask_mode=mask_mode, phase_mode=phase_mode, save_paths=save_paths,
+				contour_dir=contour_dir,
+				img_dir =img_dir, DC=True,
+				seg_dir=seg_dir, crop_dim=crop_dim, vmax_factor=vmax_factor, titles=titles, plot=plot)
+
 def save_figba(out_dir, rtvol_dict=rtvol, nnunet_output=nnunet_output_dir, file_extension="png"):
 	"""
 	Bland-Altman plots of EDV, ESV and EF for entries of rtvol for cine, real-time and real-time stress.
 	"""
 	file_extensions=file_extension.split(",")
 	seg_dir = os.path.join(nnunet_output, "rtvol_cine_2d_single_cv/")
-	output_file = ""
+	output_file = os.path.join(out_dir,"cardiac_function_cine.txt")
 	ed_tuple_cine, es_tuple_cine, ef_tuple_cine = calc_mean_stdv_parameters_cine(rtvol_dict, seg_dir=seg_dir, output_file=output_file,
 									flag3d=False, slice_selection=False)
 
+	output_file = os.path.join(out_dir,"cardiac_function_rt.txt")
 	seg_dir = os.path.join(nnunet_output, "rtvol_rt_2d_single_cv/")
 	ed_tuple_rt, es_tuple_rt, ef_tuple_rt = calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=seg_dir, output_file=output_file)
 
+	output_file = os.path.join(out_dir,"cardiac_function_rt_stress.txt")
 	seg_dir = os.path.join(nnunet_output, "rtvol_rt_stress_2d_single_cv/")
 	ed_tuple_rt_stress, es_tuple_rt_stress, ef_tuple_rt_stress = calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=seg_dir,
 							session_mc_suffix="_rt_stress_manual"+contour_format, session_comDL_suffix="_rt_stress_comDL"+contour_format,
@@ -773,6 +858,35 @@ def save_figba(out_dir, rtvol_dict=rtvol, nnunet_output=nnunet_output_dir, file_
 			plot_indexes=[i], ylim=ylims_edv[i], plot_mode=["comDL"], file_extensions=file_extensions)
 		plot_ba_esv(out_dir, es_tuple_cine, es_tuple_rt, es_tuple_rt_stress, plot=False,
 			plot_indexes=[i], ylim=ylims_esv[i], plot_mode=["comDL"], file_extensions=file_extensions)
+
+def write_cardiac_function(out_dir, contour_dir=contour_files_dir, exp_dir=end_exp_dir, rtvol_dict=rtvol):
+	seg_dir=""
+	output_file = os.path.join(out_dir,"cardiac_function_cine.txt")
+	ed_tuple_cine, es_tuple_cine, ef_tuple_cine = calc_mean_stdv_parameters_cine(rtvol_dict, contour_dir=contour_dir, seg_dir=seg_dir, output_file="",
+									flag3d=False, slice_selection=False)
+	(ed_vol, _, _) = ed_tuple_cine
+	(es_vol, _, _) = es_tuple_cine
+	(ef, _, _) = ef_tuple_cine
+	print("cine")
+	write_output_cardiac_function_parameters(output_file, ed_vol, es_vol, ef, scale = 100, precision=1)
+
+	output_file = os.path.join(out_dir,"cardiac_function_rt.txt")
+	ed_tuple_rt, es_tuple_rt, ef_tuple_rt = calc_mean_stdv_parameters_rt(rtvol_dict, contour_dir=contour_dir, seg_dir=seg_dir, exp_dir=exp_dir, output_file="")
+	(ed_vol, _, _) = ed_tuple_rt
+	(es_vol, _, _) = es_tuple_rt
+	(ef, _, _) = ef_tuple_rt
+	print("rt")
+	write_output_cardiac_function_parameters(output_file, ed_vol, es_vol, ef, precision=1)
+
+	output_file = os.path.join(out_dir,"cardiac_function_rt_stress.txt")
+	ed_tuple_rt_stress, es_tuple_rt_stress, ef_tuple_rt_stress = calc_mean_stdv_parameters_rt(rtvol_dict, contour_dir=contour_dir, seg_dir=seg_dir,
+							session_mc_suffix="_rt_stress_manual"+contour_format, session_comDL_suffix="_rt_stress_comDL"+contour_format,
+				exp_dir = exp_dir, ed_es_phase_file="_rt_stress.txt", output_file="")
+	(ed_vol, _, _) = ed_tuple_rt_stress
+	(es_vol, _, _) = es_tuple_rt_stress
+	(ef, _, _) = ef_tuple_rt_stress
+	print("rt_stress")
+	write_output_cardiac_function_parameters(output_file, ed_vol, es_vol, ef, precision=1)
 
 def main(out_dir_fig, out_dir_data, plot=False, nnunet_output="/scratch/mschi/nnUnet/"):
 	"""

@@ -18,7 +18,7 @@ export FIGURE_OUT=$SCRIPT_REPO/Figure_03
 cmd_array=(	'import sys,os;'
 	'sys.path.insert(0,os.environ["SCRIPT_DIR"]);'
 	'import assess_dl_seg;'
-	'assess_dl_seg.save_fig3(out_dir=os.environ["FIGURE_OUT"])')
+	'assess_dl_seg.save_fig3(out_dir=os.environ["FIGURE_OUT"],file_extension="png,pdf")')
 
 cmd="${cmd_array[*]}"
 python3 -c "$cmd"
