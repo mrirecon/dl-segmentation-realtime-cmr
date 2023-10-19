@@ -555,9 +555,13 @@ def crop_2darray(arr:np.array, cdim:int):
 	:returns: Cropped array
 	:rtype: np.array
 	"""
-	x_center = arr.shape[0] // 2
-	y_center = arr.shape[1] // 2
-	arr = arr[int(x_center-cdim/2):int(x_center+cdim/2), int(y_center-cdim/2):int(y_center+cdim/2)]
+	if not list == type(cdim):
+		x_center = arr.shape[0] // 2
+		y_center = arr.shape[1] // 2
+		arr = arr[int(x_center-cdim/2):int(x_center+cdim/2), int(y_center-cdim/2):int(y_center+cdim/2)]
+	else:
+		(x1,x2,y1,y2) = cdim
+		arr = arr[x1:x2,y1:y2]
 	return arr
 
 def calc_dice_coeff(ref:list, pred:list, segm_classes:int, plist = [], reverse=False)->list:
@@ -1364,13 +1368,18 @@ def plot_mc_nnunet(contour_dir, img_dir, seg_dir, rtvol_dict, param_list, flag3d
 		#manual contours
 		session = os.path.join(contour_dir, vol+contour_suffix)
 		img_dims, fov, slices = extract_img_params(session)
-		mask_list, param_list, ccsf = masks_and_parameters_from_file(session, img_dims)
-		slice_indexes, mlist, plist = combine_masks_multi(mask_list, param_list, slices, reverse)
+		mask_list, plist, ccsf = masks_and_parameters_from_file(session, img_dims)
+		slice_indexes, mlist, plist = combine_masks_multi(mask_list, plist, slices, reverse)
 		for m,ps in enumerate(plist):
 			for n,p in enumerate(ps):
 				if [slice,phase] == p:
 					mask_mc = mlist[m][n]
-		mask_mc = crop_2darray(mask_mc, crop_dim)
+
+		if not list == type(crop_dim):
+			mask_mc = crop_2darray(mask_mc, crop_dim)
+		else:
+			mask_mc = crop_2darray(mask_mc, crop_dim[num])
+
 		mask_dl = np.zeros(mask_mc.shape, dtype=float)
 
 		comp_title = ""
@@ -1394,13 +1403,21 @@ def plot_mc_nnunet(contour_dir, img_dir, seg_dir, rtvol_dict, param_list, flag3d
 				else:
 					mask_nnunet = nnunet.read_nnunet_segm(nnunet_prefix+str(slice).zfill(2)+".nii.gz")[:,:,phase]
 
-			mask_dl = crop_2darray(mask_nnunet, crop_dim)
+			if not list == type(crop_dim):
+				mask_dl = crop_2darray(mask_nnunet, crop_dim)
+			else:
+				mask_dl = crop_2darray(mask_nnunet, crop_dim[num])
+
 			comp_title = "nnUNet Segmentation"
 
 		img_file = os.path.join(img_dir, vol, img_suffix)
 		images = cfl.readcfl(img_file)
 		img = np.abs(images[:,:,0,0,0,0,0,0,0,0,phase,0,0,slice])
-		img = crop_2darray(img, crop_dim)
+
+		if not list == type(crop_dim):
+			img = crop_2darray(img, crop_dim)
+		else:
+			img = crop_2darray(img, crop_dim[num])
 
 		img = flip_rot(img, f[0], f[1])
 		mask_mc = flip_rot(mask_mc, f[0], f[1])
@@ -1409,7 +1426,7 @@ def plot_mc_nnunet(contour_dir, img_dir, seg_dir, rtvol_dict, param_list, flag3d
 		ax[num].imshow(img, cmap="gray")
 		mask_plt = np.abs(mask_mc)
 		masked_plt = np.ma.masked_where(mask_plt == 0, mask_plt)
-		ax[num].imshow(masked_plt, cmap=light_jet,interpolation='none', alpha=0.35, vmin=1, vmax=3)
+		ax[num].imshow(masked_plt, cmap=light_jet,interpolation='none', alpha=0.4, vmin=1, vmax=3)
 		if check:
 			ax[num].set_title(vol + " slc" + str(slice) + " phs" + str(phase))
 		else:
@@ -1418,7 +1435,7 @@ def plot_mc_nnunet(contour_dir, img_dir, seg_dir, rtvol_dict, param_list, flag3d
 		ax[columns+num].imshow(np.abs(img), cmap="gray")
 		mask_plt = np.abs(mask_dl)
 		masked_plt = np.ma.masked_where(mask_plt == 0, mask_plt)
-		ax[columns+num].imshow(masked_plt, cmap=light_jet,interpolation='none', alpha=0.35, vmin=1, vmax=3)
+		ax[columns+num].imshow(masked_plt, cmap=light_jet,interpolation='none', alpha=0.4, vmin=1, vmax=3)
 		ax[columns+num].set_title(comp_title)
 
 	if 0 != len(save_paths):
