@@ -1,0 +1,49 @@
+nnU-Net
+EDV
+vol01	120.0
+vol02	153.4
+vol03	89.2
+vol04	106.2
+vol05	175.6
+vol06	140.0
+vol07	136.8
+vol08	182.6
+vol09	125.2
+vol10	115.4
+vol11	206.2
+vol12	99.6
+vol13	169.3
+vol14	137.0
+vol15	189.1
+ESV
+vol01	55.7
+vol02	66.0
+vol03	38.2
+vol04	56.9
+vol05	70.6
+vol06	56.4
+vol07	41.6
+vol08	82.9
+vol09	52.4
+vol10	35.7
+vol11	72.5
+vol12	37.0
+vol13	54.6
+vol14	50.8
+vol15	68.1
+EF
+vol01	53.6
+vol02	57.0
+vol03	57.1
+vol04	46.4
+vol05	59.8
+vol06	59.7
+vol07	69.6
+vol08	54.6
+vol09	58.1
+vol10	69.1
+vol11	64.8
+vol12	62.9
+vol13	67.8
+vol14	62.9
+vol15	64.0

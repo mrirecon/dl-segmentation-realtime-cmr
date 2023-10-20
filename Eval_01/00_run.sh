@@ -13,18 +13,18 @@ read -ra param < <(grep -v '^#' assess_dl.env | xargs)
 export "${param[@]}"
 
 export SCRIPT_DIR=$SCRIPT_REPO/01_scripts
-export FIGURE_OUT=$FIGURE_DIR/Eval_01
+export FIGURE_OUT=$SCRIPT_REPO/Eval_01
 
-# Cardiac function evaluation of comDL and nnU-Net
+# Write cardiac function values for manually corrected contours, comDL and nnU-Net
 cmd_array=(	'import sys,os;'
 	'sys.path.insert(0,os.environ["SCRIPT_DIR"]);'
 	'import assess_dl_seg;'
-	'assess_dl_seg.write_parameter_files_mc_comdl_nnunet(out_dir=os.environ["FIGURE_OUT"])')
+	'assess_dl_seg.write_cardiac_function_all(out_dir=os.environ["FIGURE_OUT"])')
 
 cmd="${cmd_array[*]}"
 python3 -c "$cmd"
 
-# Cardiac function evaluation of nnU-Net with automatic and semi-automatic phase selection
+# Write cardiac function values for automatical evaluation with nnU-Net
 cmd_array=(	'import sys,os;'
 	'sys.path.insert(0,os.environ["SCRIPT_DIR"]);'
 	'import assess_dl_seg;'

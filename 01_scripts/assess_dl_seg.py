@@ -203,84 +203,8 @@ def calc_mean_stdv_two_sets(setA, setB, mode="absolute", scale=1, precision=None
 		return round(mean_diff, precision), round(stdv_diff, precision), round(mean,precision), round(stdv_mean, precision)
 	return mean_diff, stdv_diff, mean, stdv_mean
 
-def write_output_stdv_parameters(output_file, ed_tuple, es_tuple, ef_tuple, scale = 0.001, precision=3):
-	"""
-	Write output mean and standard deviation parameters.
-
-	:param str output_file: File path to output text file
-	:param tuple ed_tuple: Tuple of lists of LV volume for ED phase for manual contours, comDL contours and nnU-Net contours
-	:param tuple es_tuple: Tuple of lists of LV volume for ES phase for manual contours, comDL contours and nnU-Net contours
-	:param tuple ef_tuple: Tuple of lists of ejection fraction for manual contours, comDL contours and nnU-Net contours
-	:param float scale: Scale for parameters
-	:param int precision: Precision for output data. Default: 3
-	"""
-	(ed_vol_mc, ed_vol_comDL, ed_vol_nnunet) = ed_tuple
-	(es_vol_mc, es_vol_comDL, es_vol_nnunet) = es_tuple
-	(ef_mc, ef_comDL, ef_nnunet) = ef_tuple
-	mean_diff_comDL_ed, stdv_diff_comDL_ed, mean_comDL_ed, stdv_mean_comDL_ed = calc_mean_stdv_two_sets(ed_vol_mc, ed_vol_comDL, scale=scale, precision=precision)
-	mean_diff_comDL_es, stdv_diff_comDL_es, mean_comDL_es, stdv_mean_comDL_es = calc_mean_stdv_two_sets(es_vol_mc, es_vol_comDL, scale=scale, precision=precision)
-	mean_diff_nnunet_ed, stdv_diff_nnunet_ed, mean_nnunet_ed, stdv_mean_nnunet_ed = calc_mean_stdv_two_sets(ed_vol_mc, ed_vol_nnunet, scale=scale, precision=precision)
-	mean_diff_nnunet_es, stdv_diff_nnunet_es, mean_nnunet_es, stdv_mean_nnunet_es = calc_mean_stdv_two_sets(es_vol_mc, es_vol_nnunet, scale=scale, precision=precision)
-	mean_rel_comDL_ed, stdv_rel_comDL_ed,_,_ = calc_mean_stdv_two_sets(ed_vol_mc, ed_vol_comDL, mode="relative", precision=precision, scale=100)
-	mean_rel_comDL_es, stdv_rel_comDL_es,_,_ = calc_mean_stdv_two_sets(es_vol_mc, es_vol_comDL, mode="relative", precision=precision, scale=100)
-	mean_rel_nnunet_ed, stdv_rel_nnunet_ed,_,_ = calc_mean_stdv_two_sets(ed_vol_mc, ed_vol_nnunet, mode="relative", precision=precision, scale=100)
-	mean_rel_nnunet_es, stdv_rel_nnunet_es,_,_ = calc_mean_stdv_two_sets(es_vol_mc, es_vol_nnunet, mode="relative", precision=precision, scale=100)
-	#ejection fraction
-	mean_diff_comDL_ef, stdv_diff_comDL_ef, mean_comDL_ef, stdv_mean_comDL_ef = calc_mean_stdv_two_sets(ef_mc, ef_comDL, scale=1, precision=precision)
-	mean_diff_nnunet_ef, stdv_diff_nnunet_ef, mean_nnunet_ef, stdv_mean_nnunet_ef = calc_mean_stdv_two_sets(ef_mc, ef_nnunet, scale=1, precision=precision)
-	mean_rel_comDL_ef, stdv_rel_comDL_ef, _,_ = calc_mean_stdv_two_sets(ef_mc, ef_comDL, mode="relative", precision=precision, scale=100)
-	mean_rel_nnunet_ef, stdv_rel_nnunet_ef, _,_ = calc_mean_stdv_two_sets(ef_mc, ef_nnunet, mode="relative", precision=precision, scale=100)
-	if "" != output_file:
-		with open (output_file, 'w', encoding="utf8", errors='ignore') as output:
-			output.write("MEDIS DL ACD\n")
-			output.write("mean LVED[ml]:\t"+str(mean_comDL_ed)+"\n")
-			output.write("stdv LVED[ml]:\t"+str(stdv_mean_comDL_ed)+"\n")
-			output.write("mean LVES[ml]:\t"+str(mean_comDL_es)+"\n")
-			output.write("stdv LVES[ml]:\t"+str(stdv_mean_comDL_es)+"\n")
-
-			output.write("mean diff LVED[ml]:\t"+str(mean_diff_comDL_ed)+"\n")
-			output.write("stdv diff LVED[ml]:\t"+str(stdv_diff_comDL_ed)+"\n")
-			output.write("mean diff LVES[ml]:\t"+str(mean_diff_comDL_es)+"\n")
-			output.write("stdv diff LVES[ml]:\t"+str(stdv_diff_comDL_es)+"\n")
-
-			output.write("mean LVED rel[%]:\t"+str(mean_rel_comDL_ed)+"\n")
-			output.write("stdv LVED rel[%]:\t"+str(stdv_rel_comDL_ed)+"\n")
-			output.write("mean LVES rel[%]:\t"+str(mean_rel_comDL_es)+"\n")
-			output.write("stdv LVES rel[%]:\t"+str(stdv_rel_comDL_es)+"\n")
-
-			output.write("mean EF[%]:\t"+str(mean_comDL_ef)+"\n")
-			output.write("stdv EF[%]:\t"+str(stdv_mean_comDL_ef)+"\n")
-			output.write("mean diff EF[%]:\t"+str(mean_diff_comDL_ef)+"\n")
-			output.write("stdv diff EF[%]:\t"+str(stdv_diff_comDL_ef)+"\n")
-			output.write("mean EF rel[%]:\t"+str(mean_rel_comDL_ef)+"\n")
-			output.write("stdv EF rel[%]:\t"+str(stdv_rel_comDL_ef)+"\n")
-			output.write("\n")
-
-			output.write("nnU-Net\n")
-			output.write("mean LVED[ml]:\t"+str(mean_nnunet_ed)+"\n")
-			output.write("stdv LVED[ml]:\t"+str(stdv_mean_nnunet_ed)+"\n")
-			output.write("mean LVES[ml]:\t"+str(mean_nnunet_es)+"\n")
-			output.write("stdv LVES[ml]:\t"+str(stdv_mean_nnunet_es)+"\n")
-
-			output.write("mean diff LVED[ml]:\t"+str(mean_diff_nnunet_ed)+"\n")
-			output.write("stdv diff LVED[ml]:\t"+str(stdv_diff_nnunet_ed)+"\n")
-			output.write("mean diff LVES[ml]:\t"+str(mean_diff_nnunet_es)+"\n")
-			output.write("stdv diff LVES[ml]:\t"+str(stdv_diff_nnunet_es)+"\n")
-
-			output.write("mean LVED rel[%]:\t"+str(mean_rel_nnunet_ed)+"\n")
-			output.write("stdv LVED rel[%]:\t"+str(stdv_rel_nnunet_ed)+"\n")
-			output.write("mean LVES rel[%]:\t"+str(mean_rel_nnunet_es)+"\n")
-			output.write("stdv LVES rel[%]:\t"+str(stdv_rel_nnunet_es)+"\n")
-
-			output.write("mean EF[%]:\t"+str(mean_nnunet_ef)+"\n")
-			output.write("stdv EF[%]:\t"+str(stdv_mean_nnunet_ef)+"\n")
-			output.write("mean diff EF[%]:\t"+str(mean_diff_nnunet_ef)+"\n")
-			output.write("stdv diff EF[%]:\t"+str(stdv_diff_nnunet_ef)+"\n")
-			output.write("mean EF rel[%]:\t"+str(mean_rel_nnunet_ef)+"\n")
-			output.write("stdv EF rel[%]:\t"+str(stdv_rel_nnunet_ef)+"\n")
-	output.close()
-
-def write_output_cardiac_function_parameters(output_file, ed_vol, es_vol, ef, rtvol_dict=rtvol, scale = 0.001, precision=1):
+def write_output_cardiac_function_parameters(output_file, ed_vol, es_vol, ef, rtvol_dict=rtvol, scale = 0.001, precision=1,
+						header="Manually corrected MEDIS DL ACD"):
 	"""
 	Write output mean and standard deviation parameters.
 
@@ -293,9 +217,8 @@ def write_output_cardiac_function_parameters(output_file, ed_vol, es_vol, ef, rt
 	"""
 	if "" != output_file:
 		with open (output_file, 'w', encoding="utf8", errors='ignore') as output:
-			output.write("Manual corrected MEDIS DL ACD\n")
+			output.write(header+"\n")
 			output.write("EDV\n")
-			print(len(ed_vol))
 			for num, e in enumerate(ed_vol):
 				output.write(rtvol_dict[num]["id"]+"\t"+str(round(e*scale,precision))+"\n")
 			output.write("ESV\n")
@@ -308,7 +231,7 @@ def write_output_cardiac_function_parameters(output_file, ed_vol, es_vol, ef, rt
 
 def calc_mean_stdv_parameters_cine(rtvol_dict, seg_dir = os.path.join(nnunet_output_dir, "rtvol_cine_2d_single_cv/"),
 				   contour_dir = contour_files_dir, flag3d=False, contour_format=contour_format,
-				   pixel_spacing = 1.328125, output_file="", slice_selection=False, precision=1):
+				   pixel_spacing = 1.328125, slice_selection=False):
 	"""
 	Calculate mean and standard deviation parameters for cine MRI for manual contours, comDL contours and nnU-Net contours.
 
@@ -317,9 +240,7 @@ def calc_mean_stdv_parameters_cine(rtvol_dict, seg_dir = os.path.join(nnunet_out
 	:param str contour_dir: Directory containing Medis contour files in format <vol_id>_cine_manual.con and <vol_id>_cine_comDL.con
 	:param bool flag3d: Flag for marking input data as 2D or 3D data
 	:param float pixel_spacing: Pixel spacing of input in mm, e.g. 1px = 1.6 mm x 1.6 mm --> pixel_spacing = 1.6
-	:param str output_file: Optional file path to write parameters into output text file
 	:param bool slice_selection: Selection of slices for nnU-Net segmentation confined to slices containing the heart
-	:param int precision: Precision for output data. Default: 1
 	"""
 	thickness = 6.6
 	ed_vol_mc, es_vol_mc = [], []
@@ -381,17 +302,12 @@ def calc_mean_stdv_parameters_cine(rtvol_dict, seg_dir = os.path.join(nnunet_out
 			es_vol_nnunet.append(es_vol)
 			ef_nnunet.append( (ed_vol - es_vol) / ed_vol * 100)
 
-	if "" != output_file:
-		write_output_stdv_parameters(output_file, (ed_vol_mc, ed_vol_comDL, ed_vol_nnunet), (es_vol_mc, es_vol_comDL, es_vol_nnunet),
-			       (ef_mc, ef_comDL, ef_nnunet), precision=precision)
-
 	return (ed_vol_mc, ed_vol_comDL, ed_vol_nnunet), (es_vol_mc, es_vol_comDL, es_vol_nnunet), (ef_mc, ef_comDL, ef_nnunet)
 
 def calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=os.path.join(nnunet_output_dir, "rtvol_rt_2d_single_cv/"),
 				contour_dir=contour_files_dir, flag3d=False,
 				pixel_spacing=1.6, session_mc_suffix="_rt_manual"+contour_format, session_comDL_suffix="_rt_comDL"+contour_format,
-				exp_dir=end_exp_dir, ed_es_phase_file="_rt.txt", output_file="",
-				precision=1):
+				exp_dir=end_exp_dir, ed_es_phase_file="_rt.txt"):
 	"""
 	Calculate mean and standard deviation parameters for rt MRI for manual, comDL and nnU-Net contours.
 
@@ -404,8 +320,6 @@ def calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=os.path.join(nnunet_output_
 	:param str session_comDL_suffix: Suffix for comDL contour file
 	:param str exp_dir: Directory containing text files with indexes for the end-expiration state
 	:param str ed_es_phase_file: Suffix for text file in 'exp_dir' containing ED and ES phase information. Format <exp_dir>/<vol_id><ed_es_phase_file>
-	:param str output_file: Optional file path to write parameters into output text file
-	:param int precision: Precision for output data. Default: 1
 	"""
 	thickness = 6.6
 	ed_vol_mc, es_vol_mc = [], []
@@ -474,12 +388,17 @@ def calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=os.path.join(nnunet_output_
 			ed_vol_nnunet.append(ed_vol)
 			es_vol_nnunet.append(es_vol)
 			ef_nnunet.append( (ed_vol - es_vol) / ed_vol * 100)
-
-	if "" != output_file:
-		write_output_stdv_parameters(output_file, (ed_vol_mc, ed_vol_comDL, ed_vol_nnunet), (es_vol_mc, es_vol_comDL, es_vol_nnunet),
-				(ef_mc, ef_comDL, ef_nnunet), precision=precision)
-
 	return (ed_vol_mc, ed_vol_comDL, ed_vol_nnunet), (es_vol_mc, es_vol_comDL, es_vol_nnunet), (ef_mc, ef_comDL, ef_nnunet)
+
+def read_cardiac_function_parameters(file_mc, file_comDL, file_nnunet):
+	"""
+	Read cardiac function parameters
+	"""
+	edv_mc, esv_mc, ef_mc = read_clinical_measures(file_mc, no_dict=True)
+	edv_comDL, esv_comDL, ef_comDL = read_clinical_measures(file_comDL, no_dict=True)
+	edv_nnunet, esv_nnunet, ef_nnunet = read_clinical_measures(file_nnunet, no_dict=True)
+
+	return (edv_mc, edv_comDL, edv_nnunet), (esv_mc, esv_comDL, esv_nnunet), (ef_mc, ef_comDL, ef_nnunet)
 
 def plot_ba_ef(save_dir, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_stress, set_colors=["royalblue", "palegreen", "indianred"],
 	       plot_indexes=[0,1,2], ylim=[], plot_mode=["nnunet", "comDL"], plot=True, file_extensions=["png"]):
@@ -603,6 +522,37 @@ def plot_ba_esv(save_dir, es_tuple_cine, es_tuple_rt, es_tuple_rt_stress, set_co
 		assess_utils.plot_bland_altman_multi(setA, setC, save_paths=save_paths, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
 				figlayout="tight", ylim=ylim, scale=0.001, plot=plot)
 
+def plot_ba_esv_cine_rt(save_dir, es_tuple_cine, es_tuple_rt, set_colors=["royalblue", "palegreen", "indianred"],
+		plot_indexes=[0,1], ylim=[], plot_mode=["nnunet", "auto"]):
+	#Bland-Altman plots for end-systolic volume (ESV)
+	(es_vol_mc_cine, es_vol_auto_cine, es_vol_nnunet_cine) = es_tuple_cine
+	(es_vol_mc_rt, es_vol_auto_rt, es_vol_nnunet_rt) = es_tuple_rt
+	xlabel="LV end-systolic volume [ml]"
+	ylabel="ESV cine - ESV rt [ml]"
+	set_labels = ["mc", "nnunet"]
+	set_mc = [es_vol_mc_cine, es_vol_mc_cine]
+	set_nnunet = [es_vol_mc_rt, es_vol_nnunet_rt]
+
+	save_str = ""
+	if [0,1] in plot_indexes:
+		save_str = "all"
+	else:
+		for i in plot_indexes:
+			save_str += set_labels[i]
+	save_path = os.path.join(save_dir, "BA_cine_rt_ESV_"+save_str+".pdf")
+
+	setA, setB, setC = [], [], []
+	labels, colors = [], []
+	for i in plot_indexes:
+		setA.append(set_mc[i])
+		setB.append(set_nnunet[i])
+		labels.append(set_labels[i])
+		colors.append(set_colors[i])
+	#submyo.plot_bland_altman_multi(setA, setB, save_path=save_path, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
+	#			figlayout="tight", ylim=ylim, scale=0.001)
+	assess_utils.plot_bland_altman_multi(setA, setB, save_path=save_path, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
+				figlayout="tight", ylim=ylim, scale=0.001)
+
 def write_parameter_files_nnunet_auto(out_dir, rtvol_dict=rtvol,
 				contour_dir=contour_files_dir,
 				nnunet_output=nnunet_output_dir,
@@ -618,40 +568,22 @@ def write_parameter_files_nnunet_auto(out_dir, rtvol_dict=rtvol,
 	edv_nnunet = [data["edv_nnunet"] for data in rtvol_dict]
 	esv_nnunet = [data["esv_nnunet"] for data in rtvol_dict]
 	ef_nnunet  = [data["ef_nnunet"]  for data in rtvol_dict]
-	output_file = os.path.join(out_dir, "rt_mc_nnunet_auto.txt")
-	write_output_stdv_parameters(output_file, (edv_mc, edv_mc, edv_nnunet), (esv_mc, esv_mc, esv_nnunet),
-					(ef_mc, ef_mc, ef_nnunet), precision=1)
+
+	output_file = os.path.join(out_dir,"cardiac_function_mc_rt.txt")
+	if not os.path.isfile(output_file):
+		write_output_cardiac_function_parameters(output_file, edv_mc, esv_mc, ef_mc, rtvol_dict=rtvol_dict, precision=1, header="Manually corrected MEDIS DL ACD")
+
+	output_file = os.path.join(out_dir,"cardiac_function_nnunet_auto_rt.txt")
+	write_output_cardiac_function_parameters(output_file, edv_nnunet, esv_nnunet, ef_nnunet, rtvol_dict=rtvol_dict, precision=1, header="Automatic evaluation of nnU-Net")
 
 	assess_utils.identify_ED_ES_mc_nnunet(rtvol_dict, contour_dir=contour_dir, seg_dir=os.path.join(nnunet_output, "rtvol_rt_2d_single_cv/"), exp_dir=exp_dir,
 					restrict_slices=True)
-	edv_mc = [data["edv_mc"] for data in rtvol_dict]
-	esv_mc = [data["esv_mc"] for data in rtvol_dict]
-	ef_mc  = [data["ef_mc"]  for data in rtvol_dict]
 	edv_nnunet = [data["edv_nnunet"] for data in rtvol_dict]
 	esv_nnunet = [data["esv_nnunet"] for data in rtvol_dict]
 	ef_nnunet  = [data["ef_nnunet"]  for data in rtvol_dict]
-	output_file = os.path.join(out_dir, "rt_mc_nnunet_auto_restricted_slices.txt")
-	write_output_stdv_parameters(output_file, (edv_mc, edv_mc, edv_nnunet), (esv_mc, esv_mc, esv_nnunet),
-					(ef_mc, ef_mc, ef_nnunet), precision=1)
 
-def write_parameter_files_mc_comdl_nnunet(out_dir, rtvol_dict=rtvol, contour_dir=contour_files_dir, nnunet_output=nnunet_output_dir):
-	"""
-	Bland-Altman plots for comparison of manual contours with comDL and nnU-Net segmentations.
-	"""
-	seg_dir = os.path.join(nnunet_output, "rtvol_cine_2d_single_cv/")
-	output_file = os.path.join(out_dir, "cine_2d_single.txt")
-	_, _, _ = calc_mean_stdv_parameters_cine(rtvol_dict, seg_dir=seg_dir, contour_dir=contour_dir, output_file=output_file,
-									flag3d=False, slice_selection=False, precision=1)
-
-	seg_dir = os.path.join(nnunet_output, "rtvol_rt_2d_single_cv/")
-	output_file = os.path.join(out_dir, "rt_2d_single.txt")
-	_, _, _ = calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=seg_dir, contour_dir=contour_dir, output_file=output_file, precision=1)
-
-	seg_dir = os.path.join(nnunet_output, "rtvol_rt_stress_2d_single_cv/")
-	output_file = os.path.join(out_dir, "rt_stress_2d_single.txt")
-	_,_,_ = calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=seg_dir, contour_dir=contour_dir, output_file=output_file,
-			session_mc_suffix="_rt_stress_manual"+contour_format,
-			session_comDL_suffix="_rt_stress_comDL"+contour_format, ed_es_phase_file="_rt_stress.txt", precision=1)
+	output_file = os.path.join(out_dir,"cardiac_function_nnunet_semi-auto_rt.txt")
+	write_output_cardiac_function_parameters(output_file, edv_nnunet, esv_nnunet, ef_nnunet, rtvol_dict=rtvol_dict, precision=1, header="Semi-automatic evaluation of nnU-Net with manual slice selection")
 
 def plot_BA_nnunet_auto(rtvol_dict, out_dir_fig, plot=False, file_extensions=["pdf"]):
 	"""
@@ -713,6 +645,76 @@ def plot_BA_nnunet_auto(rtvol_dict, out_dir_fig, plot=False, file_extensions=["p
 	assess_utils.plot_bland_altman_multi([ef_mc], [ef_nnunet], labels=labels, ylabel=ylabel, xlabel=xlabel, ylim=ylim,
 					save_paths=save_paths, plot=plot)
 
+def read_clinical_measures(in_file, no_dict=False):
+	EDV_dict = []
+	ESV_dict = []
+	EF_dict = []
+	readout = ""
+	with open (in_file, 'rt', encoding="utf8", errors='ignore') as myfile:
+		for line in myfile:
+			content = line.split()
+			content = [c.strip() for c in content]
+			if "EDV" == content[0].strip():
+				readout = "EDV"
+				continue
+			if "ESV" == content[0].strip():
+				readout = "ESV"
+				continue
+			if "EF" == content[0].strip():
+				readout = "EF"
+				continue
+
+			if "EDV" == readout:
+				EDV_dict.append({"id":content[0], "value":float(content[1])})
+			if "ESV" == readout:
+				ESV_dict.append({"id":content[0], "value":float(content[1])})
+			if "EF" == readout:
+				EF_dict.append({"id":content[0], "value":float(content[1])})
+	myfile.close()
+	if no_dict:
+		return [d["value"] for d in EDV_dict], [d["value"] for d in ESV_dict], [d["value"] for d in EF_dict]
+	return EDV_dict, ESV_dict, EF_dict
+
+def print_abs_rel_diff(file_ref, file_comp, precision=1):
+	edv_ref, esv_ref, ef_ref = read_clinical_measures(file_ref)
+	edv_comp, esv_comp, ef_comp = read_clinical_measures(file_comp)
+	ids = []
+	for i in edv_comp:
+		ids.append(i["id"])
+	edv_a = [d["value"] for d in edv_ref if d["id"] in ids]
+	esv_a = [d["value"] for d in esv_ref if d["id"] in ids]
+	ef_a = [d["value"] for d in ef_ref if d["id"] in ids]
+	edv_b = [d["value"] for d in edv_comp]
+	esv_b = [d["value"] for d in esv_comp]
+	ef_b = [d["value"] for d in ef_comp]
+	mdiff_abs_edv, stdv_abs_edv, _, _ = calc_mean_stdv_two_sets(edv_a, edv_b, precision=precision)
+	mdiff_abs_esv, stdv_abs_esv, _, _ = calc_mean_stdv_two_sets(esv_a, esv_b, precision=precision)
+	mdiff_rel_edv, stdv_rel_edv,_,_ = calc_mean_stdv_two_sets(edv_a, edv_b, mode="relative", precision=precision, scale=100)
+	mdiff_rel_esv, stdv_rel_esv,_,_ = calc_mean_stdv_two_sets(esv_a, esv_b, mode="relative", precision=precision, scale=100)
+	#ejection fraction
+	mdiff_abs_ef, stdv_abs_ef, _, _ = calc_mean_stdv_two_sets(ef_a, ef_b, precision=precision)
+	mdiff_rel_ef, stdv_rel_ef, _, _ = calc_mean_stdv_two_sets(ef_a, ef_b, mode="relative", precision=precision, scale=100)
+	print("Absolute mean differences")
+	print("EDV", mdiff_abs_edv, stdv_abs_edv)
+	print("ESV", mdiff_abs_esv, stdv_abs_esv)
+	print("EF", mdiff_abs_ef, stdv_abs_ef)
+	print("Relative mean differences")
+	print("EDV", mdiff_rel_edv, stdv_rel_edv)
+	print("ESV", mdiff_rel_esv, stdv_rel_esv)
+	print("EF", mdiff_rel_ef, stdv_rel_ef)
+
+def write_cardiac_function_single(out_dir, rtvol_dict, edv_tuple, esv_tuple, ef_tuple, modus="cine"):
+	(edv_mc, edv_comDL, edv_nnunet) = edv_tuple
+	(esv_mc, esv_comDL, esv_nnunet) = esv_tuple
+	(ef_mc, ef_comDL, ef_nnunet) = ef_tuple
+	print(modus)
+	output_file = os.path.join(out_dir,"cardiac_function_mc_"+modus+".txt")
+	write_output_cardiac_function_parameters(output_file, edv_mc, esv_mc, ef_mc, rtvol_dict=rtvol_dict, precision=1, header="Manually corrected MEDIS DL ACD")
+	output_file = os.path.join(out_dir,"cardiac_function_comDL_"+modus+".txt")
+	write_output_cardiac_function_parameters(output_file, edv_comDL, esv_comDL, ef_comDL, rtvol_dict=rtvol_dict, precision=1, header="MEDIS DL ACD")
+	output_file = os.path.join(out_dir,"cardiac_function_nnunet_"+modus+".txt")
+	write_output_cardiac_function_parameters(output_file, edv_nnunet, esv_nnunet, ef_nnunet, rtvol_dict=rtvol_dict, precision=1, header="nnU-Net")
+
 def save_fig1(out_dir, plot=False, img_dir=scanner_reco_dir,
 			contour_dir=contour_files_dir,
 			seg_dir=nnunet_output_dir,
@@ -758,7 +760,9 @@ def save_fig1(out_dir, plot=False, img_dir=scanner_reco_dir,
 				seg_dir=seg_dir, crop_dim=crop_dim, vmax_factor=vmax_factor, titles=titles, plot=plot)
 
 def save_fig2(out_dir, rtvol_dict=rtvol, plot=False, contour_dir=contour_files_dir, seg_dir=nnunet_output_dir, file_extension="png"):
-	# Figures for Dice's coefficient depending on heart rate
+	"""
+	Create figure for Dice's coefficient depending on heart rate
+	"""
 
 	file_extensions=file_extension.split(",")
 	ylim = [0.2,1]
@@ -782,7 +786,7 @@ def save_fig3(out_dir, rtvol_dict=rtvol, plot=False, img_dir=scanner_reco_dir,
 			seg_dir=os.path.join(nnunet_output_dir, "rtvol_rt_stress_2d_single_cv"),
 			file_extension="png"):
 	"""
-	Plotting limits of neural networks for manuscript.
+	Create figure for visualizing the limits of neural networks for manuscript.
 	"""
 	file_extensions=file_extension.split(",")
 	crop_dim=[[50,110,30,90],[50,110,30,90],[40,120,40,120], [25,105,15,95]]  #[30,110,50,130]
@@ -797,6 +801,9 @@ def save_figdc(out_dir, plot=False, img_dir=scanner_reco_dir,
 			contour_dir=contour_files_dir,
 			seg_dir=nnunet_output_dir,
 			file_extension="png"):
+	"""
+	Create a figure depicting an example for Dice's coefficients for comDL and nnU-Net segmentations.
+	"""
 	file_extensions=file_extension.split(",")
 	vol = "vol12"
 	reverse = True
@@ -837,18 +844,18 @@ def save_figba(out_dir, rtvol_dict=rtvol, nnunet_output=nnunet_output_dir, file_
 	file_extensions=file_extension.split(",")
 	seg_dir = os.path.join(nnunet_output, "rtvol_cine_2d_single_cv/")
 	output_file = os.path.join(out_dir,"cardiac_function_cine.txt")
-	ed_tuple_cine, es_tuple_cine, ef_tuple_cine = calc_mean_stdv_parameters_cine(rtvol_dict, seg_dir=seg_dir, output_file=output_file,
+	ed_tuple_cine, es_tuple_cine, ef_tuple_cine = calc_mean_stdv_parameters_cine(rtvol_dict, seg_dir=seg_dir,
 									flag3d=False, slice_selection=False)
 
 	output_file = os.path.join(out_dir,"cardiac_function_rt.txt")
 	seg_dir = os.path.join(nnunet_output, "rtvol_rt_2d_single_cv/")
-	ed_tuple_rt, es_tuple_rt, ef_tuple_rt = calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=seg_dir, output_file=output_file)
+	ed_tuple_rt, es_tuple_rt, ef_tuple_rt = calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=seg_dir)
 
 	output_file = os.path.join(out_dir,"cardiac_function_rt_stress.txt")
 	seg_dir = os.path.join(nnunet_output, "rtvol_rt_stress_2d_single_cv/")
 	ed_tuple_rt_stress, es_tuple_rt_stress, ef_tuple_rt_stress = calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=seg_dir,
 							session_mc_suffix="_rt_stress_manual"+contour_format, session_comDL_suffix="_rt_stress_comDL"+contour_format,
-				exp_dir = end_exp_dir, ed_es_phase_file="_rt_stress.txt", output_file=output_file)
+				exp_dir = end_exp_dir, ed_es_phase_file="_rt_stress.txt")
 
 	for i in range(3):
 		plot_ba_ef(out_dir, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_stress, plot=False,
@@ -870,37 +877,30 @@ def save_figba(out_dir, rtvol_dict=rtvol, nnunet_output=nnunet_output_dir, file_
 		plot_ba_esv(out_dir, es_tuple_cine, es_tuple_rt, es_tuple_rt_stress, plot=False,
 			plot_indexes=[i], ylim=ylims_esv[i], plot_mode=["comDL"], file_extensions=file_extensions)
 
-def write_cardiac_function(out_dir, contour_dir=contour_files_dir, exp_dir=end_exp_dir, rtvol_dict=rtvol, contour_suffix=contour_format):
-	seg_dir=""
-	output_file = os.path.join(out_dir,"cardiac_function_cine"+contour_format)
-	ed_tuple_cine, es_tuple_cine, ef_tuple_cine = calc_mean_stdv_parameters_cine(rtvol_dict, contour_dir=contour_dir, seg_dir=seg_dir, output_file="",
-									flag3d=False, slice_selection=False, contour_format=contour_suffix)
-	(ed_vol, _, _) = ed_tuple_cine
-	(es_vol, _, _) = es_tuple_cine
-	(ef, _, _) = ef_tuple_cine
-	print("cine")
-	write_output_cardiac_function_parameters(output_file, ed_vol, es_vol, ef, rtvol_dict=rtvol_dict, precision=1)
+def write_cardiac_function_all(out_dir, rtvol_dict=rtvol, contour_dir=contour_files_dir, exp_dir=end_exp_dir,
+				nnunet_output=nnunet_output_dir, contour_suffix=contour_format):
+	"""
+	Write cardiac function parameters EDV, ESV and EF into files for manually corrected, comDL and nnU-Net contours.
+	"""
+	# cine CMR
+	seg_dir = os.path.join(nnunet_output, "rtvol_cine_2d_single_cv/")
+	ed_tuple_cine, es_tuple_cine, ef_tuple_cine = calc_mean_stdv_parameters_cine(rtvol_dict, contour_dir=contour_dir, seg_dir=seg_dir,
+									flag3d=False, slice_selection=False)
+	write_cardiac_function_single(out_dir, rtvol_dict, ed_tuple_cine, es_tuple_cine, ef_tuple_cine, modus="cine")
 
-	output_file = os.path.join(out_dir,"cardiac_function_rt"+contour_format)
+	# real-time CMR at rest
+	seg_dir = os.path.join(nnunet_output, "rtvol_rt_2d_single_cv/")
 	ed_tuple_rt, es_tuple_rt, ef_tuple_rt = calc_mean_stdv_parameters_rt(rtvol_dict, contour_dir=contour_dir, seg_dir=seg_dir, exp_dir=exp_dir,
-									session_mc_suffix="_rt_manual"+contour_suffix,
-									output_file="")
-	(ed_vol, _, _) = ed_tuple_rt
-	(es_vol, _, _) = es_tuple_rt
-	(ef, _, _) = ef_tuple_rt
-	print("rt")
-	write_output_cardiac_function_parameters(output_file, ed_vol, es_vol, ef, rtvol_dict=rtvol_dict, precision=1)
+									session_mc_suffix="_rt_manual"+contour_suffix)
+	write_cardiac_function_single(out_dir, rtvol_dict, ed_tuple_rt, es_tuple_rt, ef_tuple_rt, modus="rt")
 
-	output_file = os.path.join(out_dir,"cardiac_function_rt_stress"+contour_format)
+	# real-time CMR at stress
+	seg_dir = os.path.join(nnunet_output, "rtvol_rt_stress_2d_single_cv/")
 	ed_tuple_rt_stress, es_tuple_rt_stress, ef_tuple_rt_stress = calc_mean_stdv_parameters_rt(rtvol_dict, contour_dir=contour_dir, seg_dir=seg_dir,
 							session_mc_suffix="_rt_stress_manual"+contour_suffix, session_comDL_suffix="_rt_stress_comDL"+contour_suffix,
-				exp_dir = exp_dir, ed_es_phase_file="_rt_stress.txt", output_file="")
-	(ed_vol, _, _) = ed_tuple_rt_stress
-	(es_vol, _, _) = es_tuple_rt_stress
-	(ef, _, _) = ef_tuple_rt_stress
-	print("rt_stress")
-	write_output_cardiac_function_parameters(output_file, ed_vol, es_vol, ef,  rtvol_dict=rtvol_dict, precision=1)
+							exp_dir = exp_dir, ed_es_phase_file="_rt_stress.txt")
 
+	write_cardiac_function_single(out_dir, rtvol_dict, ed_tuple_rt_stress, es_tuple_rt_stress, ef_tuple_rt_stress, modus="rt_stress")
 
 def main(out_dir_fig, out_dir_data, plot=False, nnunet_output="/scratch/mschi/nnUnet/"):
 	"""
@@ -920,9 +920,6 @@ def main(out_dir_fig, out_dir_data, plot=False, nnunet_output="/scratch/mschi/nn
 
 	# Limits of segmentation network
 	save_fig3(out_dir_fig, plot=plot, seg_dir=os.path.join(nnunet_output, "output/rtvol_rt_stress_2d_single_cv"))
-
-	# Evaluation of cardiac function parameters
-	write_parameter_files_mc_comdl_nnunet(out_dir_data=rtvol)
 
 	#Bland-Altman Plot
 	write_parameter_files_nnunet_auto(out_dir_data, rtvol)

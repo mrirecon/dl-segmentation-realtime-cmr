@@ -552,6 +552,7 @@ def crop_2darray(arr:np.array, cdim:int):
 	Center crop input array of shape [xdim, ydim] to [cdim, cdim]
 
 	:param np.array arr: 2D input array
+	:param int cdim: Dimension of cropped, spherical output. Optional input as list in format [x1,x2,y1,y2] for cropping [x1:x2,y1:y2]
 	:returns: Cropped array
 	:rtype: np.array
 	"""

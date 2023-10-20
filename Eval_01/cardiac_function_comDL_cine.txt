@@ -1,0 +1,49 @@
+MEDIS DL ACD
+EDV
+vol01	130.0
+vol02	141.9
+vol03	93.1
+vol04	193.7
+vol05	205.4
+vol06	134.7
+vol07	139.5
+vol08	176.4
+vol09	116.5
+vol10	95.8
+vol11	200.7
+vol12	108.6
+vol13	184.4
+vol14	132.7
+vol15	196.4
+ESV
+vol01	54.7
+vol02	67.7
+vol03	31.3
+vol04	74.0
+vol05	75.1
+vol06	62.7
+vol07	53.4
+vol08	86.4
+vol09	52.5
+vol10	37.4
+vol11	94.7
+vol12	40.6
+vol13	56.0
+vol14	53.0
+vol15	73.5
+EF
+vol01	57.9
+vol02	52.3
+vol03	66.4
+vol04	61.8
+vol05	63.4
+vol06	53.4
+vol07	61.7
+vol08	51.0
+vol09	55.0
+vol10	61.0
+vol11	52.8
+vol12	62.6
+vol13	69.6
+vol14	60.1
+vol15	62.6

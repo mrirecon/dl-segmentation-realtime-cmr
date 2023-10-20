@@ -1,0 +1,49 @@
+Manually corrected MEDIS DL ACD
+EDV
+vol01	117.6
+vol02	138.2
+vol03	90.3
+vol04	178.7
+vol05	209.3
+vol06	129.0
+vol07	134.0
+vol08	152.3
+vol09	95.4
+vol10	83.3
+vol11	191.6
+vol12	101.2
+vol13	185.0
+vol14	129.7
+vol15	173.9
+ESV
+vol01	48.2
+vol02	61.2
+vol03	34.1
+vol04	67.2
+vol05	77.7
+vol06	65.6
+vol07	53.7
+vol08	81.7
+vol09	50.4
+vol10	38.4
+vol11	98.8
+vol12	40.5
+vol13	68.3
+vol14	58.2
+vol15	86.6
+EF
+vol01	59.0
+vol02	55.7
+vol03	62.2
+vol04	62.4
+vol05	62.9
+vol06	49.2
+vol07	59.9
+vol08	46.4
+vol09	47.2
+vol10	53.9
+vol11	48.4
+vol12	60.0
+vol13	63.1
+vol14	55.1
+vol15	50.2

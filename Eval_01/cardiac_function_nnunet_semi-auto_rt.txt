@@ -1,0 +1,49 @@
+Semi-automatic evaluation of nnU-Net with manual slice selection
+EDV
+vol01	117.6
+vol02	144.1
+vol03	116.3
+vol04	174.7
+vol05	208.2
+vol06	131.3
+vol07	138.9
+vol08	156.7
+vol09	100.8
+vol10	88.2
+vol11	191.8
+vol12	98.5
+vol13	191.6
+vol14	132.7
+vol15	173.0
+ESV
+vol01	46.0
+vol02	71.6
+vol03	38.0
+vol04	68.3
+vol05	83.7
+vol06	61.9
+vol07	58.3
+vol08	80.3
+vol09	57.2
+vol10	40.1
+vol11	99.0
+vol12	35.3
+vol13	63.5
+vol14	57.2
+vol15	85.6
+EF
+vol01	60.9
+vol02	50.3
+vol03	67.3
+vol04	60.9
+vol05	59.8
+vol06	52.9
+vol07	58.0
+vol08	48.7
+vol09	43.2
+vol10	54.5
+vol11	48.4
+vol12	64.2
+vol13	66.9
+vol14	56.9
+vol15	50.5
