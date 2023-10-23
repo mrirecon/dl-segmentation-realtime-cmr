@@ -400,7 +400,7 @@ def read_cardiac_function_parameters(file_mc, file_comDL, file_nnunet):
 
 	return (edv_mc, edv_comDL, edv_nnunet), (esv_mc, esv_comDL, esv_nnunet), (ef_mc, ef_comDL, ef_nnunet)
 
-def plot_ba_ef(save_dir, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_stress, set_colors=["royalblue", "palegreen", "indianred"],
+def plot_ba_ef(save_dir, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_stress, set_colors=["royalblue", "limegreen", "crimson"],
 	       plot_indexes=[0,1,2], ylim=[], plot_mode=["nnunet", "comDL"], plot=True, file_extensions=["png"]):
 	#Bland-Altman plots for ejection fraction (EF)
 	(ef_mc_cine, ef_comDL_cine, ef_nnunet_cine) = ef_tuple_cine
@@ -441,7 +441,7 @@ def plot_ba_ef(save_dir, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_stress, set_col
 		assess_utils.plot_bland_altman_multi(setA, setC, save_paths=save_paths, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
 				figlayout="tight", ylim=ylim, plot=plot)
 
-def plot_ba_edv(save_dir, ed_tuple_cine, ed_tuple_rt, ed_tuple_rt_stress, set_colors=["royalblue", "palegreen", "indianred"],
+def plot_ba_edv(save_dir, ed_tuple_cine, ed_tuple_rt, ed_tuple_rt_stress, set_colors=["royalblue", "limegreen", "crimson"],
 		plot_indexes=[0,1,2], ylim=[], plot_mode=["nnunet", "comDL"], plot=True, file_extensions=["png"]):
 	#Bland-Altman plots for end-diastolic volume (EDV)
 	(ed_vol_mc_cine, ed_vol_comDL_cine, ed_vol_nnunet_cine) = ed_tuple_cine
@@ -474,15 +474,15 @@ def plot_ba_edv(save_dir, ed_tuple_cine, ed_tuple_rt, ed_tuple_rt_stress, set_co
 		colors.append(set_colors[i])
 	if "nnunet" in plot_mode:
 		assess_utils.plot_bland_altman_multi(setA, setB, save_paths=save_paths, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
-				figlayout="tight", ylim=ylim, scale=0.001, plot=plot)
+				figlayout="tight", ylim=ylim, scale=1, plot=plot)
 
 	ylabel="manual contours EDV - comDL EDV [ml]"
 	save_paths = [os.path.join(save_dir, "BA_comDL_EDV_"+save_str+"."+f) for f in file_extensions]
 	if "comDL" in plot_mode:
 		assess_utils.plot_bland_altman_multi(setA, setC, save_paths=save_paths, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
-				figlayout="tight", ylim=ylim, scale=0.001, plot=plot)
+				figlayout="tight", ylim=ylim, scale=1, plot=plot)
 
-def plot_ba_esv(save_dir, es_tuple_cine, es_tuple_rt, es_tuple_rt_stress, set_colors=["royalblue", "palegreen", "indianred"],
+def plot_ba_esv(save_dir, es_tuple_cine, es_tuple_rt, es_tuple_rt_stress, set_colors=["royalblue", "limegreen", "crimson"],
 		plot_indexes=[0,1,2], ylim=[], plot_mode=["nnunet", "comDL"], plot=True, file_extensions=["png"]):
 	#Bland-Altman plots for end-systolic volume (ESV)
 	(es_vol_mc_cine, es_vol_comDL_cine, es_vol_nnunet_cine) = es_tuple_cine
@@ -514,15 +514,15 @@ def plot_ba_esv(save_dir, es_tuple_cine, es_tuple_rt, es_tuple_rt_stress, set_co
 		colors.append(set_colors[i])
 	if "nnunet" in plot_mode:
 		assess_utils.plot_bland_altman_multi(setA, setB, save_paths=save_paths, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
-				figlayout="tight", ylim=ylim, scale=0.001, plot=plot)
+				figlayout="tight", ylim=ylim, scale=1, plot=plot)
 
 	ylabel="manual contours ESV - comDL ESV [ml]"
 	save_paths = [os.path.join(save_dir, "BA_comDL_ESV_"+save_str+"."+f) for f in file_extensions]
 	if "comDL" in plot_mode:
 		assess_utils.plot_bland_altman_multi(setA, setC, save_paths=save_paths, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
-				figlayout="tight", ylim=ylim, scale=0.001, plot=plot)
+				figlayout="tight", ylim=ylim, scale=1, plot=plot)
 
-def plot_ba_esv_cine_rt(save_dir, es_tuple_cine, es_tuple_rt, set_colors=["royalblue", "palegreen", "indianred"],
+def plot_ba_esv_cine_rt(save_dir, es_tuple_cine, es_tuple_rt, set_colors=["royalblue", "limegreen", "crimson"],
 		plot_indexes=[0,1], ylim=[], plot_mode=["nnunet", "auto"]):
 	#Bland-Altman plots for end-systolic volume (ESV)
 	(es_vol_mc_cine, es_vol_auto_cine, es_vol_nnunet_cine) = es_tuple_cine
@@ -768,11 +768,11 @@ def save_fig2(out_dir, rtvol_dict=rtvol, plot=False, contour_dir=contour_files_d
 	ylim = [0.2,1]
 
 	# nnU-Net
-	#calc_DC_and_bpm(rtvol_dict, mode=["nnunet"], contour_dir = contour_dir, seg_dir = seg_dir)
-	#contour_mode = "nnunet"
-	#save_paths = [os.path.join(out_dir, "DC_vs_bpm_"+contour_mode+"."+f) for f in file_extensions]
-	#title="nnU-Net"
-	#plot_DC_vs_bpm(rtvol_dict, save_paths=save_paths, contour_mode=contour_mode, ylim=ylim, plot=plot, title=title)
+	calc_DC_and_bpm(rtvol_dict, mode=["nnunet"], contour_dir = contour_dir, seg_dir = seg_dir)
+	contour_mode = "nnunet"
+	save_paths = [os.path.join(out_dir, "DC_vs_bpm_"+contour_mode+"."+f) for f in file_extensions]
+	title="nnU-Net"
+	plot_DC_vs_bpm(rtvol_dict, save_paths=save_paths, contour_mode=contour_mode, ylim=ylim, plot=plot, title=title)
 
 	# comDL
 	calc_DC_and_bpm(rtvol_dict, mode=["comDL"], contour_dir = contour_dir, seg_dir = seg_dir)
@@ -837,32 +837,39 @@ def save_figdc(out_dir, plot=False, img_dir=scanner_reco_dir,
 				img_dir =img_dir, DC=True,
 				seg_dir=seg_dir, crop_dim=crop_dim, vmax_factor=vmax_factor, titles=titles, plot=plot)
 
-def save_figba(out_dir, rtvol_dict=rtvol, nnunet_output=nnunet_output_dir, file_extension="png"):
+def save_figba(out_dir, rtvol_dict=rtvol, param_dir="", nnunet_output=nnunet_output_dir, file_extension="png"):
 	"""
 	Bland-Altman plots of EDV, ESV and EF for entries of rtvol for cine, real-time and real-time stress.
 	"""
 	file_extensions=file_extension.split(",")
-	seg_dir = os.path.join(nnunet_output, "rtvol_cine_2d_single_cv/")
-	output_file = os.path.join(out_dir,"cardiac_function_cine.txt")
-	ed_tuple_cine, es_tuple_cine, ef_tuple_cine = calc_mean_stdv_parameters_cine(rtvol_dict, seg_dir=seg_dir,
-									flag3d=False, slice_selection=False)
+	if "" == param_dir:
+		param_dir = out_dir
+		write_cardiac_function_all(out_dir, rtvol_dict=rtvol_dict, nnunet_output=nnunet_output)
 
-	output_file = os.path.join(out_dir,"cardiac_function_rt.txt")
-	seg_dir = os.path.join(nnunet_output, "rtvol_rt_2d_single_cv/")
-	ed_tuple_rt, es_tuple_rt, ef_tuple_rt = calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=seg_dir)
+	modus = "cine"
+	file_mc = os.path.join(param_dir,"cardiac_function_mc_"+modus+".txt")
+	file_comDL = os.path.join(param_dir,"cardiac_function_comDL_"+modus+".txt")
+	file_nnunet = os.path.join(param_dir,"cardiac_function_nnunet_"+modus+".txt")
+	edv_tuple_cine, esv_tuple_cine, ef_tuple_cine = read_cardiac_function_parameters(file_mc, file_comDL, file_nnunet)
 
-	output_file = os.path.join(out_dir,"cardiac_function_rt_stress.txt")
-	seg_dir = os.path.join(nnunet_output, "rtvol_rt_stress_2d_single_cv/")
-	ed_tuple_rt_stress, es_tuple_rt_stress, ef_tuple_rt_stress = calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=seg_dir,
-							session_mc_suffix="_rt_stress_manual"+contour_format, session_comDL_suffix="_rt_stress_comDL"+contour_format,
-				exp_dir = end_exp_dir, ed_es_phase_file="_rt_stress.txt")
+	modus = "rt"
+	file_mc = os.path.join(param_dir,"cardiac_function_mc_"+modus+".txt")
+	file_comDL = os.path.join(param_dir,"cardiac_function_comDL_"+modus+".txt")
+	file_nnunet = os.path.join(param_dir,"cardiac_function_nnunet_"+modus+".txt")
+	edv_tuple_rt, esv_tuple_rt, ef_tuple_rt = read_cardiac_function_parameters(file_mc, file_comDL, file_nnunet)
+
+	modus = "rt_stress"
+	file_mc = os.path.join(param_dir,"cardiac_function_mc_"+modus+".txt")
+	file_comDL = os.path.join(param_dir,"cardiac_function_comDL_"+modus+".txt")
+	file_nnunet = os.path.join(param_dir,"cardiac_function_nnunet_"+modus+".txt")
+	edv_tuple_rt_stress, esv_tuple_rt_stress, ef_tuple_rt_stress = read_cardiac_function_parameters(file_mc, file_comDL, file_nnunet)
 
 	for i in range(3):
 		plot_ba_ef(out_dir, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_stress, plot=False,
 			plot_indexes=[i], ylim=[-20,20], plot_mode=["nnunet"], file_extensions=file_extensions)
-		plot_ba_edv(out_dir, ed_tuple_cine, ed_tuple_rt, ed_tuple_rt_stress, plot=False,
+		plot_ba_edv(out_dir, edv_tuple_cine, edv_tuple_rt, edv_tuple_rt_stress, plot=False,
 			plot_indexes=[i], ylim=[-80,80], plot_mode=["nnunet"], file_extensions=file_extensions)
-		plot_ba_esv(out_dir, es_tuple_cine, es_tuple_rt, es_tuple_rt_stress, plot=False,
+		plot_ba_esv(out_dir, esv_tuple_cine, esv_tuple_rt, esv_tuple_rt_stress, plot=False,
 			plot_indexes=[i], ylim=[-18,18], plot_mode=["nnunet"], file_extensions=file_extensions)
 
 	ef_tuple_rt_stress = [[x for i, x in enumerate(a) if i!= 2] for a in ef_tuple_rt_stress]
@@ -872,9 +879,9 @@ def save_figba(out_dir, rtvol_dict=rtvol, nnunet_output=nnunet_output_dir, file_
 	for i in range(3):
 		plot_ba_ef(out_dir, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_stress, plot=False,
 			plot_indexes=[i], ylim=ylims_ef[i], plot_mode=["comDL"], file_extensions=file_extensions)
-		plot_ba_edv(out_dir, ed_tuple_cine, ed_tuple_rt, ed_tuple_rt_stress, plot=False,
+		plot_ba_edv(out_dir, edv_tuple_cine, edv_tuple_rt, edv_tuple_rt_stress, plot=False,
 			plot_indexes=[i], ylim=ylims_edv[i], plot_mode=["comDL"], file_extensions=file_extensions)
-		plot_ba_esv(out_dir, es_tuple_cine, es_tuple_rt, es_tuple_rt_stress, plot=False,
+		plot_ba_esv(out_dir, esv_tuple_cine, esv_tuple_rt, esv_tuple_rt_stress, plot=False,
 			plot_indexes=[i], ylim=ylims_esv[i], plot_mode=["comDL"], file_extensions=file_extensions)
 
 def write_cardiac_function_all(out_dir, rtvol_dict=rtvol, contour_dir=contour_files_dir, exp_dir=end_exp_dir,

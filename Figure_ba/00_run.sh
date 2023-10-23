@@ -13,17 +13,15 @@ read -ra param < <(grep -v '^#' assess_dl.env | xargs)
 export "${param[@]}"
 
 export SCRIPT_DIR=$SCRIPT_REPO/01_scripts
+export PARAM_DIR=$SCRIPT_REPO/Eval_01
 export FIGURE_OUT=$SCRIPT_REPO/Figure_ba
 
-if ! [ -f "$FIGURE_OUT"/BA_nnunet_EDV_cine22.png ] ; then
-	cmd_array=(	'import sys,os;'
-		'sys.path.insert(0,os.environ["SCRIPT_DIR"]);'
-		'import assess_dl_seg;'
-		'assess_dl_seg.save_figba(out_dir=os.environ["FIGURE_OUT"])')
-
-	cmd="${cmd_array[*]}"
-	python3 -c "$cmd"
-fi
+cmd_array=(	'import sys,os;'
+	'sys.path.insert(0,os.environ["SCRIPT_DIR"]);'
+	'import assess_dl_seg;'
+	'assess_dl_seg.save_figba(out_dir=os.environ["FIGURE_OUT"],param_dir=os.environ["PARAM_DIR"])')
+cmd="${cmd_array[*]}"
+python3 -c "$cmd"
 
 IN_FIG=("$FIGURE_OUT"/BA_nnunet_EDV_cine.png "$FIGURE_OUT"/BA_nnunet_EDV_rt.png "$FIGURE_OUT"/BA_nnunet_EDV_rt_stress.png)
 IN_FIG+=("$FIGURE_OUT"/BA_nnunet_ESV_cine.png "$FIGURE_OUT"/BA_nnunet_ESV_rt.png "$FIGURE_OUT"/BA_nnunet_ESV_rt_stress.png)

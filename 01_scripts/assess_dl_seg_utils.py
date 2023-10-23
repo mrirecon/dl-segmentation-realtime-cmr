@@ -227,7 +227,7 @@ def plot_bland_altman_multi(setA:list, setB:list, header:str="", save_paths:list
 					#print("Deviating average in class " + str(num) + " and index " + str(enum))
 					dev_list.append([num,enum])
 	for num,(a,d) in enumerate(zip(avg_list, diff_list)):
-		plt.scatter(a,d, sizes=np.array([point_size for i in a]), label=labels[num], c=colors[num])
+		plt.scatter(a,d, s=15, label=labels[num], c=colors[num])
 
 	if "poster" == plt_mode:
 		tick_size="large"
@@ -236,10 +236,10 @@ def plot_bland_altman_multi(setA:list, setB:list, header:str="", save_paths:list
 		legendsize="large"
 		framealpha=1
 	else:
-		tick_size="medium"
-		fontsize="small"
-		label_size="medium"
-		legendsize="medium"
+		tick_size="large"
+		fontsize="medium"
+		label_size="x-large"
+		legendsize="large"
 		framealpha=0.8
 
 	plt.xticks(size=tick_size)
