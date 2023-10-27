@@ -1,0 +1,44 @@
+DC for cine
+automatic contours
+BG 0.999 0.0
+RV 0.904 0.064
+Myo 0.961 0.024
+LV 0.966 0.028
+nnUNet
+BG 0.999 0.0
+RV 0.904 0.034
+Myo 0.907 0.021
+LV 0.952 0.019
+DC for real-time rest
+automatic contours
+BG 0.998 0.001
+RV 0.922 0.052
+Myo 0.875 0.048
+LV 0.928 0.041
+nnUNet
+BG 0.998 0.0
+RV 0.896 0.027
+Myo 0.885 0.022
+LV 0.943 0.018
+DC for real-time stress
+automatic contours
+BG 0.994 0.004
+RV 0.786 0.14
+Myo 0.721 0.146
+LV 0.793 0.145
+nnUNet
+BG 0.997 0.002
+RV 0.826 0.114
+Myo 0.85 0.03
+LV 0.921 0.028
+DC for real-time max stress
+automatic contours
+BG 0.992 0.005
+RV 0.687 0.18
+Myo 0.622 0.187
+LV 0.697 0.207
+nnUNet
+BG 0.997 0.002
+RV 0.788 0.157
+Myo 0.826 0.035
+LV 0.909 0.03

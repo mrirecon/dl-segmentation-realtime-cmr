@@ -972,12 +972,12 @@ def get_ed_es_dice_from_session_multi(contour_dir, data_dict, manual_contour_suf
 		print(title)
 		if "both" == phase_select:
 			for i in range(len(ed_dc_list)):
-				print("ED: " + class_labels[i], round(sum(ed_dc_list[i]) / len(ed_dc_list[i]),3))
+				print("ED: " + class_labels[i], round(sum(ed_dc_list[i]) / len(ed_dc_list[i]),3), round(np.std(ed_dc_list[i]),3))
 			for i in range(len(es_dc_list)):
-				print("ES: " + class_labels[i], round(sum(es_dc_list[i]) / len(es_dc_list[i]),3))
+				print("ES: " + class_labels[i], round(sum(es_dc_list[i]) / len(es_dc_list[i]),3), round(np.std(es_dc_list[i]),3))
 		else:
 			for i in range(len(ed_dc_list)):
-				print(class_labels[i], round(sum(ed_dc_list[i]) / len(ed_dc_list[i]),3))
+				print(class_labels[i], round(sum(ed_dc_list[i]) / len(ed_dc_list[i]),3), round(np.std(ed_dc_list[i]),3))
 	return ed_dc_list, es_dc_list, ed_dict_list, es_dict_list
 
 #---Calc bpm---
@@ -1409,7 +1409,7 @@ def plot_mc_nnunet(contour_dir, img_dir, seg_dir, rtvol_dict, param_list, flag3d
 			else:
 				mask_dl = crop_2darray(mask_nnunet, crop_dim[num])
 
-			comp_title = "nnUNet Segmentation"
+			comp_title = "nnU-Net segmentation"
 
 		img_file = os.path.join(img_dir, vol, img_suffix)
 		images = cfl.readcfl(img_file)

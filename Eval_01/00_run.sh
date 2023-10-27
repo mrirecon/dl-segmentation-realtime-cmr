@@ -32,3 +32,12 @@ cmd_array=(	'import sys,os;'
 
 cmd="${cmd_array[*]}"
 python3 -c "$cmd"
+
+# Write Dice's coefficient values
+cmd_array=(	'import sys,os;'
+	'sys.path.insert(0,os.environ["SCRIPT_DIR"]);'
+	'import assess_dl_seg;'
+	'assess_dl_seg.dice_coeff()')
+
+cmd="${cmd_array[*]}"
+python3 -c "$cmd" >> "$FIGURE_OUT"/Dice_all.txt
