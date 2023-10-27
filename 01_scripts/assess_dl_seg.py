@@ -798,7 +798,7 @@ def save_fig1(out_dir, plot=False, img_dir=scanner_reco_dir,
 				img_dir =img_dir,
 				seg_dir=seg_dir, crop_dim=crop_dim, vmax_factor=vmax_factor, titles=titles, plot=plot)
 
-def save_fig2(out_dir, rtvol_dict=rtvol, plot=False, contour_dir=contour_files_dir, seg_dir=nnunet_output_dir, file_extension="png"):
+def save_fig3(out_dir, rtvol_dict=rtvol, plot=False, contour_dir=contour_files_dir, seg_dir=nnunet_output_dir, file_extension="png"):
 	"""
 	Create figure for Dice's coefficient depending on heart rate
 	"""
@@ -815,12 +815,12 @@ def save_fig2(out_dir, rtvol_dict=rtvol, plot=False, contour_dir=contour_files_d
 
 	# comDL
 	calc_DC_and_bpm(rtvol_dict, mode=["comDL"], contour_dir = contour_dir, seg_dir = seg_dir)
-	#contour_mode = "comDL"
-	#save_paths = [os.path.join(out_dir, "DC_vs_bpm_"+contour_mode+"."+f) for f in file_extensions]
-	#title="comDL"
-	#plot_DC_vs_bpm(rtvol_dict, save_paths=save_paths, contour_mode=contour_mode, ylim=ylim, plot=plot, title=title)
+	contour_mode = "comDL"
+	save_paths = [os.path.join(out_dir, "DC_vs_bpm_"+contour_mode+"."+f) for f in file_extensions]
+	title="comDL"
+	plot_DC_vs_bpm(rtvol_dict, save_paths=save_paths, contour_mode=contour_mode, ylim=ylim, plot=plot, title=title)
 
-def save_fig3(out_dir, rtvol_dict=rtvol, plot=False, img_dir=scanner_reco_dir,
+def save_fig4(out_dir, rtvol_dict=rtvol, plot=False, img_dir=scanner_reco_dir,
 			contour_dir=contour_files_dir,
 			seg_dir=os.path.join(nnunet_output_dir, "rtvol_rt_stress_2d_single_cv"),
 			file_extension="png"):
@@ -836,7 +836,7 @@ def save_fig3(out_dir, rtvol_dict=rtvol, plot=False, img_dir=scanner_reco_dir,
 				crop_dim=crop_dim, contour_suffix = "_rt_stress_manual"+contour_format, img_suffix="rt_stress_scanner", save_paths=save_paths,
 				check=False, plot=plot)
 
-def save_figdc(out_dir, plot=False, img_dir=scanner_reco_dir,
+def save_fig2(out_dir, plot=False, img_dir=scanner_reco_dir,
 			contour_dir=contour_files_dir,
 			seg_dir=nnunet_output_dir,
 			file_extension="png"):

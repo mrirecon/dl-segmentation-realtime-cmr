@@ -15,10 +15,14 @@ export "${param[@]}"
 export SCRIPT_DIR=$SCRIPT_REPO/01_scripts
 export FIGURE_OUT=$SCRIPT_REPO/Figure_03
 
-cmd_array=(	'import sys,os;'
-	'sys.path.insert(0,os.environ["SCRIPT_DIR"]);'
-	'import assess_dl_seg;'
-	'assess_dl_seg.save_fig3(out_dir=os.environ["FIGURE_OUT"],file_extension="png,pdf")')
+if ! [ -f "$FIGURE_OUT"/DC_vs_bpm_nnunet.png ] ; then
+	cmd_array=(	'import sys,os;'
+		'sys.path.insert(0,os.environ["SCRIPT_DIR"]);'
+		'import assess_dl_seg;'
+		'assess_dl_seg.save_fig3(out_dir=os.environ["FIGURE_OUT"])')
 
-cmd="${cmd_array[*]}"
-python3 -c "$cmd"
+	cmd="${cmd_array[*]}"
+	python3 -c "$cmd"
+fi
+
+bash "$SCRIPT_DIR"/43_annotate_inkscape.sh "$FIGURE_OUT"/figure_template.svg "$FIGURE_OUT"/figure_03_DC_vs_bpm.png "$FIGURE_OUT"/DC_vs_bpm_nnunet.png "$FIGURE_OUT"/DC_vs_bpm_comDL.png

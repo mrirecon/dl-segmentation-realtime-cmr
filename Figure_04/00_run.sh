@@ -13,14 +13,12 @@ read -ra param < <(grep -v '^#' assess_dl.env | xargs)
 export "${param[@]}"
 
 export SCRIPT_DIR=$SCRIPT_REPO/01_scripts
-export FIGURE_OUT=$SCRIPT_REPO/Figure_dc
+export FIGURE_OUT=$SCRIPT_REPO/Figure_04
 
 cmd_array=(	'import sys,os;'
 	'sys.path.insert(0,os.environ["SCRIPT_DIR"]);'
 	'import assess_dl_seg;'
-	'assess_dl_seg.save_figdc(out_dir=os.environ["FIGURE_OUT"])')
+	'assess_dl_seg.save_fig4(out_dir=os.environ["FIGURE_OUT"],file_extension="png,pdf")')
 
 cmd="${cmd_array[*]}"
 python3 -c "$cmd"
-
-bash "$SCRIPT_DIR"/43_annotate_inkscape.sh "$FIGURE_OUT"/figure_dc_template.svg "$FIGURE_OUT"/figure_dc.png "$FIGURE_OUT"/figure_dc_a.png "$FIGURE_OUT"/figure_dc_b.png "$FIGURE_OUT"/figure_dc_c.png "$FIGURE_OUT"/figure_dc_d.png
