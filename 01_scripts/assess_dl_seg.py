@@ -783,20 +783,6 @@ def save_fig1(out_dir, plot=False, img_dir=scanner_reco_dir,
 				contour_dir=contour_dir,
 				img_dir =img_dir,
 				seg_dir=seg_dir, crop_dim=crop_dim, vmax_factor=vmax_factor, titles=titles, plot=plot)
-	mask_mode = []
-	phase_mode = "es"
-	save_paths = [os.path.join(out_dir, "figure_01_c."+f) for f in file_extensions]
-	assess_utils.plot_measurement_types(vol, reverse, slice_idx, mask_mode=mask_mode, phase_mode=phase_mode, save_paths=save_paths,
-				contour_dir=contour_dir,
-				img_dir =img_dir,
-				seg_dir=seg_dir, crop_dim=crop_dim, vmax_factor=vmax_factor, titles=titles, plot=plot)
-	mask_mode = ["mc"]
-	phase_mode = "es"
-	save_paths = [os.path.join(out_dir, "figure_01_d."+f) for f in file_extensions]
-	assess_utils.plot_measurement_types(vol, reverse, slice_idx, mask_mode=mask_mode, phase_mode=phase_mode, save_paths=save_paths,
-				contour_dir=contour_dir,
-				img_dir =img_dir,
-				seg_dir=seg_dir, crop_dim=crop_dim, vmax_factor=vmax_factor, titles=titles, plot=plot)
 
 def save_fig3(out_dir, rtvol_dict=rtvol, plot=False, contour_dir=contour_files_dir, seg_dir=nnunet_output_dir, file_extension="png"):
 	"""

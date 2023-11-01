@@ -9,12 +9,12 @@
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    width="320.04001mm"
-   height="315.56958mm"
-   viewBox="0 0 320.04001 315.56958"
+   height="157.78479mm"
+   viewBox="0 0 320.04001 157.78479"
    version="1.1"
    id="svg8"
    inkscape:version="1.0.2 (e86c870879, 2021-01-15)"
-   sodipodi:docname="figure_1comp_template.svg">
+   sodipodi:docname="figure_01_template.svg">
   <defs
      id="defs2" />
   <sodipodi:namedview
@@ -26,7 +26,7 @@
      inkscape:pageshadow="2"
      inkscape:zoom="0.35"
      inkscape:cx="650.51429"
-     inkscape:cy="314.80228"
+     inkscape:cy="320.96773"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      inkscape:document-rotation="0"
@@ -58,40 +58,22 @@
      id="layer1"
      transform="translate(66.281906,-64.875229)">
     <image
-       sodipodi:absref="/home/mschi1/Documents/scripts_assessment_dl_seg_rt/Figure_01/figure1_comp/img1.png"
+       sodipodi:absref="/home/mschi1/Documents/scripts_assessment_dl_seg_rt/Figure_01/temp/img1.png"
        xlink:href="img1.png"
-       y="64.875229"
-       x="-66.281906"
+       width="320.04001"
+       height="78.892395"
+       preserveAspectRatio="none"
        id="image34"
-       preserveAspectRatio="none"
-       height="78.892395"
-       width="320.04001" />
+       x="-66.281906"
+       y="64.875229" />
     <image
-       sodipodi:absref="/home/mschi1/Documents/scripts_assessment_dl_seg_rt/Figure_01/figure1_comp/img2.png"
+       sodipodi:absref="/home/mschi1/Documents/scripts_assessment_dl_seg_rt/Figure_01/temp/img2.png"
        xlink:href="img2.png"
-       y="143.76762"
-       x="-66.281906"
+       width="320.04001"
+       height="78.892395"
+       preserveAspectRatio="none"
        id="image48"
-       preserveAspectRatio="none"
-       height="78.892395"
-       width="320.04001" />
-    <image
-       sodipodi:absref="/home/mschi1/Documents/scripts_assessment_dl_seg_rt/Figure_01/figure1_comp/img3.png"
-       xlink:href="img3.png"
-       y="222.66002"
        x="-66.281906"
-       id="image62"
-       preserveAspectRatio="none"
-       height="78.892395"
-       width="320.04001" />
-    <image
-       sodipodi:absref="/home/mschi1/Documents/scripts_assessment_dl_seg_rt/Figure_01/figure1_comp/img4.png"
-       xlink:href="img4.png"
-       y="301.5524"
-       x="-66.281906"
-       id="image76"
-       preserveAspectRatio="none"
-       height="78.892395"
-       width="320.04001" />
+       y="143.76762" />
   </g>
 </svg>
