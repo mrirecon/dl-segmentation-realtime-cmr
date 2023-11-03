@@ -6,7 +6,8 @@
 # Martin Schilling, 2023, martin.schilling@med.uni-goettingen.de
 #
 
-SCRIPT_REPO="$( cd "$( dirname "$( dirname "${BASH_SOURCE[0]}" )" )" >/dev/null 2>&1 && pwd )"
+SCRIPT_REPO="$( cd "$( dirname "$( dirname "$(readlink -f "${BASH_SOURCE[0]}")" )" )" >/dev/null 2>&1 && pwd )"
+
 cd "$SCRIPT_REPO"/01_scripts/ || exit
 
 read -ra param < <(grep -v '^#' assess_dl.env | xargs)
