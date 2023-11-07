@@ -160,12 +160,11 @@ def masks_and_parameters_from_file(txt_string:str, img_shape:list, mp_number=8):
 	return mask_list, param_list, ccsf
 
 #---Bland-Altman plot---
-
-def plot_bland_altman_multi(setA:list, setB:list, header:str="", save_paths:list=[], lower_bound:float=None, upper_bound:float=None, point_size:float=10,
-	check:bool=False, scale:float=1, precision:int = 2, plot:bool=True, plt_mode:str="abstract", figlayout="default", ylim = [],
-	labels:list = ["anteroseptal", "inferoseptal", "inferior", "inferolateral", "anterolateral", "anterior"],
+def plot_bland_altman_multi(setA:list, setB:list, header:str="", save_paths:list=[], lower_bound:float=None, upper_bound:float=None, point_size:float=15,
+	check:bool=False, scale:float=1, precision:int = 2, plot:bool=True, ylim = [],
+	labels:list = ["label1", "label2", "label3", "label4", "label5", "label6"],
 	colors:list = ["royalblue", "dodgerblue", "palegreen", "yellowgreen", "darkorange", "indianred"],
-	xlabel:str = "Average Measurement of T1 [ms]", ylabel:str = "moba T1 - subspace T1 [ms]"):
+	xlabel:str = "", ylabel:str = ""):
 	"""
 	Plot a Bland-Altman plot for two given sets 'A' and 'B'.
 
@@ -180,8 +179,7 @@ def plot_bland_altman_multi(setA:list, setB:list, header:str="", save_paths:list
 	:param float scale: Values are scaled by this value
 	:param int precision: Precision for rounding values in plot
 	:param bool plot: Flag for showing the plot. This way the plot can be saved without showing the plot.
-	:param str plt_mode: Mode for creating figures. Either "abstract" or "poster"
-	:param str figlayout: Layout of figures. 'default' or 'tight'
+	:param list ylim: Limits for y-axis
 	:param list labels: Labels for groups in sets
 	:param list colors: Colors for groups in sets
 	:param str xlabel: Label for x-axis
@@ -227,20 +225,13 @@ def plot_bland_altman_multi(setA:list, setB:list, header:str="", save_paths:list
 					#print("Deviating average in class " + str(num) + " and index " + str(enum))
 					dev_list.append([num,enum])
 	for num,(a,d) in enumerate(zip(avg_list, diff_list)):
-		plt.scatter(a,d, s=15, label=labels[num], c=colors[num])
+		plt.scatter(a,d, s=point_size, label=labels[num], c=colors[num])
 
-	if "poster" == plt_mode:
-		tick_size="large"
-		fontsize="medium"
-		label_size="x-large"
-		legendsize="large"
-		framealpha=1
-	else:
-		tick_size="large"
-		fontsize="medium"
-		label_size="x-large"
-		legendsize="large"
-		framealpha=0.8
+	tick_size="large"
+	fontsize="medium"
+	label_size="x-large"
+	legendsize="large"
+	framealpha=0.8
 
 	plt.xticks(size=tick_size)
 	plt.yticks(size=tick_size)
@@ -279,6 +270,102 @@ def plot_bland_altman_multi(setA:list, setB:list, header:str="", save_paths:list
 	else:
 		plt.close()
 	return dev_list
+
+def plot_bland_altman_axes(setA:list, setB:list, ax, header:str="", lower_bound:float=None, upper_bound:float=None, point_size:float=15,
+	check:bool=False, scale:float=1, precision:int = 2, ylim = [],
+	labels:list = ["label1", "label2", "label3", "label4", "label5", "label6"],
+	colors:list = ["royalblue", "dodgerblue", "palegreen", "yellowgreen", "darkorange", "indianred"],
+	xlabel:str = "Average Measurement of T1 [ms]", ylabel:str = "moba T1 - subspace T1 [ms]"):
+	"""
+	Plot a Bland-Altman plot for two given sets 'A' and 'B'.
+
+	:param list setA: List of first set of values
+	:param list setB: List of second set of values
+	:param plt.axes ax: Ax to plot subplot on
+	:param str header: Title addition for the plot
+	:param float lower_bound: Lower bound for value of set A
+	:param float upper_bound: Upper bound for value of set A
+	:param float point_size: Size of points in scatter plot
+	:param bool check: Check groups and indexes of sets, if they deviate more than 1.96 standard deviation
+	:param float scale: Values are scaled by this value
+	:param int precision: Precision for rounding values in plot
+	:param list ylim: Limits for y-axis
+	:param list labels: Labels for groups in sets
+	:param list colors: Colors for groups in sets
+	:param str xlabel: Label for x-axis
+	:param str ylabel: Label for y-axis
+	:returns: List index and entry index in format [[list1, entry1], [list2, entry2], ...] for deviating entries
+	:rtype: list
+	"""
+	setA_flat, setB_flat = [], []
+	for set in setA:
+		for e in set:
+			setA_flat.append(e*scale)
+	for set in setB:
+		for e in set:
+			setB_flat.append(e*scale)
+
+	avg, diff = [], []
+	for (m,s) in zip(setA_flat, setB_flat):
+		if None != lower_bound:
+			if m < lower_bound:
+				continue
+		if None != upper_bound:
+			if m > upper_bound:
+				continue
+		avg.append((m+s) / 2)
+		diff.append(m-s)
+	stdv = np.std(diff)
+	avg_diff=sum(diff) / len(avg)
+	upper_limit = sum(diff) / len(diff) + 1.96 * stdv
+	lower_limit = sum(diff) / len(diff) - 1.96 * stdv
+
+	avg_list = [[] for i in range(len(setA))]
+	diff_list = [[] for i in range(len(setA))]
+	dev_list = []
+	for num,(al,bl) in enumerate(zip(setA.copy(),setB.copy())):
+		for enum,(a,b) in enumerate(zip(al,bl)):
+			a = a*scale
+			b = b*scale
+			avg_list[num].append((a+b) / 2)
+			diff_list[num].append(a-b)
+			if check:
+				if (a - b < lower_limit) or (a - b > upper_limit):
+					#print("Deviating average in class " + str(num) + " and index " + str(enum))
+					dev_list.append([num,enum])
+	for num,(a,d) in enumerate(zip(avg_list, diff_list)):
+		ax.scatter(a,d, s=point_size, label=labels[num], c=colors[num])
+
+	tick_size="x-large"
+	fontsize="large"
+	label_size="xx-large"
+	legendsize="large"
+	framealpha=0.8
+
+	ax.tick_params(axis='both', labelsize=tick_size)
+	ax.set_xlabel(xlabel, size=label_size)
+	ax.set_ylabel(ylabel, size=label_size, labelpad=0)
+	ax.set_title(header, size=label_size)
+
+	hori_offset = 0.25 * (max(avg) - min(avg))
+	vert_offset = 1/25 * np.abs(max(diff) - min(diff))
+	#print(vert_offset)
+	if 0 != len(ylim):
+		vert_offset = 1/60 * np.abs(ylim[1] - ylim[0])
+	#print(vert_offset)
+
+	ax.text(max(avg)-hori_offset, lower_limit+vert_offset, '-1.96 SD = {0:.{1}f}'.format(lower_limit, precision), ha='left', va='center', fontsize=fontsize)
+	ax.text(max(avg)-hori_offset, upper_limit+vert_offset, '1.96 SD = {0:.{1}f}'.format(upper_limit, precision), ha='left', va='center', fontsize=fontsize)
+	ax.text(max(avg)-hori_offset, avg_diff+vert_offset, 'MEAN = {0:.{1}f}'.format(avg_diff, precision), ha='left', va='center', fontsize=fontsize)
+	ax.hlines(y=np.asarray([lower_limit, upper_limit, avg_diff]), xmin=min(avg)-hori_offset, xmax= max(avg)+hori_offset,
+		colors=["gray" for i in range(3)], linestyles=["dashed" for i in range(3)])
+	ax.set_xlim((min(avg)-hori_offset/2, max(avg)+hori_offset/2))
+	if 0 == len(ylim):
+		ax.set_ylim((min(diff)-hori_offset*3, max(diff)+hori_offset*6))
+	else:
+		ax.set_ylim(ylim)
+	ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.05),
+		ncol=3, fancybox=True, shadow=False, framealpha=framealpha, fontsize=legendsize)
 
 #---Creating nnU-Net input data---
 def extract_img_params(session:os.path):

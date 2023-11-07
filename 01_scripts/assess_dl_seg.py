@@ -277,9 +277,9 @@ def write_output_cardiac_function_parameters(output_file, ed_vol, es_vol, ef, rt
 	Write output mean and standard deviation parameters.
 
 	:param str output_file: File path to output text file
-	:param tuple ed_tuple: Tuple of lists of LV volume for ED phase for manual contours, comDL contours and nnU-Net contours
-	:param tuple es_tuple: Tuple of lists of LV volume for ES phase for manual contours, comDL contours and nnU-Net contours
-	:param tuple ef_tuple: Tuple of lists of ejection fraction for manual contours, comDL contours and nnU-Net contours
+	:param tuple ed_tuple: Tuple of lists of LV volume for ED phase for manually corrected contours, comDL contours and nnU-Net contours
+	:param tuple es_tuple: Tuple of lists of LV volume for ES phase for manually corrected contours, comDL contours and nnU-Net contours
+	:param tuple ef_tuple: Tuple of lists of ejection fraction for manually corrected contours, comDL contours and nnU-Net contours
 	:param float scale: Scale for parameters
 	:param int precision: Precision for output data. Default: 3
 	"""
@@ -301,7 +301,7 @@ def calc_mean_stdv_parameters_cine(rtvol_dict, seg_dir = os.path.join(nnunet_out
 				   contour_dir = contour_files_dir, flag3d=False, contour_format=contour_format,
 				   pixel_spacing = 1.328125, slice_selection=False):
 	"""
-	Calculate mean and standard deviation parameters for cine MRI for manual contours, comDL contours and nnU-Net contours.
+	Calculate mean and standard deviation parameters for cine MRI for manually corrected contours, comDL contours and nnU-Net contours.
 
 	:param list rtvol_dict: List of dictionaries with volunteer id and reverse flag
 	:param str seg_dir: Directory containing segmentation of nnU-Net for cine measurements
@@ -385,7 +385,7 @@ def calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=os.path.join(nnunet_output_
 	:param str contour_dir: Directory containing Medis contour files in format <vol_id>_cine_manual.con and <vol_id>_cine_comDL.con
 	:param bool flag3d: Flag for marking input data as 2D or 3D data
 	:param float pixel_spacing: Pixel spacing of input in mm, e.g. 1px = 1.6 mm x 1.6 mm --> pixel_spacing = 1.6
-	:param str session_mc_suffix: Suffix for manual contour file
+	:param str session_mc_suffix: Suffix for manually corrected contour file
 	:param str session_comDL_suffix: Suffix for comDL contour file
 	:param str exp_dir: Directory containing text files with indexes for the end-expiration state
 	:param str ed_es_phase_file: Suffix for text file in 'exp_dir' containing ED and ES phase information. Format <exp_dir>/<vol_id><ed_es_phase_file>
@@ -470,15 +470,14 @@ def read_cardiac_function_parameters(file_mc, file_comDL, file_nnunet):
 
 	return (edv_mc, edv_comDL, edv_nnunet), (esv_mc, esv_comDL, esv_nnunet), (ef_mc, ef_comDL, ef_nnunet)
 
-def plot_ba_ef(save_dir, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_stress, set_colors=["royalblue", "limegreen", "crimson"],
-	       plot_indexes=[0,1,2], ylim=[], plot_mode=["nnunet", "comDL"], plot=True, file_extensions=["png"]):
+def plot_ba_ef(ax, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_stress, set_colors=["royalblue", "limegreen", "crimson"],
+	       plot_indexes=[0,1,2], ylim=[], plot_mode="nnunet", precision=1):
 	#Bland-Altman plots for ejection fraction (EF)
 	(ef_mc_cine, ef_comDL_cine, ef_nnunet_cine) = ef_tuple_cine
 	(ef_mc_rt, ef_comDL_rt, ef_nnunet_rt) = ef_tuple_rt
 	(ef_mc_rt_stress, ef_comDL_rt_stress, ef_nnunet_rt_stress) = ef_tuple_rt_stress
 
 	xlabel="EF [%]"
-	ylabel="manual contours EF - nnU-Net EF [%]"
 	save_labels = ["cine", "rt", "rt_stress"]
 	set_labels = ["cine", "rt", "rt stress"]
 	set_mc = [ef_mc_cine, ef_mc_rt, ef_mc_rt_stress]
@@ -491,7 +490,6 @@ def plot_ba_ef(save_dir, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_stress, set_col
 	else:
 		for i in plot_indexes:
 			save_str += save_labels[i]
-	save_paths = [os.path.join(save_dir, "BA_nnunet_EF_"+save_str+"."+f) for f in file_extensions]
 
 	setA, setB, setC = [], [], []
 	labels, colors = [], []
@@ -501,25 +499,24 @@ def plot_ba_ef(save_dir, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_stress, set_col
 		setC.append(set_comDL[i])
 		labels.append(set_labels[i])
 		colors.append(set_colors[i])
-	if "nnunet" in plot_mode:
-		assess_utils.plot_bland_altman_multi(setA, setB, save_paths=save_paths, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
-				figlayout="tight", ylim=ylim, plot=plot)
+	if "nnunet" == plot_mode:
+		ylabel="mcc EF - nnU-Net EF [%]"
+		assess_utils.plot_bland_altman_axes(setA, setB, ax, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
+				ylim=ylim, precision=precision)
 
-	ylabel="manual contours EF - comDL EF [%]"
-	save_paths = [os.path.join(save_dir, "BA_comDL_EF_"+save_str+"."+f) for f in file_extensions]
-	if "comDL" in plot_mode:
-		assess_utils.plot_bland_altman_multi(setA, setC, save_paths=save_paths, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
-				figlayout="tight", ylim=ylim, plot=plot)
+	if "comDL" == plot_mode:
+		ylabel="mcc EF - comDL EF [%]"
+		assess_utils.plot_bland_altman_axes(setA, setC, ax, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
+				ylim=ylim, precision=precision)
 
-def plot_ba_edv(save_dir, ed_tuple_cine, ed_tuple_rt, ed_tuple_rt_stress, set_colors=["royalblue", "limegreen", "crimson"],
-		plot_indexes=[0,1,2], ylim=[], plot_mode=["nnunet", "comDL"], plot=True, file_extensions=["png"]):
+def plot_ba_edv(ax, ed_tuple_cine, ed_tuple_rt, ed_tuple_rt_stress, set_colors=["royalblue", "limegreen", "crimson"],
+		plot_indexes=[0,1,2], ylim=[], plot_mode="nnunet", precision=1):
 	#Bland-Altman plots for end-diastolic volume (EDV)
 	(ed_vol_mc_cine, ed_vol_comDL_cine, ed_vol_nnunet_cine) = ed_tuple_cine
 	(ed_vol_mc_rt, ed_vol_comDL_rt, ed_vol_nnunet_rt) = ed_tuple_rt
 	(ed_vol_mc_rt_stress, ed_vol_comDL_rt_stress, ed_vol_nnunet_rt_stress) = ed_tuple_rt_stress
 
-	xlabel="LV end-diastolic volume [ml]"
-	ylabel="manual contours EDV - nnU-Net EDV [ml]"
+	xlabel="LV end-diastolic volume [mL]"
 	save_labels = ["cine", "rt", "rt_stress"]
 	set_labels = ["cine", "rt", "rt stress"]
 	set_mc = [ed_vol_mc_cine, ed_vol_mc_rt, ed_vol_mc_rt_stress]
@@ -532,7 +529,6 @@ def plot_ba_edv(save_dir, ed_tuple_cine, ed_tuple_rt, ed_tuple_rt_stress, set_co
 	else:
 		for i in plot_indexes:
 			save_str += save_labels[i]
-	save_paths = [os.path.join(save_dir, "BA_nnunet_EDV_"+save_str+"."+f) for f in file_extensions]
 
 	setA, setB, setC = [], [], []
 	labels, colors = [], []
@@ -542,24 +538,23 @@ def plot_ba_edv(save_dir, ed_tuple_cine, ed_tuple_rt, ed_tuple_rt_stress, set_co
 		setC.append(set_comDL[i])
 		labels.append(set_labels[i])
 		colors.append(set_colors[i])
-	if "nnunet" in plot_mode:
-		assess_utils.plot_bland_altman_multi(setA, setB, save_paths=save_paths, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
-				figlayout="tight", ylim=ylim, scale=1, plot=plot)
+	if "nnunet" == plot_mode:
+		ylabel="mcc EDV - nnU-Net EDV [mL]"
+		assess_utils.plot_bland_altman_axes(setA, setB, ax, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
+				ylim=ylim, precision=precision)
 
-	ylabel="manual contours EDV - comDL EDV [ml]"
-	save_paths = [os.path.join(save_dir, "BA_comDL_EDV_"+save_str+"."+f) for f in file_extensions]
-	if "comDL" in plot_mode:
-		assess_utils.plot_bland_altman_multi(setA, setC, save_paths=save_paths, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
-				figlayout="tight", ylim=ylim, scale=1, plot=plot)
+	if "comDL" == plot_mode:
+		ylabel="mcc EDV - comDL EDV [mL]"
+		assess_utils.plot_bland_altman_axes(setA, setC, ax, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
+				ylim=ylim, precision=precision)
 
-def plot_ba_esv(save_dir, es_tuple_cine, es_tuple_rt, es_tuple_rt_stress, set_colors=["royalblue", "limegreen", "crimson"],
-		plot_indexes=[0,1,2], ylim=[], plot_mode=["nnunet", "comDL"], plot=True, file_extensions=["png"]):
+def plot_ba_esv(ax, es_tuple_cine, es_tuple_rt, es_tuple_rt_stress, set_colors=["royalblue", "limegreen", "crimson"],
+		plot_indexes=[0,1,2], ylim=[], plot_mode="nnunet", precision=1):
 	#Bland-Altman plots for end-systolic volume (ESV)
 	(es_vol_mc_cine, es_vol_comDL_cine, es_vol_nnunet_cine) = es_tuple_cine
 	(es_vol_mc_rt, es_vol_comDL_rt, es_vol_nnunet_rt) = es_tuple_rt
 	(es_vol_mc_rt_stress, es_vol_comDL_rt_stress, es_vol_nnunet_rt_stress) = es_tuple_rt_stress
-	xlabel="LV end-systolic volume [ml]"
-	ylabel="manual contours ESV - nnU-Net ESV [ml]"
+	xlabel="LV end-systolic volume [mL]"
 	save_labels = ["cine", "rt", "rt_stress"]
 	set_labels = ["cine", "rt", "rt stress"]
 	set_mc = [es_vol_mc_cine, es_vol_mc_rt, es_vol_mc_rt_stress]
@@ -572,7 +567,6 @@ def plot_ba_esv(save_dir, es_tuple_cine, es_tuple_rt, es_tuple_rt_stress, set_co
 	else:
 		for i in plot_indexes:
 			save_str += save_labels[i]
-	save_paths = [os.path.join(save_dir, "BA_nnunet_ESV_"+save_str+"."+f) for f in file_extensions]
 
 	setA, setB, setC = [], [], []
 	labels, colors = [], []
@@ -582,22 +576,22 @@ def plot_ba_esv(save_dir, es_tuple_cine, es_tuple_rt, es_tuple_rt_stress, set_co
 		setC.append(set_comDL[i])
 		labels.append(set_labels[i])
 		colors.append(set_colors[i])
-	if "nnunet" in plot_mode:
-		assess_utils.plot_bland_altman_multi(setA, setB, save_paths=save_paths, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
-				figlayout="tight", ylim=ylim, scale=1, plot=plot)
+	if "nnunet" == plot_mode:
+		ylabel="mcc ESV - nnU-Net ESV [mL]"
+		assess_utils.plot_bland_altman_axes(setA, setB, ax, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
+				ylim=ylim, precision=precision)
 
-	ylabel="manual contours ESV - comDL ESV [ml]"
-	save_paths = [os.path.join(save_dir, "BA_comDL_ESV_"+save_str+"."+f) for f in file_extensions]
-	if "comDL" in plot_mode:
-		assess_utils.plot_bland_altman_multi(setA, setC, save_paths=save_paths, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
-				figlayout="tight", ylim=ylim, scale=1, plot=plot)
+	if "comDL" == plot_mode:
+		ylabel="mcc ESV - comDL ESV [mL]"
+		assess_utils.plot_bland_altman_axes(setA, setC, ax, labels=labels, colors=colors, ylabel=ylabel, xlabel=xlabel,
+				ylim=ylim, precision=precision)
 
 def write_parameter_files_nnunet_auto(out_dir, rtvol_dict=rtvol,
 				contour_dir=contour_files_dir,
 				nnunet_output=nnunet_output_dir,
 				exp_dir=end_exp_dir):
 	"""
-	Bland-Altman plots for comparison of manual contours and nnU-Net segmentations with automatic evaluation.
+	Bland-Altman plots for comparison of manually corrected contours and nnU-Net segmentation with automatic evaluation.
 	"""
 	assess_utils.identify_ED_ES_mc_nnunet(rtvol_dict, contour_dir=contour_dir, seg_dir=os.path.join(nnunet_output, "rtvol_rt_2d_single_cv/"), exp_dir=exp_dir,
 					restrict_slices=False)
@@ -626,7 +620,7 @@ def write_parameter_files_nnunet_auto(out_dir, rtvol_dict=rtvol,
 
 def plot_BA_nnunet_auto(rtvol_dict, out_dir_fig, plot=False, file_extensions=["pdf"]):
 	"""
-	Bland-Altman plots for comparison of manual contours and nnU-Net segmentations with automatic evaluation.
+	Bland-Altman plots for comparison of manually corrected contours and nnU-Net segmentations with automatic evaluation.
 	"""
 	assess_utils.identify_ED_ES_mc_nnunet(rtvol_dict, restrict_slices=False)
 	edv_mc = [data["edv_mc"] for data in rtvol_dict]
@@ -636,8 +630,8 @@ def plot_BA_nnunet_auto(rtvol_dict, out_dir_fig, plot=False, file_extensions=["p
 	esv_nnunet = [data["esv_nnunet"] for data in rtvol_dict]
 	ef_nnunet  = [data["ef_nnunet"]  for data in rtvol_dict]
 
-	xlabel="LV blood volume [ml]"
-	ylabel="manual contours - nnU-Net auto [ml]"
+	xlabel="LV blood volume [mL]"
+	ylabel="mcc - nnU-Net auto [mL]"
 	labels = ["EDV"]
 	ylim=[-60,20]
 	save_paths = [os.path.join(out_dir_fig, "BA_nnunet_auto_EDV."+f) for f in file_extensions]
@@ -649,7 +643,7 @@ def plot_BA_nnunet_auto(rtvol_dict, out_dir_fig, plot=False, file_extensions=["p
 	assess_utils.plot_bland_altman_multi([esv_mc], [esv_nnunet], labels=labels, ylabel=ylabel, xlabel=xlabel, ylim=ylim, scale=0.001,
 					save_paths=save_paths, plot=plot)
 	xlabel="LV ejection fraction [%]"
-	ylabel="manual contours - nnU-Net auto [%]"
+	ylabel="mcc EF - nnU-Net auto EF [%]"
 	labels = ["EF"]
 	ylim=[-12,12]
 	save_paths = [os.path.join(out_dir_fig, "BA_nnunet_auto_EF."+f) for f in file_extensions]
@@ -664,8 +658,8 @@ def plot_BA_nnunet_auto(rtvol_dict, out_dir_fig, plot=False, file_extensions=["p
 	esv_nnunet = [data["esv_nnunet"] for data in rtvol_dict]
 	ef_nnunet  = [data["ef_nnunet"]  for data in rtvol_dict]
 
-	xlabel="LV blood volume [ml]"
-	ylabel="manual contours - nnU-Net auto [ml]"
+	xlabel="LV blood volume [mL]"
+	ylabel="mcc - nnU-Net auto [mL]"
 	labels = ["EDV"]
 	ylim=[-60,20]
 	save_paths = [os.path.join(out_dir_fig, "BA_nnunet_auto_restricted_slices_EDV."+f) for f in file_extensions]
@@ -677,7 +671,7 @@ def plot_BA_nnunet_auto(rtvol_dict, out_dir_fig, plot=False, file_extensions=["p
 	assess_utils.plot_bland_altman_multi([esv_mc], [esv_nnunet], labels=labels, ylabel=ylabel, xlabel=xlabel, ylim=ylim, scale=0.001,
 					save_paths=save_paths, plot=plot)
 	xlabel="LV ejection fraction [%]"
-	ylabel="manual contours - nnU-Net auto [%]"
+	ylabel="mcc - nnU-Net auto [%]"
 	labels = ["EF"]
 	ylim=[-12,12]
 	save_paths = [os.path.join(out_dir_fig, "BA_nnunet_auto_restricted_slices_EF."+f) for f in file_extensions]
@@ -862,7 +856,7 @@ def save_fig2(out_dir, plot=False, img_dir=scanner_reco_dir,
 				img_dir =img_dir, DC=True,
 				seg_dir=seg_dir, crop_dim=crop_dim, vmax_factor=vmax_factor, titles=titles, plot=plot)
 
-def save_figba(out_dir, rtvol_dict=rtvol, param_dir="", nnunet_output=nnunet_output_dir, file_extension="png"):
+def save_figba(out_dir, rtvol_dict=rtvol, param_dir="", nnunet_output=nnunet_output_dir, file_extension="pdf"):
 	"""
 	Bland-Altman plots of EDV, ESV and EF for entries of rtvol for cine, real-time and real-time stress.
 	"""
@@ -889,32 +883,76 @@ def save_figba(out_dir, rtvol_dict=rtvol, param_dir="", nnunet_output=nnunet_out
 	file_nnunet = os.path.join(param_dir,"cardiac_function_nnunet_"+modus+".txt")
 	edv_tuple_rt_stress, esv_tuple_rt_stress, ef_tuple_rt_stress = read_cardiac_function_parameters(file_mc, file_comDL, file_nnunet)
 
-	for i in range(3):
-		plot_ba_ef(out_dir, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_stress, plot=False,
-			plot_indexes=[i], ylim=[-20,20], plot_mode=["nnunet"], file_extensions=file_extensions)
-		plot_ba_edv(out_dir, edv_tuple_cine, edv_tuple_rt, edv_tuple_rt_stress, plot=False,
-			plot_indexes=[i], ylim=[-80,80], plot_mode=["nnunet"], file_extensions=file_extensions)
-		plot_ba_esv(out_dir, esv_tuple_cine, esv_tuple_rt, esv_tuple_rt_stress, plot=False,
-			plot_indexes=[i], ylim=[-18,18], plot_mode=["nnunet"], file_extensions=file_extensions)
+	rows=3
+	columns=3
+	fig, axes = plt.subplots(rows, columns, figsize=(columns*8,rows*6))
+	axes = axes.flatten()
+	save_paths = [os.path.join(out_dir, "figure_b1_cf_nnunet."+f) for f in file_extensions]
 
+	ylims_edv= [[-20,20], [-20,20], [-80,80]]
+	ylims_esv= [[-20,20], [-20,20], [-20,20]]
+	ylims_ef = [[-20,20], [-20,20], [-20,20]]
+
+	for i in range(columns):
+		plot_ba_edv(axes[i], edv_tuple_cine, edv_tuple_rt, edv_tuple_rt_stress,
+			plot_indexes=[i], ylim=ylims_edv[i], plot_mode="nnunet")
+		plot_ba_esv(axes[columns+i], esv_tuple_cine, esv_tuple_rt, esv_tuple_rt_stress,
+			plot_indexes=[i], ylim=ylims_esv[i], plot_mode="nnunet")
+		plot_ba_ef(axes[2*columns+i], ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_stress,
+			plot_indexes=[i], ylim=ylims_ef[i], plot_mode="nnunet")
+
+	if 0 != len(save_paths):
+		if list == type(save_paths):
+			for s in save_paths:
+				if ".png" in s:
+					fig.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
+				else:
+					fig.savefig(s, bbox_inches='tight', pad_inches=0)
+		else:
+			if ".png" in save_paths:
+				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
+			else:
+				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0)
+	plt.close()
+
+	rows=3
+	columns=3
+	fig, axes = plt.subplots(rows, columns, figsize=(columns*8,rows*6))
+	axes = axes.flatten()
+	save_paths = [os.path.join(out_dir, "figure_b2_cf_comDL."+f) for f in file_extensions]
 	ef_tuple_rt_stress = [[x for i, x in enumerate(a) if i!= 2] for a in ef_tuple_rt_stress]
-	ylims_ef = [[-25,25], [-25,25], [-50,50]]
+
 	ylims_edv= [[-25,25], [-25,25], [-100,100]]
 	ylims_esv= [[-25,25], [-25,25], [-25,25]]
-	for i in range(3):
-		plot_ba_ef(out_dir, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_stress, plot=False,
-			plot_indexes=[i], ylim=ylims_ef[i], plot_mode=["comDL"], file_extensions=file_extensions)
-		plot_ba_edv(out_dir, edv_tuple_cine, edv_tuple_rt, edv_tuple_rt_stress, plot=False,
-			plot_indexes=[i], ylim=ylims_edv[i], plot_mode=["comDL"], file_extensions=file_extensions)
-		plot_ba_esv(out_dir, esv_tuple_cine, esv_tuple_rt, esv_tuple_rt_stress, plot=False,
-			plot_indexes=[i], ylim=ylims_esv[i], plot_mode=["comDL"], file_extensions=file_extensions)
+	ylims_ef = [[-25,25], [-25,25], [-50,50]]
 
-def save_figba_cine_rt(out_dir, rtvol_dict=rtvol, param_dir="", nnunet_output=nnunet_output_dir, file_extension="png"):
+	for i in range(3):
+		plot_ba_edv(axes[i], edv_tuple_cine, edv_tuple_rt, edv_tuple_rt_stress,
+			plot_indexes=[i], ylim=ylims_edv[i], plot_mode="comDL")
+		plot_ba_esv(axes[columns+i], esv_tuple_cine, esv_tuple_rt, esv_tuple_rt_stress,
+			plot_indexes=[i], ylim=ylims_esv[i], plot_mode="comDL")
+		plot_ba_ef(axes[2*columns+i], ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_stress,
+			plot_indexes=[i], ylim=ylims_ef[i], plot_mode="comDL")
+
+	if 0 != len(save_paths):
+		if list == type(save_paths):
+			for s in save_paths:
+				if ".png" in s:
+					fig.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
+				else:
+					fig.savefig(s, bbox_inches='tight', pad_inches=0)
+		else:
+			if ".png" in save_paths:
+				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
+			else:
+				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0)
+	plt.close()
+
+def save_figba_cine_rt(out_dir, rtvol_dict=rtvol, param_dir="", nnunet_output=nnunet_output_dir, file_extension="pdf"):
 	# Bland-Altman plots for end-diastolic volume (EDV), end-systolic volume (ESV) and ejection fraction (EF)
 	# between manually corrected contours in cine CMR and real-time free-breathing CMR
 	file_extensions=file_extension.split(",")
 	set_colors=["royalblue"]
-	plot=False
 	ylim=[-12,12]
 	set_labels = ["manually corrected contours"]
 	file_extensions=file_extension.split(",")
@@ -933,23 +971,38 @@ def save_figba_cine_rt(out_dir, rtvol_dict=rtvol, param_dir="", nnunet_output=nn
 	(esv_cine, esv_rt, _) = esv_tuple_cine
 	(ef_cine, ef_rt, _) = ef_tuple_cine
 
-	xlabel="LV end-diastolic volume [ml]"
-	ylabel="EDV cine - EDV rt [ml]"
-	save_paths = [os.path.join(out_dir, "BA_cine_rt_EDV."+f) for f in file_extensions]
-	assess_utils.plot_bland_altman_multi([edv_cine], [edv_rt], save_paths=save_paths, labels=set_labels, colors=set_colors, ylabel=ylabel, xlabel=xlabel,
-				figlayout="tight", ylim=ylim, scale=1, plot=plot)
+	rows=1
+	columns=3
+	fig, axes = plt.subplots(rows, columns, figsize=(columns*8,rows*6))
+	axes = axes.flatten()
+	save_paths = [os.path.join(out_dir, "figure_b3_cf_cine_rt."+f) for f in file_extensions]
 
-	xlabel="LV end-systolic volume [ml]"
-	ylabel="ESV cine - ESV rt [ml]"
-	save_paths = [os.path.join(out_dir, "BA_cine_rt_ESV."+f) for f in file_extensions]
-	assess_utils.plot_bland_altman_multi([esv_cine], [esv_rt], save_paths=save_paths, labels=set_labels, colors=set_colors, ylabel=ylabel, xlabel=xlabel,
-				figlayout="tight", ylim=ylim, scale=1, plot=plot)
+	xlabel="LV end-diastolic volume [mL]"
+	ylabel="EDV cine - EDV rt [mL]"
+	assess_utils.plot_bland_altman_axes([edv_cine], [edv_rt], ax=axes[0], labels=set_labels, colors=set_colors, ylabel=ylabel, xlabel=xlabel,
+								ylim=ylim, scale=1)
+
+	xlabel="LV end-systolic volume [mL]"
+	ylabel="ESV cine - ESV rt [mL]"
+	assess_utils.plot_bland_altman_axes([esv_cine], [esv_rt], ax=axes[1], labels=set_labels, colors=set_colors, ylabel=ylabel, xlabel=xlabel,
+				      				ylim=ylim, scale=1)
 
 	xlabel="EF [%]"
 	ylabel="EF cine - EF rt [%]"
-	save_paths = [os.path.join(out_dir, "BA_cine_rt_EF."+f) for f in file_extensions]
-	assess_utils.plot_bland_altman_multi([ef_cine], [ef_rt], save_paths=save_paths, labels=set_labels, colors=set_colors, ylabel=ylabel, xlabel=xlabel,
-				figlayout="tight", ylim=ylim, scale=1, plot=plot)
+	assess_utils.plot_bland_altman_axes([ef_cine], [ef_rt], ax=axes[2], labels=set_labels, colors=set_colors, ylabel=ylabel, xlabel=xlabel,
+				      				ylim=ylim, scale=1)
+	if 0 != len(save_paths):
+		if list == type(save_paths):
+			for s in save_paths:
+				if ".png" in s:
+					fig.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
+				else:
+					fig.savefig(s, bbox_inches='tight', pad_inches=0)
+		else:
+			if ".png" in save_paths:
+				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
+			else:
+				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0)
 
 def write_cardiac_function_all(out_dir, rtvol_dict=rtvol, contour_dir=contour_files_dir, exp_dir=end_exp_dir,
 				nnunet_output=nnunet_output_dir, contour_suffix=contour_format):

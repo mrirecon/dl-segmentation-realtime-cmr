@@ -22,6 +22,3 @@ cmd_array=(	'import sys,os;'
 	'assess_dl_seg.save_figba_cine_rt(out_dir=os.environ["FIGURE_OUT"],param_dir=os.environ["PARAM_DIR"])')
 cmd="${cmd_array[*]}"
 python3 -c "$cmd"
-
-IN_FIG=("$FIGURE_OUT"/BA_cine_rt_EDV.png "$FIGURE_OUT"/BA_cine_rt_ESV.png "$FIGURE_OUT"/BA_cine_rt_EF.png)
-bash "$SCRIPT_DIR"/43_annotate_inkscape.sh "$FIGURE_OUT"/figure_ba_cine_rt_template.svg "$FIGURE_OUT"/figure_b3_cf_cine_rt.png "${IN_FIG[@]}"

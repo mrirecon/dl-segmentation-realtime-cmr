@@ -22,13 +22,3 @@ cmd_array=(	'import sys,os;'
 	'assess_dl_seg.save_figba(out_dir=os.environ["FIGURE_OUT"],param_dir=os.environ["PARAM_DIR"])')
 cmd="${cmd_array[*]}"
 python3 -c "$cmd"
-
-IN_FIG=("$FIGURE_OUT"/BA_nnunet_EDV_cine.png "$FIGURE_OUT"/BA_nnunet_EDV_rt.png "$FIGURE_OUT"/BA_nnunet_EDV_rt_stress.png)
-IN_FIG+=("$FIGURE_OUT"/BA_nnunet_ESV_cine.png "$FIGURE_OUT"/BA_nnunet_ESV_rt.png "$FIGURE_OUT"/BA_nnunet_ESV_rt_stress.png)
-IN_FIG+=("$FIGURE_OUT"/BA_nnunet_EF_cine.png "$FIGURE_OUT"/BA_nnunet_EF_rt.png "$FIGURE_OUT"/BA_nnunet_EF_rt_stress.png)
-bash "$SCRIPT_DIR"/43_annotate_inkscape.sh "$FIGURE_OUT"/figure_ba_template.svg "$FIGURE_OUT"/figure_b1_cf_nnunet.png "${IN_FIG[@]}"
-
-IN_FIG=("$FIGURE_OUT"/BA_comDL_EDV_cine.png "$FIGURE_OUT"/BA_comDL_EDV_rt.png "$FIGURE_OUT"/BA_comDL_EDV_rt_stress.png)
-IN_FIG+=("$FIGURE_OUT"/BA_comDL_ESV_cine.png "$FIGURE_OUT"/BA_comDL_ESV_rt.png "$FIGURE_OUT"/BA_comDL_ESV_rt_stress.png)
-IN_FIG+=("$FIGURE_OUT"/BA_comDL_EF_cine.png "$FIGURE_OUT"/BA_comDL_EF_rt.png "$FIGURE_OUT"/BA_comDL_EF_rt_stress.png)
-bash "$SCRIPT_DIR"/43_annotate_inkscape.sh "$FIGURE_OUT"/figure_ba_template.svg "$FIGURE_OUT"/figure_b2_cf_comDL.png "${IN_FIG[@]}"
