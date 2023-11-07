@@ -1416,6 +1416,123 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 	else:
 		plt.close()
 
+def plot_measurement_types_axes(vol, axes, reverse, slice_idx, mask_mode=[], phase_mode="es", save_paths=[],
+			contour_dir=contour_files_dir,
+			img_dir = scanner_reco_dir,
+			seg_dir=nnunet_output_dir, crop_dim=160,
+			vmax_factor=1, DC=False,
+			titles = ["cine", "real-time MRI (rest)", "real-time MRI (stress)", "real-time MRI (max stress)"], plot=True):
+	"""
+	Visualize different measurement forms (cine, real-time rest, rt stressm rt max stress) in a combined plot with optional segmentation.
+
+	:param str vol: Volunteer string in format vol<id>
+	:param bool reverse: Flag for reverse order of indexes of cardiac phase in contour file
+	:param str mask_mode: Mode for optional segmentation mask. Either 'none', 'mc', 'comDL' or 'nnunet'
+	:param str phase_mode: Mode for cardiac phase. Either 'es' or 'ed'
+	:param list save_paths: List of file paths (for different file extensions) or single string to save plot
+	:param str contour_dir: Directory containing contour files of Medis session
+	:param str img_dir: Directory containing reconstructed images in format <img_dir>/<vol>/cine_scanner.{cfl,hdr}, .../rt_scanner.{cfl,hdr}, etc.
+	:param str seg_dir: Directory containing nnU-Net segmentations
+	:param int crop_dim: Crop dimension for reconstructed images
+	:param list titles: List of titles for individual subplots
+	:param bool plot: Flag for showing the plot. This way the plot can be saved without showing the plot.
+	"""
+	slice_select = [slice_idx for i in range(4)]
+	label_size = "xx-large"
+	label_size = 18
+	img_files = [os.path.join(img_dir, vol, i) for i in ["cine_scanner", "rt_scanner", "rt_stress_scanner", "rt_maxstress_scanner"]]
+
+	sessions = [os.path.join(contour_dir, vol+"_" + s+"_manual"+contour_format) for s in ["cine", "rt", "rt_stress", "rt_maxstress"]]
+
+	if 0 != len(mask_mode):
+		comDL_sessions = [os.path.join(contour_dir, vol+"_" + s+"_comDL"+contour_format) for s in ["cine", "rt", "rt_stress", "rt_maxstress"]]
+		seg_subdirs = ["rtvol_cine_2d_single_cv", "rtvol_rt_2d_single_cv","rtvol_rt_stress_2d_single_cv", "rtvol_rt_maxstress_2d_single_cv"]
+		seg_dirs = [os.path.join(seg_dir, s, "rtvol_"+vol[3:]) for s in seg_subdirs]
+
+	for num, (contour_file, ax) in enumerate(zip(sessions, axes)):
+
+		img_dims, fov, slices = extract_img_params(contour_file)
+		mask_list, param_list, ccsf = masks_and_parameters_from_file(contour_file, img_dims)
+		slice_list_mc, mlist, plist = combine_masks_multi(mask_list, param_list, slices=slices, reverse=reverse)
+
+		# find phase from manual contours
+		if "cine" in contour_file:
+			EDphase, ESphase = extract_ED_ES_phase_cine(plist, mlist, segm_class=3)
+			phase = EDphase if "ed" == phase_mode else ESphase
+
+		else:
+			ed_idx, es_idx, ed_count_list, es_count_list = get_ed_es_from_manual_rt(mlist, plist, segm_class=3)
+			if "ed" == phase_mode:
+				for e in ed_idx:
+					if slice_select[num] == e[0][0]:
+						phase = e[0][1]
+						continue
+			else:
+				for e in es_idx:
+					if slice_select[num] == e[0][0]:
+						phase = e[0][1]
+						continue
+
+		img = cfl.readcfl(img_files[num])
+		img = np.abs(img[:,:,0,0,0,0,0,0,0,0,phase,0,0,slice_select[num]])
+		img = crop_2darray(img, crop_dim)
+		img = flip_rot(img, -1, 1)
+
+		mask_mc = np.zeros((crop_dim, crop_dim))
+		for i,ps in enumerate(plist):
+			for j,p in enumerate(ps):
+				if [slice_select[num], phase] == p:
+					mask_mc = mlist[i][j]
+					continue
+
+		ax.imshow(img, cmap="gray", vmax=np.max(img)*vmax_factor)
+		if 0 != len(titles):
+			ax.set_title(titles[num], size=label_size)
+
+		if 0 != len(mask_mode):
+
+			for enum,m in enumerate(mask_mode):
+				# find segmentation for slice and phase combination
+				second_row_title = ""
+				mask = np.zeros((crop_dim, crop_dim))
+				if "mc" == m:
+					second_row_title = "Manually corrected contours"
+					mask = mask_mc.copy()
+
+				elif "comDL" == m:
+					img_dims, fov, slices = extract_img_params(contour_file)
+					mask_list, param_list, ccsf = masks_and_parameters_from_file(comDL_sessions[num], img_dims)
+					slice_list_comDL, mlist, plist = combine_masks_multi(mask_list, param_list, slices, reverse=reverse)
+					for i,ps in enumerate(plist):
+						for j,p in enumerate(ps):
+							if [slice_select[num], phase] == p:
+								mask = mlist[i][j]
+								continue
+					if DC:
+						dice_coeffs, dict_list = calc_dice_coeff(ref=[mask_mc], pred=[mask], segm_classes=4)
+						second_row_title = "DC: LV-"+str(round(dice_coeffs[3],2))+", MYO-"+str(round(dice_coeffs[2],2))+", RV-"+str(round(dice_coeffs[1],2))
+					else:
+						second_row_title = "comDL"
+				elif "nnunet" == m:
+					nnunet_file = seg_dirs[num]+str(slice_select[num]).zfill(2)+str(phase).zfill(3)+".nii.gz"
+					if os.path.isfile(nnunet_file):
+						mask = nnunet.read_nnunet_segm(nnunet_file)
+					else:
+						mask = nnunet.read_nnunet_segm(seg_dirs[num]+str(slice_select[num]).zfill(2)+".nii.gz")[:,:,phase]
+
+					if DC:
+						dice_coeffs, dict_list = calc_dice_coeff(ref=[mask_mc], pred=[mask], segm_classes=4)
+						second_row_title = "DC: LV-"+str(round(dice_coeffs[3],2))+", MYO-"+str(round(dice_coeffs[2],2))+", RV-"+str(round(dice_coeffs[1],2))
+					else:
+						second_row_title = "nnU-Net"
+
+				mask = crop_2darray(mask, crop_dim)
+				mask = flip_rot(mask, -1, 1)
+				ax.imshow(img, cmap="gray", vmax=np.max(img)*vmax_factor)
+				masked_plt = np.ma.masked_where(mask == 0, mask)
+				ax.imshow(masked_plt, cmap=light_jet,interpolation='none', alpha=0.4)
+				ax.set_title(second_row_title, size=label_size)
+
 def plot_mc_nnunet(contour_dir, img_dir, seg_dir, rtvol_dict, param_list, flag3d=True, mode = "nnunet",
 			crop_dim=160, contour_suffix = "_cine.txt", save_paths=[], img_suffix="cine_scanner",
 			check=False, plot=True):

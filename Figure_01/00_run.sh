@@ -23,4 +23,3 @@ cmd_array=(	'import sys,os;'
 cmd="${cmd_array[*]}"
 python3 -c "$cmd"
 
-bash "$SCRIPT_DIR"/43_annotate_inkscape.sh "$FIGURE_OUT"/figure_01_template.svg "$FIGURE_OUT"/figure_01_measurement_ED_ES.png "$FIGURE_OUT"/figure_01_a.png "$FIGURE_OUT"/figure_01_b.png

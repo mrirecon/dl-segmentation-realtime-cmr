@@ -26,4 +26,3 @@ if ! [ -f "$FIGURE_OUT"/DC_vs_bpm_nnunet.png ] ; then
 	python3 -c "$cmd"
 fi
 
-bash "$SCRIPT_DIR"/43_annotate_inkscape.sh "$FIGURE_OUT"/figure_template.svg "$FIGURE_OUT"/figure_03_DC_vs_bpm.png "$FIGURE_OUT"/DC_vs_bpm_nnunet.png "$FIGURE_OUT"/DC_vs_bpm_comDL.png

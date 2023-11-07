@@ -141,7 +141,7 @@ def calc_DC_and_bpm(rtvol_dict, mode=["nnunet"],
 	modes = ["rt", "rt_stress", "rt_maxstress"]
 	manual_contour_suffixes = ["_rt_manual"+contour_format, "_rt_stress_manual"+contour_format, "_rt_maxstress_manual"+contour_format]
 	comDL_contour_suffixes = ["_rt_comDL"+contour_format, "_rt_stress_comDL"+contour_format, "_rt_maxstress_comDL"+contour_format]
-	descr = ["RV", "Myo", "LV"]
+	descr = ["RV", "MYO", "LV"]
 
 	for d in rtvol_dict:
 		vol = d["id"]
@@ -240,17 +240,69 @@ def plot_DC_vs_bpm(rtvol_dict, save_paths=[], contour_mode="nnunet", ylim=[], pl
 				if ".png" in s:
 					plt.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 				else:
-					plt.savefig(s, bbox_inches='tight', pad_inches=0)
+					plt.savefig(s, bbox_inches='tight', pad_inches=0.01)
 		else:
 			if ".png" in save_paths:
 				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 			else:
-				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0)
+				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
 
 	if plot:
 		plt.show()
 	else:
 		plt.close()
+
+def plot_DC_vs_bpm_axes(rtvol_dict, ax, contour_mode="nnunet", ylim=[], mode="noerror", title=""):
+	"""
+	Plot Dice's coefficient of a list of input dictionaries.
+
+	:param list rtvol_dict: List of dictionaries
+	:param str save_path: Path to save plot. Default: Output is not saved
+	:param str contour_mode: Contour mode for plotting. Either 'nnunet' or 'comDL'
+	"""
+	modes = ["rt", "rt_stress", "rt_maxstress"]
+	descr = ["LV", "MYO", "RV"]
+	markers = ["o", "s", "D"]
+	colors = ["crimson", "limegreen", "royalblue"]
+	markersize = 15
+	dice_scores = [[] for i in descr]
+	dice_scores_std = [[] for i in descr]
+	heartrates = []
+	heartrates_std = []
+	for d in rtvol_dict:
+		for m in modes:
+			heartrate_key = "bpm"+m
+			heartrate_std_key = "bpmstd"+m
+			if heartrate_key in d:
+				heartrates.append(d[heartrate_key])
+				heartrates_std.append(d[heartrate_std_key])
+				for i, desc in enumerate(descr):
+					dice_scores[i].append(d["DC"+contour_mode+m+desc])
+					dice_scores_std[i].append(d["DCstd"+contour_mode+m+desc])
+	if "error" == mode:
+		for i, desc in enumerate(descr):
+			ax.errorbar(heartrates, dice_scores[i], xerr=heartrates_std, yerr=dice_scores_std[i], fmt='none',
+			label=desc, markersize=markersize, ecolor=colors[i])
+
+	else:
+			for i, desc in enumerate(descr):
+				ax.scatter(heartrates, dice_scores[i], label=desc, s=markersize, c=colors[i], marker=markers[i])
+
+	tick_size="large"
+	label_size="xx-large"
+	ax.set_xlabel("Heart rate [bpm]", size=label_size)
+	ax.set_ylabel("Dice's coefficient", size=label_size)
+	if "" != title:
+		ax.set_title(title, size=label_size)
+
+	ax.set_xticks(ticks=[i*20+60 for i in range(0,6)])
+	ax.set_yticks(ticks=[i*0.1+round(ylim[0],1) for i in range(0,int((ylim[1]-ylim[0])*10)+1)])
+	ax.tick_params(axis='both', labelsize=tick_size)
+
+	if 0 != len(ylim):
+		ax.set_ylim(ylim)
+
+	ax.legend(loc="lower left")
 
 def calc_mean_stdv_two_sets(setA, setB, mode="absolute", scale=1, precision=None):
 	"""
@@ -679,6 +731,9 @@ def plot_BA_nnunet_auto(rtvol_dict, out_dir_fig, plot=False, file_extensions=["p
 					save_paths=save_paths, plot=plot)
 
 def read_clinical_measures(in_file, no_dict=False):
+	"""
+	Read clinical measures (EDV, ESV, EF) from text file
+	"""
 	EDV_dict = []
 	ESV_dict = []
 	EF_dict = []
@@ -751,9 +806,9 @@ def write_cardiac_function_single(out_dir, rtvol_dict, edv_tuple, esv_tuple, ef_
 def save_fig1(out_dir, plot=False, img_dir=scanner_reco_dir,
 			contour_dir=contour_files_dir,
 			seg_dir=nnunet_output_dir,
-			file_extension="png"):
+			file_extension="pdf"):
 	"""
-	Parameters for plotting the measurement types in the manuscript.
+	Create figure for plotting measurement types and manually corrected contours
 	"""
 	file_extensions=file_extension.split(",")
 	vol = "vol12"
@@ -761,56 +816,95 @@ def save_fig1(out_dir, plot=False, img_dir=scanner_reco_dir,
 	slice_idx=13
 	vmax_factor=0.8
 	crop_dim=80
+
+	rows=2
+	columns=4
+	fig, axes = plt.subplots(rows, columns, figsize=(columns*6,rows*6))
+	ax = axes.flatten()
+
+	for i in range(rows*columns):
+		ax[i].set_axis_off()
+
 	mask_mode = []
 	phase_mode = "ed"
-	save_paths = [os.path.join(out_dir, "figure_01_a."+f) for f in file_extensions]
+	save_paths = [os.path.join(out_dir, "figure_01_measurement_ED."+f) for f in file_extensions]
 	titles = ["cine", "real-time (76 bpm)", "real-time (115 bpm)", "real-time (162 bpm)"]
-	assess_utils.plot_measurement_types(vol, reverse, slice_idx, mask_mode=mask_mode, phase_mode=phase_mode, save_paths=save_paths,
-				contour_dir=contour_dir,
-				img_dir =img_dir,
+	assess_utils.plot_measurement_types_axes(vol, [ax[i] for i in range(columns)], reverse, slice_idx, mask_mode=mask_mode,
+				phase_mode=phase_mode, save_paths=save_paths, contour_dir=contour_dir, img_dir=img_dir,
 				seg_dir=seg_dir, crop_dim=crop_dim, vmax_factor=vmax_factor, titles=titles, plot=plot)
 
 	mask_mode = ["mc"]
 	phase_mode = "ed"
-	save_paths = [os.path.join(out_dir, "figure_01_b."+f) for f in file_extensions]
-	assess_utils.plot_measurement_types(vol, reverse, slice_idx, mask_mode=mask_mode, phase_mode=phase_mode, save_paths=save_paths,
-				contour_dir=contour_dir,
-				img_dir =img_dir,
+	assess_utils.plot_measurement_types_axes(vol, [ax[columns+i] for i in range(columns)], reverse, slice_idx, mask_mode=mask_mode,
+				phase_mode=phase_mode, save_paths=save_paths, contour_dir=contour_dir, img_dir=img_dir,
 				seg_dir=seg_dir, crop_dim=crop_dim, vmax_factor=vmax_factor, titles=titles, plot=plot)
+
+	if 0 != len(save_paths):
+		if list == type(save_paths):
+			for s in save_paths:
+				if ".png" in s:
+					fig.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
+				else:
+					fig.savefig(s, bbox_inches='tight', pad_inches=0.01)
+		else:
+			if ".png" in save_paths:
+				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
+			else:
+				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
+	plt.close()
 
 def save_fig3(out_dir, rtvol_dict=rtvol, plot=False, contour_dir=contour_files_dir, seg_dir=nnunet_output_dir, file_extension="png"):
 	"""
 	Create figure for Dice's coefficient depending on heart rate
 	"""
-
 	file_extensions=file_extension.split(",")
 	ylim = [0.2,1]
+	save_paths = [os.path.join(out_dir, "figure_03_DC_vs_bpm."+f) for f in file_extensions]
+
+	rows=1
+	columns=2
+	fig, axes = plt.subplots(rows, columns, figsize=(columns*8,rows*6))
+	axes = axes.flatten()
 
 	# nnU-Net
 	calc_DC_and_bpm(rtvol_dict, mode=["nnunet"], contour_dir = contour_dir, seg_dir = seg_dir)
 	contour_mode = "nnunet"
 	save_paths = [os.path.join(out_dir, "DC_vs_bpm_"+contour_mode+"."+f) for f in file_extensions]
 	title="nnU-Net"
-	plot_DC_vs_bpm(rtvol_dict, save_paths=save_paths, contour_mode=contour_mode, ylim=ylim, plot=plot, title=title)
+	plot_DC_vs_bpm_axes(rtvol_dict, axes[0], contour_mode=contour_mode, ylim=ylim, title=title)
 
 	# comDL
 	calc_DC_and_bpm(rtvol_dict, mode=["comDL"], contour_dir = contour_dir, seg_dir = seg_dir)
 	contour_mode = "comDL"
 	save_paths = [os.path.join(out_dir, "DC_vs_bpm_"+contour_mode+"."+f) for f in file_extensions]
 	title="comDL"
-	plot_DC_vs_bpm(rtvol_dict, save_paths=save_paths, contour_mode=contour_mode, ylim=ylim, plot=plot, title=title)
+	plot_DC_vs_bpm_axes(rtvol_dict, axes[1], contour_mode=contour_mode, ylim=ylim, title=title)
+
+	if 0 != len(save_paths):
+		if list == type(save_paths):
+			for s in save_paths:
+				if ".png" in s:
+					plt.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
+				else:
+					plt.savefig(s, bbox_inches='tight', pad_inches=0.01)
+		else:
+			if ".png" in save_paths:
+				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
+			else:
+				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
+	plt.close()
 
 def save_fig4(out_dir, rtvol_dict=rtvol, plot=False, img_dir=scanner_reco_dir,
 			contour_dir=contour_files_dir,
 			seg_dir=os.path.join(nnunet_output_dir, "rtvol_rt_stress_2d_single_cv"),
-			file_extension="png"):
+			file_extension="pdf"):
 	"""
 	Create figure for visualizing the limits of neural networks for manuscript.
 	"""
 	file_extensions=file_extension.split(",")
-	crop_dim=[[50,110,30,90],[50,110,30,90],[40,120,40,120], [25,105,15,95]]  #[30,110,50,130]
+	crop_dim=[[50,110,30,90],[50,110,30,90],[40,120,40,120], [25,105,15,95]]
 
-	save_paths = [os.path.join(out_dir, "figure_03_nn_limits."+f) for f in file_extensions]
+	save_paths = [os.path.join(out_dir, "figure_04_nn_limits."+f) for f in file_extensions]
 	param_list = [['vol10', 2, 25], ['vol10', 3, 123], ['vol11', 15, 69], ['vol15', 11, 126]]
 	assess_utils.plot_mc_nnunet(contour_dir, img_dir, seg_dir, rtvol_dict, param_list, flag3d=False, mode = "nnunet",
 				crop_dim=crop_dim, contour_suffix = "_rt_stress_manual"+contour_format, img_suffix="rt_stress_scanner", save_paths=save_paths,
@@ -819,7 +913,7 @@ def save_fig4(out_dir, rtvol_dict=rtvol, plot=False, img_dir=scanner_reco_dir,
 def save_fig2(out_dir, plot=False, img_dir=scanner_reco_dir,
 			contour_dir=contour_files_dir,
 			seg_dir=nnunet_output_dir,
-			file_extension="png"):
+			file_extension="pdf"):
 	"""
 	Create a figure depicting an example for Dice's coefficients for comDL and nnU-Net segmentations.
 	"""
@@ -830,31 +924,57 @@ def save_fig2(out_dir, plot=False, img_dir=scanner_reco_dir,
 	vmax_factor=0.8
 	crop_dim=80
 	phase_mode = "es"
+
+	rows=4
+	columns=4
+	fig, axes = plt.subplots(rows, columns, figsize=(columns*6,rows*6))
+	ax = axes.flatten()
+	for i in range(rows*columns):
+		ax[i].set_axis_off()
+
+	save_paths = [os.path.join(out_dir, "figure_02_dc."+f) for f in file_extensions]
+
+	pad=-3
+	ax[2*columns].annotate("comDL", xy=(0,0.5), xytext=(-ax[2*columns].yaxis.labelpad - pad, 0),
+		xycoords=ax[2*columns].yaxis.label, textcoords='offset points',
+		size=60, ha='right', va='center', rotation=90)
+
+	ax[3*columns].annotate("nnU-Net", xy=(0,0.5), xytext=(-ax[3*columns].yaxis.labelpad - pad, 0),
+		xycoords=ax[3*columns].yaxis.label, textcoords='offset points',
+		size=60, ha='right', va='center', rotation=90)
+
 	mask_mode = []
 	titles = ["cine", "real-time (76 bpm)", "real-time (115 bpm)", "real-time (162 bpm)"]
-	save_paths = [os.path.join(out_dir, "figure_dc_a."+f) for f in file_extensions]
-	assess_utils.plot_measurement_types(vol, reverse, slice_idx, mask_mode=mask_mode, phase_mode=phase_mode, save_paths=save_paths,
-				contour_dir=contour_dir,
-				img_dir =img_dir,
+	assess_utils.plot_measurement_types_axes(vol, [ax[i] for i in range(columns)], reverse, slice_idx, mask_mode=mask_mode,
+				phase_mode=phase_mode, save_paths=save_paths, contour_dir=contour_dir, img_dir=img_dir,
 				seg_dir=os.path.join(nnunet_output_dir, "rtvol_rt_stress_2d_single_cv"), crop_dim=crop_dim, vmax_factor=vmax_factor, titles=titles, plot=plot)
 	mask_mode = ["mc"]
-	save_paths = [os.path.join(out_dir, "figure_dc_b."+f) for f in file_extensions]
-	assess_utils.plot_measurement_types(vol, reverse, slice_idx, mask_mode=mask_mode, phase_mode=phase_mode, save_paths=save_paths,
-				contour_dir=contour_dir,
-				img_dir =img_dir, DC=False,
+	assess_utils.plot_measurement_types_axes(vol, [ax[columns+i] for i in range(columns)], reverse, slice_idx, mask_mode=mask_mode,
+				phase_mode=phase_mode, save_paths=save_paths, contour_dir=contour_dir, img_dir=img_dir, DC=False,
 				seg_dir=seg_dir, crop_dim=crop_dim, vmax_factor=vmax_factor, titles=titles, plot=plot)
 	mask_mode = ["comDL"]
-	save_paths = [os.path.join(out_dir, "figure_dc_c."+f) for f in file_extensions]
-	assess_utils.plot_measurement_types(vol, reverse, slice_idx, mask_mode=mask_mode, phase_mode=phase_mode, save_paths=save_paths,
-				contour_dir=contour_dir,
-				img_dir =img_dir, DC=True,
+	assess_utils.plot_measurement_types_axes(vol, [ax[2*columns+i] for i in range(columns)], reverse, slice_idx, mask_mode=mask_mode,
+				phase_mode=phase_mode, save_paths=save_paths, contour_dir=contour_dir, img_dir=img_dir, DC=True,
 				seg_dir=seg_dir, crop_dim=crop_dim, vmax_factor=vmax_factor, titles=titles, plot=plot)
 	mask_mode = ["nnunet"]
-	save_paths = [os.path.join(out_dir, "figure_dc_d."+f) for f in file_extensions]
-	assess_utils.plot_measurement_types(vol, reverse, slice_idx, mask_mode=mask_mode, phase_mode=phase_mode, save_paths=save_paths,
-				contour_dir=contour_dir,
-				img_dir =img_dir, DC=True,
+	assess_utils.plot_measurement_types_axes(vol, [ax[3*columns+i] for i in range(columns)], reverse, slice_idx, mask_mode=mask_mode,
+				phase_mode=phase_mode, save_paths=save_paths, contour_dir=contour_dir, img_dir=img_dir, DC=True,
 				seg_dir=seg_dir, crop_dim=crop_dim, vmax_factor=vmax_factor, titles=titles, plot=plot)
+
+
+	if 0 != len(save_paths):
+		if list == type(save_paths):
+			for s in save_paths:
+				if ".png" in s:
+					fig.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
+				else:
+					fig.savefig(s, bbox_inches='tight', pad_inches=0.01)
+		else:
+			if ".png" in save_paths:
+				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
+			else:
+				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
+	plt.close()
 
 def save_figba(out_dir, rtvol_dict=rtvol, param_dir="", nnunet_output=nnunet_output_dir, file_extension="pdf"):
 	"""
@@ -907,12 +1027,12 @@ def save_figba(out_dir, rtvol_dict=rtvol, param_dir="", nnunet_output=nnunet_out
 				if ".png" in s:
 					fig.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 				else:
-					fig.savefig(s, bbox_inches='tight', pad_inches=0)
+					fig.savefig(s, bbox_inches='tight', pad_inches=0.01)
 		else:
 			if ".png" in save_paths:
 				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 			else:
-				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0)
+				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
 	plt.close()
 
 	rows=3
@@ -940,12 +1060,12 @@ def save_figba(out_dir, rtvol_dict=rtvol, param_dir="", nnunet_output=nnunet_out
 				if ".png" in s:
 					fig.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 				else:
-					fig.savefig(s, bbox_inches='tight', pad_inches=0)
+					fig.savefig(s, bbox_inches='tight', pad_inches=0.01)
 		else:
 			if ".png" in save_paths:
 				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 			else:
-				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0)
+				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
 	plt.close()
 
 def save_figba_cine_rt(out_dir, rtvol_dict=rtvol, param_dir="", nnunet_output=nnunet_output_dir, file_extension="pdf"):
@@ -997,12 +1117,12 @@ def save_figba_cine_rt(out_dir, rtvol_dict=rtvol, param_dir="", nnunet_output=nn
 				if ".png" in s:
 					fig.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 				else:
-					fig.savefig(s, bbox_inches='tight', pad_inches=0)
+					fig.savefig(s, bbox_inches='tight', pad_inches=0.01)
 		else:
 			if ".png" in save_paths:
 				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 			else:
-				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0)
+				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
 
 def write_cardiac_function_all(out_dir, rtvol_dict=rtvol, contour_dir=contour_files_dir, exp_dir=end_exp_dir,
 				nnunet_output=nnunet_output_dir, contour_suffix=contour_format):
