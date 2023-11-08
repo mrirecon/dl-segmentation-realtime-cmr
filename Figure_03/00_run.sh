@@ -14,13 +14,14 @@ read -ra param < <(grep -v '^#' assess_dl.env | xargs)
 export "${param[@]}"
 
 export SCRIPT_DIR=$SCRIPT_REPO/01_scripts
+export PARAM_DIR=$SCRIPT_REPO/Eval_01
 export FIGURE_OUT=$SCRIPT_REPO/Figure_03
 
 if ! [ -f "$FIGURE_OUT"/DC_vs_bpm_nnunet.png ] ; then
 	cmd_array=(	'import sys,os;'
 		'sys.path.insert(0,os.environ["SCRIPT_DIR"]);'
 		'import assess_dl_seg;'
-		'assess_dl_seg.save_fig3(out_dir=os.environ["FIGURE_OUT"])')
+		'assess_dl_seg.save_fig3(out_dir=os.environ["FIGURE_OUT"],param_dir=os.environ["PARAM_DIR"])')
 
 	cmd="${cmd_array[*]}"
 	python3 -c "$cmd"

@@ -349,6 +349,55 @@ def write_output_cardiac_function_parameters(output_file, ed_vol, es_vol, ef, rt
 				output.write(rtvol_dict[num]["id"]+"\t"+str(round(e,precision))+"\n")
 		output.close()
 
+def write_output_dice_coefficients(output_file, rtvol_dict=rtvol, precision=4, network="nnunet", meas="rt",
+						header="nnU-Net"):
+	"""
+	Write output mean and standard deviation parameters of output Dice's coefficients.
+
+	:param str output_file: File path to output text file
+	:param list rtvol_dict: List of dictionaries with volunteer id and Dice's coefficients for each volunteer
+	:param int precision: Precision for output data. Default: 4
+	:param str network: Neural network for segmentation. Either "nnunet" or "comDL"
+	:param str meas: Measurement mode. Either "rt", "rt_stress" or "rt_maxstress"
+	:param str header: Header for first line of output file
+	"""
+	if "" != output_file:
+		with open (output_file, 'w', encoding="utf8", errors='ignore') as output:
+			output.write(header+"\n")
+			output.write("BPM\n")
+			for d in rtvol_dict:
+				val_key = 'bpm'+meas
+				std_key = 'bpmstd'+meas
+				if val_key in d:
+					output.write(d["id"]+"\t"+str(round(d[val_key],precision))+"\t"+str(round(d[std_key],precision))+"\n")
+				else:
+					output.write(d["id"]+"\t---\t---\n")
+			output.write("LV\n")
+			for d in rtvol_dict:
+				val_key = 'DC'+network+meas+'LV'
+				std_key = 'DCstd'+network+meas+'LV'
+				if val_key in d:
+					output.write(d["id"]+"\t"+str(round(d[val_key],precision))+"\t"+str(round(d[std_key],precision))+"\n")
+				else:
+					output.write(d["id"]+"\t---\t---\n")
+			output.write("MYO\n")
+			for d in rtvol_dict:
+				val_key = 'DC'+network+meas+'Myo'
+				std_key = 'DCstd'+network+meas+'Myo'
+				if val_key in d:
+					output.write(d["id"]+"\t"+str(round(d[val_key],precision))+"\t"+str(round(d[std_key],precision))+"\n")
+				else:
+					output.write(d["id"]+"\t---\t---\n")
+			output.write("RV\n")
+			for d in rtvol_dict:
+				val_key = 'DC'+network+meas+'RV'
+				std_key = 'DCstd'+network+meas+'RV'
+				if val_key in d:
+					output.write(d["id"]+"\t"+str(round(d[val_key],precision))+"\t"+str(round(d[std_key],precision))+"\n")
+				else:
+					output.write(d["id"]+"\t---\t---\n")
+		output.close()
+
 def calc_mean_stdv_parameters_cine(rtvol_dict, seg_dir = os.path.join(nnunet_output_dir, "rtvol_cine_2d_single_cv/"),
 				   contour_dir = contour_files_dir, flag3d=False, contour_format=contour_format,
 				   pixel_spacing = 1.328125, slice_selection=False):
@@ -763,6 +812,33 @@ def read_clinical_measures(in_file, no_dict=False):
 		return [d["value"] for d in EDV_dict], [d["value"] for d in ESV_dict], [d["value"] for d in EF_dict]
 	return EDV_dict, ESV_dict, EF_dict
 
+def read_DC(in_file, rtvol_dict, network, meas):
+	"""
+	Read Dice's coefficients and bpm from text file
+	"""
+	readout = ""
+	with open (in_file, 'rt', encoding="utf8", errors='ignore') as myfile:
+		for line in myfile:
+			content = line.split()
+			content = [c.strip() for c in content]
+			if content[0].strip() in ["BPM", "LV", "MYO", "RV"]:
+				readout = content[0]
+				continue
+			if "BPM" == readout:
+				if "---" == content[1]:
+					continue
+				for d in rtvol_dict:
+					if content[0] == d["id"]:
+						d["bpm"+meas] = int(content[1])
+						d["bpmstd"+meas] = int(content[2])
+						continue
+			if "" != readout:
+				for d in rtvol_dict:
+					if content[0] == d["id"] and "bpm"+meas in d:
+						d["DC"+network+meas+readout] = float(content[1])
+						d["DCstd"+network+meas+readout] = float(content[2])
+	myfile.close()
+
 def print_abs_rel_diff(file_ref, file_comp, precision=1):
 	edv_ref, esv_ref, ef_ref = read_clinical_measures(file_ref)
 	edv_comp, esv_comp, ef_comp = read_clinical_measures(file_comp)
@@ -853,32 +929,41 @@ def save_fig1(out_dir, plot=False, img_dir=scanner_reco_dir,
 				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
 	plt.close()
 
-def save_fig3(out_dir, rtvol_dict=rtvol, plot=False, contour_dir=contour_files_dir, seg_dir=nnunet_output_dir, file_extension="png"):
+def save_fig3(out_dir, rtvol_dict=rtvol, param_dir="", contour_dir=contour_files_dir, seg_dir=nnunet_output_dir, file_extension="pdf,png"):
 	"""
 	Create figure for Dice's coefficient depending on heart rate
 	"""
 	file_extensions=file_extension.split(",")
 	ylim = [0.2,1]
+	meas=["rt", "rt_stress", "rt_maxstress"]
 	save_paths = [os.path.join(out_dir, "figure_03_DC_vs_bpm."+f) for f in file_extensions]
+
+	if "" == param_dir:
+		param_dir = out_dir
+		write_DC_all(out_dir, rtvol_dict=rtvol_dict, contour_dir=contour_dir, nnunet_output=seg_dir)
 
 	rows=1
 	columns=2
 	fig, axes = plt.subplots(rows, columns, figsize=(columns*8,rows*6))
 	axes = axes.flatten()
 
+	save_paths = [os.path.join(out_dir, "figure_03_DC_vs_bpm."+f) for f in file_extensions]
+
 	# nnU-Net
-	calc_DC_and_bpm(rtvol_dict, mode=["nnunet"], contour_dir = contour_dir, seg_dir = seg_dir)
-	contour_mode = "nnunet"
-	save_paths = [os.path.join(out_dir, "DC_vs_bpm_"+contour_mode+"."+f) for f in file_extensions]
+	network = "nnunet"
 	title="nnU-Net"
-	plot_DC_vs_bpm_axes(rtvol_dict, axes[0], contour_mode=contour_mode, ylim=ylim, title=title)
+	for m in meas:
+		file_DC = os.path.join(param_dir,"DC_"+network+"_"+m+".txt")
+		read_DC(file_DC, rtvol_dict, network, m)
+	plot_DC_vs_bpm_axes(rtvol_dict, axes[0], contour_mode=network, ylim=ylim, title=title)
 
 	# comDL
-	calc_DC_and_bpm(rtvol_dict, mode=["comDL"], contour_dir = contour_dir, seg_dir = seg_dir)
-	contour_mode = "comDL"
-	save_paths = [os.path.join(out_dir, "DC_vs_bpm_"+contour_mode+"."+f) for f in file_extensions]
+	network = "comDL"
 	title="comDL"
-	plot_DC_vs_bpm_axes(rtvol_dict, axes[1], contour_mode=contour_mode, ylim=ylim, title=title)
+	for m in meas:
+		file_DC = os.path.join(param_dir,"DC_"+network+"_"+m+".txt")
+		read_DC(file_DC, rtvol_dict, network, m)
+	plot_DC_vs_bpm_axes(rtvol_dict, axes[1], contour_mode=network, ylim=ylim, title=title)
 
 	if 0 != len(save_paths):
 		if list == type(save_paths):
@@ -1123,6 +1208,29 @@ def save_figba_cine_rt(out_dir, rtvol_dict=rtvol, param_dir="", nnunet_output=nn
 				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 			else:
 				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
+
+def write_DC_all(out_dir, rtvol_dict=rtvol, contour_dir=contour_files_dir, seg_dir=nnunet_output_dir):
+	"""
+	Write Dice's coefficients and heart rates in bpm for comDL and nnU-Net.
+	"""
+	meas = "rt", "rt_stress", "rt_maxstress"
+	#nnU-Net
+	calc_DC_and_bpm(rtvol_dict, mode=["nnunet"], contour_dir = contour_dir, seg_dir = seg_dir)
+	network="nnunet"
+	header="nnU-Net"
+	for m in meas:
+		file_path = os.path.join(out_dir,"DC_"+network+"_"+m+".txt")
+		write_output_dice_coefficients(file_path, rtvol_dict=rtvol_dict, precision=4, network=network, meas=m,
+								header=header)
+
+	#comDL
+	calc_DC_and_bpm(rtvol_dict, mode=["comDL"], contour_dir = contour_dir, seg_dir = seg_dir)
+	network="comDL"
+	header="comDL"
+	for m in meas:
+		file_path = os.path.join(out_dir,"DC_"+network+"_"+m+".txt")
+		write_output_dice_coefficients(file_path, rtvol_dict=rtvol_dict, precision=4, network=network, meas=m,
+								header=header)
 
 def write_cardiac_function_all(out_dir, rtvol_dict=rtvol, contour_dir=contour_files_dir, exp_dir=end_exp_dir,
 				nnunet_output=nnunet_output_dir, contour_suffix=contour_format):
