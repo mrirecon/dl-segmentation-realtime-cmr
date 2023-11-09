@@ -7,7 +7,7 @@ author: Martin Schilling (martin.schilling@med.uni-goettingen.de), 2023
 
 Script with utility functions for the creation of figures and the analysis of data
 for the manuscript "Assessment of Deep Learning Segmentation
-in Free-Breathing Real-Time Cardiac Magnetic Resonance Imaging".
+in Real-Time Free-Breathing Cardiac Magnetic Resonance Imaging".
 """
 
 import numpy as np
@@ -164,7 +164,7 @@ def plot_bland_altman_multi(setA:list, setB:list, header:str="", save_paths:list
 	check:bool=False, scale:float=1, precision:int = 2, plot:bool=True, ylim = [],
 	labels:list = ["label1", "label2", "label3", "label4", "label5", "label6"],
 	colors:list = ["royalblue", "dodgerblue", "palegreen", "yellowgreen", "darkorange", "indianred"],
-	xlabel:str = "", ylabel:str = ""):
+	xlabel:str = "average of set A and set B", ylabel:str = "set A - set B [-]"):
 	"""
 	Plot a Bland-Altman plot for two given sets 'A' and 'B'.
 
@@ -206,7 +206,6 @@ def plot_bland_altman_multi(setA:list, setB:list, header:str="", save_paths:list
 		avg.append((m+s) / 2)
 		diff.append(m-s)
 	stdv = np.std(diff)
-	#print("Standard Deviation: " +str(stdv))
 	avg_diff=sum(diff) / len(avg)
 	upper_limit = sum(diff) / len(diff) + 1.96 * stdv
 	lower_limit = sum(diff) / len(diff) - 1.96 * stdv
@@ -222,7 +221,6 @@ def plot_bland_altman_multi(setA:list, setB:list, header:str="", save_paths:list
 			diff_list[num].append(a-b)
 			if check:
 				if (a - b < lower_limit) or (a - b > upper_limit):
-					#print("Deviating average in class " + str(num) + " and index " + str(enum))
 					dev_list.append([num,enum])
 	for num,(a,d) in enumerate(zip(avg_list, diff_list)):
 		plt.scatter(a,d, s=point_size, label=labels[num], c=colors[num])
@@ -275,9 +273,9 @@ def plot_bland_altman_axes(setA:list, setB:list, ax, header:str="", lower_bound:
 	check:bool=False, scale:float=1, precision:int = 2, ylim = [],
 	labels:list = ["label1", "label2", "label3", "label4", "label5", "label6"],
 	colors:list = ["royalblue", "dodgerblue", "palegreen", "yellowgreen", "darkorange", "indianred"],
-	xlabel:str = "Average Measurement of T1 [ms]", ylabel:str = "moba T1 - subspace T1 [ms]"):
+	xlabel:str = "average of set A and set B", ylabel:str = "set A - set B [-]"):
 	"""
-	Plot a Bland-Altman plot for two given sets 'A' and 'B'.
+	Plot a Bland-Altman plot for two given sets 'A' and 'B' for an axis of a subplot.
 
 	:param list setA: List of first set of values
 	:param list setB: List of second set of values
@@ -294,8 +292,6 @@ def plot_bland_altman_axes(setA:list, setB:list, ax, header:str="", lower_bound:
 	:param list colors: Colors for groups in sets
 	:param str xlabel: Label for x-axis
 	:param str ylabel: Label for y-axis
-	:returns: List index and entry index in format [[list1, entry1], [list2, entry2], ...] for deviating entries
-	:rtype: list
 	"""
 	setA_flat, setB_flat = [], []
 	for set in setA:
@@ -331,7 +327,6 @@ def plot_bland_altman_axes(setA:list, setB:list, ax, header:str="", lower_bound:
 			diff_list[num].append(a-b)
 			if check:
 				if (a - b < lower_limit) or (a - b > upper_limit):
-					#print("Deviating average in class " + str(num) + " and index " + str(enum))
 					dev_list.append([num,enum])
 	for num,(a,d) in enumerate(zip(avg_list, diff_list)):
 		ax.scatter(a,d, s=point_size, label=labels[num], c=colors[num])
@@ -349,10 +344,8 @@ def plot_bland_altman_axes(setA:list, setB:list, ax, header:str="", lower_bound:
 
 	hori_offset = 0.25 * (max(avg) - min(avg))
 	vert_offset = 1/25 * np.abs(max(diff) - min(diff))
-	#print(vert_offset)
 	if 0 != len(ylim):
 		vert_offset = 1/60 * np.abs(ylim[1] - ylim[0])
-	#print(vert_offset)
 
 	ax.text(max(avg)-hori_offset, lower_limit+vert_offset, '-1.96 SD = {0:.{1}f}'.format(lower_limit, precision), ha='left', va='center', fontsize=fontsize)
 	ax.text(max(avg)-hori_offset, upper_limit+vert_offset, '1.96 SD = {0:.{1}f}'.format(upper_limit, precision), ha='left', va='center', fontsize=fontsize)
@@ -368,12 +361,12 @@ def plot_bland_altman_axes(setA:list, setB:list, ax, header:str="", lower_bound:
 		ncol=3, fancybox=True, shadow=False, framealpha=framealpha, fontsize=legendsize)
 
 #---Creating nnU-Net input data---
-def extract_img_params(session:os.path):
+def extract_img_params(contour_file:os.path):
 	"""
 	Extract image dimension, field of view, end-systolic and end-diastolic phases
-	and the number of slices from a session file of cardiac cine MRI.
+	and the number of slices from a contour file of cardiac cine MRI.
 
-	:param os.path session: File path to file containing session information
+	:param os.path contour_file: File path to file containing contour information
 	:returns: tuple (img_shape, fov, ed_phase, es_phase, slices)
 		WHERE
 		list img_shape is [xdim, ydim]
@@ -388,7 +381,7 @@ def extract_img_params(session:os.path):
 	fov_x, fov_y = 0,0
 	ed_phase, es_phase = 0, 0
 	number_slices = 0
-	with open (session, 'rt', encoding="utf8", errors='ignore') as input:
+	with open (contour_file, 'rt', encoding="utf8", errors='ignore') as input:
 		for line in input:
 			if line.strip():
 				content = line.split("\n")
@@ -408,7 +401,7 @@ def extract_img_params(session:os.path):
 	img_shape = [xdim, ydim]
 	fov = [fov_x, fov_y]
 	if 0 == number_slices:
-		print("extraction did not work", session)
+		print("extraction did not work", contour_file)
 	return img_shape, fov, number_slices
 
 def single_slice_combine_masks_to_list(mask_list, param_list, medis_slice):
@@ -495,7 +488,7 @@ def combine_masks_multi(mask_list, param_list, slices=0, reverse=False):
 
 def extract_ED_ES_phase_cine(plist:list, mlist:list, segm_class:int=3):
 	"""
-	Determine the end-diastolic (ED) and end-systolic (ES) phase for cine sessions.
+	Determine the end-diastolic (ED) and end-systolic (ES) phase for cine contour files.
 	A parameter list for multiple slices in combination with a list of lists of segmentation masks
 	is given as input. The amount of pixels corresponding to a given segmentation class is averaged over all slices
 	for each phase. The ED phase is the one with the larger average area, the ES phase the one with the lower average area.
@@ -529,30 +522,32 @@ def extract_ED_ES_phase_cine(plist:list, mlist:list, segm_class:int=3):
 	else:
 		return phase2, phase1
 
-def create_nnunet_input_cine(img_file:os.path, output_prefix:os.path, session:os.path="", reverse:bool=False, output_mode:str="2d", pixel_spacing:float=1.328125,
+def create_nnunet_input_cine(img_file:os.path, output_prefix:os.path, contour_file:os.path="", reverse:bool=False, output_mode:str="2d", pixel_spacing:float=1.328125,
 				phase_selection="edes", slice_selection=False):
 	"""
-	Create input for nnUNet for cine MRI based on session files.
+	Create input for nnUNet for cine MRI based on contour files.
 
 	:param os.path img_file: Reconstructed MRI images in format [xdim, ydim, 1,1,1,1,1,1,1,1,phase, slice]
 	:param os.path output_prefix: Prefix for nnUNet files. Files will have the format <prefi>xxyyy where xx
 		represents the slice index, yyy the phase index
-	:param os.path session: Text file containing Medis session information and manual contours
-	:param bool reverse: Flag for reversing the slice indexing. Some sessions feature the slices in reversed order
+	:param os.path contour_file: Text file containing Medis session information and manual contours
+	:param bool reverse: Flag for reversing the slice indexing. Some contour files feature the slices in reversed order
 	:param str output_mode: Output format of Nifti files for nnU-Net. "2d" for (1,xdim,ydim), "3d" for (batch_dim, xdim, ydim)
 	:param float pixel_spacing: Pixel spacing of input in mm, e.g. 1px = 1.6 mm x 1.6 mm --> pixel_spacing = 1.6
+	:param str phase_selection: Selection of ED and ES phases with 'edes' or all phases
+	:param bool slice_selection: Flag for 3D output to only include slices containing the heart (slice_selection=True) or all slices (slice_selection=False)
 	"""
 	img_data = cfl.readcfl(img_file)
 	img_data = np.reshape(img_data, (img_data.shape[0], img_data.shape[1],img_data.shape[10],img_data.shape[13]))
 	slice_list = []
 
-	if "" != session:
-		img_dims, fov, slices_new = extract_img_params(session)
-		mask_list, param_list, ccsf = masks_and_parameters_from_file(session, img_dims)
+	if "" != contour_file:
+		img_dims, fov, slices_new = extract_img_params(contour_file)
+		mask_list, param_list, ccsf = masks_and_parameters_from_file(contour_file, img_dims)
 		slice_indexes, mlist, plist = combine_masks_multi(mask_list, param_list, slices_new, reverse)
 
 		if img_dims != [img_data.shape[0], img_data.shape[1]]:
-				print(session, [img_data.shape[0], img_data.shape[1]], img_dims)
+				print(contour_file, [img_data.shape[0], img_data.shape[1]], img_dims)
 
 		EDphase, ESphase = extract_ED_ES_phase_cine(plist, mlist, segm_class=3)
 		pixel_spacing = round((fov[0] / img_data.shape[0] + fov[1] / img_data.shape[1]) / 2, 7)
@@ -563,9 +558,6 @@ def create_nnunet_input_cine(img_file:os.path, output_prefix:os.path, session:os
 				if EDphase == p[1] and p[0] not in slice_list:
 					slice_list.append(p[0])
 			slice_list.sort()
-
-			print(session)
-			print(slice_list)
 
 		if "edes" == phase_selection:
 			phase_list = [EDphase, ESphase]
@@ -587,7 +579,7 @@ def create_nnunet_input_cine(img_file:os.path, output_prefix:os.path, session:os
 def create_nnunet_input_rt(img_file:os.path, output_prefix:os.path, mode="single", pixel_spacing:float = 1.6,
 			   crop_dim=None, slice_id="", contour_file="", reverse_flag=""):
 	"""
-	Create input for nnUNet for cine MRI based on session files.
+	Create input for nnUNet for cine MRI based on contour files.
 
 	:param os.path img_file: Reconstructed MRI images in format [xdim, ydim, 1,1,1,1,1,1,1,1,phase, slice]
 	:param os.path output_prefix: Prefix for nnUNet files. Files will have the format <prefi>xxyyy where xx
@@ -597,7 +589,7 @@ def create_nnunet_input_rt(img_file:os.path, output_prefix:os.path, mode="single
 	:param int crop_dim: Size of square dimensions to crop image to
 	:param str slice_id: String of slice index (input from bash script)
 	:param os.path contour_file: Text file containing Medis contours to only create nnU-Net input for indexes with contours
-	:param bool reverse_flag: Flag for reversing the slice indexing. Some sessions feature the slices in reversed order.
+	:param bool reverse_flag: Flag for reversing the slice indexing. Some contour files feature the slices in reversed order.
 	"""
 	img_data = cfl.readcfl(img_file)
 	slices = [0]
@@ -660,7 +652,7 @@ def calc_dice_coeff(ref:list, pred:list, segm_classes:int, plist = [], reverse=F
 	:param list pred: List of predictions in 2d np.array format
 	:param int segm_classes: Number of segmentation classes
 	:param list plist: Parameter list in format [[slice1,phase1], [slice2,phase2], ...]
-	:param bool reverse: Flag for reversing the slice indexing. Some sessions feature the slices in reversed order
+	:param bool reverse: Flag for reversing the slice indexing. Some contour files feature the slices in reversed order
 	:returns: tuple (result, dict_list)
 		WHERE
 		list result is Dice's coefficients for every segmentation classes
@@ -706,7 +698,7 @@ def calc_dice_coeff(ref:list, pred:list, segm_classes:int, plist = [], reverse=F
 		result.append(sum(single_results[i]) / len(single_results[i]))
 	return result, dict_list
 
-def mask_for_phase_session(mlist:list, plist:list, phase:int):
+def mask_for_phase_contour_file(mlist:list, plist:list, phase:int):
 	"""
 	Calculate a list of segmentation masks for a given phase from a list of masks for a given segmentation class.
 
@@ -754,6 +746,7 @@ def get_phase_mask_from_nnunet(segm_prefix:os.path, plist:list, flag3d=False):
 
 	:param os.path segm_prefix: Prefix for Nifti file names
 	:param list plist: Lists of parameters for multiple slices. Format [slice, phase]
+	:param bool flag3d: Flag for 3D segmentation of nnU-Net
 	:returns: Segmentation mask
 	:rtype: list
 	"""
@@ -776,15 +769,16 @@ def get_phase_mask_from_nnunet(segm_prefix:os.path, plist:list, flag3d=False):
 			masks.append(img)
 	return masks
 
-def get_ed_es_dice_from_session(session:os.path, reverse:bool, segm_input:str, flag3d=False, phase_select="both", slice_selection=False)->tuple:
+def get_ed_es_dice_from_contour_file(contour_file:os.path, reverse:bool, segm_input:str, flag3d=False, phase_select="both", slice_selection=False)->tuple:
 	"""
-	Determine the end-diastolic (ED) and end-systolic (ES) Dice's coefficient for a given session featuring contours in Medis format.
+	Determine the end-diastolic (ED) and end-systolic (ES) Dice's coefficient between comDL or nnU-Net segmentation
+	and manually corrected contours.
 
-	:param os.path session: Text file containing Medis session information and manual contours.
-	:param bool reverse: Flag for reversing the slice indexing. Some sessions feature the slices in reversed order
+	:param os.path contour_file: Text file containing Medis session information and manual contours.
+	:param bool reverse: Flag for reversing the slice indexing. Some contour files feature the slices in reversed order
 	:param str segm_input: Single segmentation file (nnet segmentation) or directory/prefix (nnU-Net) containing segmentations
-	:param bool flag3d:
-	:param str phase_select:
+	:param bool flag3d: Flag for 3D segmentation of nnU-Net
+	:param str phase_select: Individual output of ED and ES phase with "both" or combined output with "combined"
 	:param bool slice_selection:
 	:returns: tuple (ed_dc, ed_dict, es_dc, es_dict)
 		WHERE
@@ -793,15 +787,15 @@ def get_ed_es_dice_from_session(session:os.path, reverse:bool, segm_input:str, f
 		list ed_dc is Dice's coefficient for end-systolic phases
 		list ed_dict is list of dictionaries containing information about Dice coefficients for ES phases
 	"""
-	img_dims, fov, slices = extract_img_params(session)
-	mask_list, param_list, ccsf = masks_and_parameters_from_file(session, img_dims)
+	img_dims, fov, slices = extract_img_params(contour_file)
+	mask_list, param_list, ccsf = masks_and_parameters_from_file(contour_file, img_dims)
 	slice_indexes, mlist, plist = combine_masks_multi(mask_list, param_list, slices=slices, reverse=reverse)
 
 	slice_indexes.sort()
 	EDphase, ESphase = extract_ED_ES_phase_cine(plist, mlist, segm_class=3)
 
-	ed_masks_mc = mask_for_phase_session(mlist, plist, EDphase)
-	es_masks_mc = mask_for_phase_session(mlist, plist, ESphase)
+	ed_masks_mc = mask_for_phase_contour_file(mlist, plist, EDphase)
+	es_masks_mc = mask_for_phase_contour_file(mlist, plist, ESphase)
 
 	#create one flat parameter list
 	ed_plist, es_plist = [], []
@@ -902,16 +896,16 @@ def get_ed_es_from_manual_rt(mlist:list, plist:list, segm_class:int=3, pixel_spa
 			es_idx.append(even_idx)
 	return ed_idx, es_idx, ed_list, es_list
 
-def get_ed_es_dice_from_session_rt(contour_file:os.path, reverse:bool, segm_input:str,
+def get_ed_es_dice_from_contour_file_rt(contour_file:os.path, reverse:bool, segm_input:str,
 			flag3d:bool=False, phase_select="both", slices_string="", mode="output")->tuple:
 	"""
-	Determine the end-diastolic (ED) and end-systolic (ES) Dice's coefficient (DC) for a given session featuring contours in Medis format.
+	Determine the end-diastolic (ED) and end-systolic (ES) Dice's coefficient (DC) for a given contour file featuring contours in Medis format.
 	A dictionary for each image with its DC is given, class labels are in order: "BG", "RV", "Myo", "LV"
 
-	:param os.path session: Text file containing Medis session information and manual contours.
-	:param bool reverse: Flag for reversing the slice indexing. Some sessions feature the slices in reversed order
+	:param os.path contour_file: Text file containing Medis session information and manual contours.
+	:param bool reverse: Flag for reversing the slice indexing. Some contour files feature the slices in reversed order
 	:param str segm_input: Single segmentation file (nnet segmentation) or directory/prefix (nnU-Net) containing segmentations
-	:param bool flag3d: Flag for the input of 3D nnU-Net data
+	:param bool flag3d: Flag for 3D segmentation of nnU-Net
 	:param str phase_select: Selection of phases. 'both' for individual calculation for ED and ES phase. 'combined' for combined calculation.
 	:param str slices_string: String of slice indexes for slice selection. Separate slices indexes with spaces "<slice1> <slice2> ..."
 	:param str mode: Set mode to "no output" for directly printing Dice's coefficients
@@ -992,7 +986,7 @@ def get_ed_es_dice_from_session_rt(contour_file:os.path, reverse:bool, segm_inpu
 
 		return ed_dc, ed_dict, es_dc, es_dict
 
-def get_ed_es_dice_from_session_multi(contour_dir, data_dict, manual_contour_suffix, comp_contour_suffix="", nnunet_prefix="", phase_select="both",
+def get_ed_es_dice_from_contour_file_multi(contour_dir, data_dict, manual_contour_suffix, comp_contour_suffix="", nnunet_prefix="", phase_select="both",
 		title="nnUNet", class_labels=["BG", "RV", "Myo", "LV"], flag3d=True, labels=4, mode="rt", print_output=True, slice_selection=False):
 	"""
 	Return Dice coefficient for multiple datasets.
@@ -1005,7 +999,7 @@ def get_ed_es_dice_from_session_multi(contour_dir, data_dict, manual_contour_suf
 	:param str phase_select: Selection for calculation of ED and ES phase. Either 'both' or 'combined'
 	:param str title: Title for output
 	:param list class_labels: List of string descriptions for class labels
-	:param bool flag3D: Flag for 3D input of nnU-Net
+	:param bool flag3d: Flag for 3D segmentation of nnU-Net
 	:param int labels: Number of labels
 	:param str mode: Mode of measurement. Either 'rt' or 'cine'
 	:param bool print_output:
@@ -1025,7 +1019,7 @@ def get_ed_es_dice_from_session_multi(contour_dir, data_dict, manual_contour_suf
 		vol = data["id"]
 		reverse = data["reverse"]
 		manual_contour_file = vol+manual_contour_suffix
-		session = os.path.join(contour_dir, manual_contour_file)
+		contour_file = os.path.join(contour_dir, manual_contour_file)
 
 		# comDL contour
 		if "" != comp_contour_suffix:
@@ -1036,9 +1030,9 @@ def get_ed_es_dice_from_session_multi(contour_dir, data_dict, manual_contour_suf
 			segm_input = nnunet_prefix+vol[3:]
 
 		if "cine" == mode:
-			ed_dc, ed_dict, es_dc, es_dict = get_ed_es_dice_from_session(session, reverse, segm_input, flag3d=flag3d, phase_select=phase_select, slice_selection=slice_selection)
+			ed_dc, ed_dict, es_dc, es_dict = get_ed_es_dice_from_contour_file(contour_file, reverse, segm_input, flag3d=flag3d, phase_select=phase_select, slice_selection=slice_selection)
 		elif "rt" == mode:
-			ed_dc, ed_dict, es_dc, es_dict = get_ed_es_dice_from_session_rt(session, reverse, segm_input, flag3d=flag3d, phase_select=phase_select)
+			ed_dc, ed_dict, es_dc, es_dict = get_ed_es_dice_from_contour_file_rt(contour_file, reverse, segm_input, flag3d=flag3d, phase_select=phase_select)
 		else:
 			sys.exit("Choose either mode 'rt' or 'cine'.")
 
@@ -1145,7 +1139,7 @@ def get_phase_area_from_nnunet(segm_prefix:os.path, plist:list, segm_class:int =
 			area.append(lv_count * pixel_spacing * pixel_spacing)
 	return area
 
-def area_for_phase_session(mlist:list, plist:list, phase:int, segm_class:int = 3, pixel_spacing:float = 1):
+def area_for_phase_contour_file(mlist:list, plist:list, phase:int, segm_class:int = 3, pixel_spacing:float = 1):
 	"""
 	Calculate a list of areas for a given phase from a list of masks for a given segmentation class.
 
@@ -1165,12 +1159,12 @@ def area_for_phase_session(mlist:list, plist:list, phase:int, segm_class:int = 3
 				area.append(lv_count*pixel_spacing*pixel_spacing)
 	return area
 
-def get_ed_es_param_from_session(session:os.path, reverse:bool, pixel_spacing:tuple=1, thickness:float=1):
+def get_ed_es_param_from_contour_file(contour_file:os.path, reverse:bool, pixel_spacing:tuple=1, thickness:float=1):
 	"""
-	Determine the end-diastolic (ED) and end-systolic (ES) phases for a given session featuring contours in Medis format.
+	Determine the end-diastolic (ED) and end-systolic (ES) phases for a given contour file featuring contours in Medis format.
 
-	:param os.path session: Text file containing Medis session information and manual contours.
-	:param bool reverse: Flag for reversing the slice indexing. Some sessions feature the slices in reversed order
+	:param os.path contour_file: Text file containing Medis session information and manual contours.
+	:param bool reverse: Flag for reversing the slice indexing. Some contour files feature the slices in reversed order
 	:param tuple pixel_spacing: Pixel spacing [mm] for the calculation of the area
 	:param float thickness: Slice thickness [mm] for the calculation of blood volumes. The total thickness hereby refers to the slice thickness + slice gap
 	:returns: tuple (ed_mc, es_mc, ed_vol, es_vol, ed_plist, es_plist)
@@ -1182,16 +1176,16 @@ def get_ed_es_param_from_session(session:os.path, reverse:bool, pixel_spacing:tu
 		list ed_plist is ED phase parameters in format [slice, phase]
 		list es_plist is ES phase parameters in format [slice, phase]
 	"""
-	img_dims, fov, slices = extract_img_params(session)
-	mask_list, param_list, ccsf = masks_and_parameters_from_file(session, img_dims)
+	img_dims, fov, slices = extract_img_params(contour_file)
+	mask_list, param_list, ccsf = masks_and_parameters_from_file(contour_file, img_dims)
 	slice_indexes, mlist, plist = combine_masks_multi(mask_list, param_list, slices, reverse=reverse)
 	EDphase, ESphase = extract_ED_ES_phase_cine(plist, mlist, segm_class=3)
-	ed_mc = area_for_phase_session(mlist.copy(), plist, EDphase, pixel_spacing=pixel_spacing)
-	es_mc = area_for_phase_session(mlist.copy(), plist, ESphase, pixel_spacing=pixel_spacing)
+	ed_mc = area_for_phase_contour_file(mlist.copy(), plist, EDphase, pixel_spacing=pixel_spacing)
+	es_mc = area_for_phase_contour_file(mlist.copy(), plist, ESphase, pixel_spacing=pixel_spacing)
 
 	ed_vol = sum(ed_mc) * thickness
 	if 0 == ed_vol:
-		print(session)
+		print(contour_file)
 	es_vol = sum(es_mc) * thickness
 
 	#create one flat parameter list
@@ -1290,7 +1284,7 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 	:param str mask_mode: Mode for optional segmentation mask. Either 'none', 'mc', 'comDL' or 'nnunet'
 	:param str phase_mode: Mode for cardiac phase. Either 'es' or 'ed'
 	:param list save_paths: List of file paths (for different file extensions) or single string to save plot
-	:param str contour_dir: Directory containing contour files of Medis session
+	:param str contour_dir: Directory containing contour files in Medis format
 	:param str img_dir: Directory containing reconstructed images in format <img_dir>/<vol>/cine_scanner.{cfl,hdr}, .../rt_scanner.{cfl,hdr}, etc.
 	:param str seg_dir: Directory containing nnU-Net segmentations
 	:param int crop_dim: Crop dimension for reconstructed images
@@ -1301,10 +1295,10 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 
 	img_files = [os.path.join(img_dir, vol, i) for i in ["cine_scanner", "rt_scanner", "rt_stress_scanner", "rt_maxstress_scanner"]]
 
-	sessions = [os.path.join(contour_dir, vol+"_" + s+"_manual"+contour_format) for s in ["cine", "rt", "rt_stress", "rt_maxstress"]]
+	contour_files = [os.path.join(contour_dir, vol+"_" + s+"_manual"+contour_format) for s in ["cine", "rt", "rt_stress", "rt_maxstress"]]
 
 	if 0 != len(mask_mode):
-		comDL_sessions = [os.path.join(contour_dir, vol+"_" + s+"_comDL"+contour_format) for s in ["cine", "rt", "rt_stress", "rt_maxstress"]]
+		comDL_contour_files = [os.path.join(contour_dir, vol+"_" + s+"_comDL"+contour_format) for s in ["cine", "rt", "rt_stress", "rt_maxstress"]]
 		seg_subdirs = ["rtvol_cine_2d_single_cv", "rtvol_rt_2d_single_cv","rtvol_rt_stress_2d_single_cv", "rtvol_rt_maxstress_2d_single_cv"]
 		seg_dirs = [os.path.join(seg_dir, s, "rtvol_"+vol[3:]) for s in seg_subdirs]
 
@@ -1315,7 +1309,7 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 	for i in range(rows*columns):
 		ax[i].set_axis_off()
 
-	for num, contour_file in enumerate(sessions):
+	for num, contour_file in enumerate(contour_files):
 
 		img_dims, fov, slices = extract_img_params(contour_file)
 		mask_list, param_list, ccsf = masks_and_parameters_from_file(contour_file, img_dims)
@@ -1367,7 +1361,7 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 
 				elif "comDL" == m:
 					img_dims, fov, slices = extract_img_params(contour_file)
-					mask_list, param_list, ccsf = masks_and_parameters_from_file(comDL_sessions[num], img_dims)
+					mask_list, param_list, ccsf = masks_and_parameters_from_file(comDL_contour_files[num], img_dims)
 					slice_list_comDL, mlist, plist = combine_masks_multi(mask_list, param_list, slices, reverse=reverse)
 					for i,ps in enumerate(plist):
 						for j,p in enumerate(ps):
@@ -1419,9 +1413,9 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 def plot_measurement_types_axes(vol, axes, reverse, slice_idx, mask_mode=[], phase_mode="es", save_paths=[],
 			contour_dir=contour_files_dir,
 			img_dir = scanner_reco_dir,
-			seg_dir=nnunet_output_dir, crop_dim=160,
+			nnunet_output=nnunet_output_dir, crop_dim=160,
 			vmax_factor=1, DC=False,
-			titles = ["cine", "real-time MRI (rest)", "real-time MRI (stress)", "real-time MRI (max stress)"], plot=True):
+			titles = ["cine", "real-time MRI (rest)", "real-time MRI (stress)", "real-time MRI (max stress)"]):
 	"""
 	Visualize different measurement forms (cine, real-time rest, rt stressm rt max stress) in a combined plot with optional segmentation.
 
@@ -1430,7 +1424,7 @@ def plot_measurement_types_axes(vol, axes, reverse, slice_idx, mask_mode=[], pha
 	:param str mask_mode: Mode for optional segmentation mask. Either 'none', 'mc', 'comDL' or 'nnunet'
 	:param str phase_mode: Mode for cardiac phase. Either 'es' or 'ed'
 	:param list save_paths: List of file paths (for different file extensions) or single string to save plot
-	:param str contour_dir: Directory containing contour files of Medis session
+	:param str contour_dir: Directory containing contour files in Medis format
 	:param str img_dir: Directory containing reconstructed images in format <img_dir>/<vol>/cine_scanner.{cfl,hdr}, .../rt_scanner.{cfl,hdr}, etc.
 	:param str seg_dir: Directory containing nnU-Net segmentations
 	:param int crop_dim: Crop dimension for reconstructed images
@@ -1442,14 +1436,14 @@ def plot_measurement_types_axes(vol, axes, reverse, slice_idx, mask_mode=[], pha
 	label_size = 18
 	img_files = [os.path.join(img_dir, vol, i) for i in ["cine_scanner", "rt_scanner", "rt_stress_scanner", "rt_maxstress_scanner"]]
 
-	sessions = [os.path.join(contour_dir, vol+"_" + s+"_manual"+contour_format) for s in ["cine", "rt", "rt_stress", "rt_maxstress"]]
+	contour_files = [os.path.join(contour_dir, vol+"_" + s+"_manual"+contour_format) for s in ["cine", "rt", "rt_stress", "rt_maxstress"]]
 
 	if 0 != len(mask_mode):
-		comDL_sessions = [os.path.join(contour_dir, vol+"_" + s+"_comDL"+contour_format) for s in ["cine", "rt", "rt_stress", "rt_maxstress"]]
+		comDL_contour_files = [os.path.join(contour_dir, vol+"_" + s+"_comDL"+contour_format) for s in ["cine", "rt", "rt_stress", "rt_maxstress"]]
 		seg_subdirs = ["rtvol_cine_2d_single_cv", "rtvol_rt_2d_single_cv","rtvol_rt_stress_2d_single_cv", "rtvol_rt_maxstress_2d_single_cv"]
-		seg_dirs = [os.path.join(seg_dir, s, "rtvol_"+vol[3:]) for s in seg_subdirs]
+		seg_dirs = [os.path.join(nnunet_output, s, "rtvol_"+vol[3:]) for s in seg_subdirs]
 
-	for num, (contour_file, ax) in enumerate(zip(sessions, axes)):
+	for num, (contour_file, ax) in enumerate(zip(contour_files, axes)):
 
 		img_dims, fov, slices = extract_img_params(contour_file)
 		mask_list, param_list, ccsf = masks_and_parameters_from_file(contour_file, img_dims)
@@ -1501,7 +1495,7 @@ def plot_measurement_types_axes(vol, axes, reverse, slice_idx, mask_mode=[], pha
 
 				elif "comDL" == m:
 					img_dims, fov, slices = extract_img_params(contour_file)
-					mask_list, param_list, ccsf = masks_and_parameters_from_file(comDL_sessions[num], img_dims)
+					mask_list, param_list, ccsf = masks_and_parameters_from_file(comDL_contour_files[num], img_dims)
 					slice_list_comDL, mlist, plist = combine_masks_multi(mask_list, param_list, slices, reverse=reverse)
 					for i,ps in enumerate(plist):
 						for j,p in enumerate(ps):
@@ -1540,7 +1534,7 @@ def plot_mc_nnunet(contour_dir, img_dir, seg_dir, rtvol_dict, param_list, flag3d
 	Plot a selection of images and segmentation masks for Medis contours and neural network segmentation.
 	Parameters for the image selection are given with idx_list in format (id, slice, phase).
 
-	:param str contour_dir: Directory containing session files in format <contour_dir>/<id><contour_suffix>
+	:param str contour_dir: Directory containing contour files in format <contour_dir>/<id><contour_suffix>
 	:param str img_dir: Directory containing images in format <img_dir>/<id>/cine_scanner
 	:param str seg_dir: Directory containing BART nnet or nnU-Net segmentations.
 	:param list rtvol_dict: List of dictionaries in format [{"id":<id>, "reverse":bool}]
@@ -1571,9 +1565,9 @@ def plot_mc_nnunet(contour_dir, img_dir, seg_dir, rtvol_dict, param_list, flag3d
 			f = [-1,0]
 
 		#manual contours
-		session = os.path.join(contour_dir, vol+contour_suffix)
-		img_dims, fov, slices = extract_img_params(session)
-		mask_list, plist, ccsf = masks_and_parameters_from_file(session, img_dims)
+		contour_file = os.path.join(contour_dir, vol+contour_suffix)
+		img_dims, fov, slices = extract_img_params(contour_file)
+		mask_list, plist, ccsf = masks_and_parameters_from_file(contour_file, img_dims)
 		slice_indexes, mlist, plist = combine_masks_multi(mask_list, plist, slices, reverse)
 		for m,ps in enumerate(plist):
 			for n,p in enumerate(ps):
@@ -2085,9 +2079,9 @@ def identify_ED_ES_mc_nnunet(rtvol_dict, contour_dir=contour_files_dir,
 		data["esv_nnunet"] = calc_cardiac_volume(es_lists, thickness=thickness)
 		data["ef_nnunet"] = (data["edv_nnunet"] - data["esv_nnunet"]) / data["edv_nnunet"] * 100
 
-		session = os.path.join(contour_dir, vol+manual_contour_suffix)
-		img_dims, fov, slices = extract_img_params(session)
-		mask_list, param_list, ccsf = masks_and_parameters_from_file(session, img_dims)
+		contour_file = os.path.join(contour_dir, vol+manual_contour_suffix)
+		img_dims, fov, slices = extract_img_params(contour_file)
+		mask_list, param_list, ccsf = masks_and_parameters_from_file(contour_file, img_dims)
 		slice_indexes, mlist, plist = combine_masks_multi(mask_list, param_list, slices, reverse=reverse)
 		ed_masks = mask_for_param_selection(mlist, plist, param=data["ed_idx_mc"])
 		ed_mc = []
@@ -2118,22 +2112,22 @@ def prepare_nnunet_cine(rtvol, img_dir, contour_dir, nnunet_dir,
 		vol = data["id"]
 		reverse = data["reverse"]
 		img_file = os.path.join(img_dir, vol, "cine_scanner")
-		session = os.path.join(contour_dir, vol + "_cine_manual"+contour_format)
+		contour_file = os.path.join(contour_dir, vol + "_cine_manual"+contour_format)
 		if "" != cine_single:
 			if not os.path.isdir(os.path.join(output_dir, cine_single, "imagesTs")):
 				os.makedirs(os.path.join(output_dir, cine_single, "imagesTs"))
 			output_prefix = os.path.join(output_dir, cine_single, "imagesTs", prefix+vol[3:])
-			create_nnunet_input_cine(img_file, output_prefix, session=session, reverse=reverse, output_mode="2d", slice_selection=False)
+			create_nnunet_input_cine(img_file, output_prefix, contour_file=contour_file, reverse=reverse, output_mode="2d", slice_selection=False)
 		if "" != cine_3d:
 			if not os.path.isdir(os.path.join(output_dir, cine_3d, "imagesTs")):
 				os.makedirs(os.path.join(output_dir, cine_3d, "imagesTs"))
 			output_prefix = os.path.join(output_dir, cine_3d, "imagesTs", prefix+vol[3:])
-			create_nnunet_input_cine(img_file, output_prefix, session=session, reverse=reverse, output_mode="3d", slice_selection=False)
+			create_nnunet_input_cine(img_file, output_prefix, contour_file=contour_file, reverse=reverse, output_mode="3d", slice_selection=False)
 		if "" != cine_3d_LV:
 			if not os.path.isdir(os.path.join(output_dir, cine_3d_LV, "imagesTs")):
 				os.makedirs(os.path.join(output_dir, cine_3d_LV, "imagesTs"))
 			output_prefix = os.path.join(output_dir, cine_3d_LV, "imagesTs", prefix+vol[3:])
-			create_nnunet_input_cine(img_file, output_prefix, session=session, reverse=reverse, output_mode="3d", slice_selection=True)
+			create_nnunet_input_cine(img_file, output_prefix, contour_file=contour_file, reverse=reverse, output_mode="3d", slice_selection=True)
 
 def prepare_nnunet_rt(rtvol, img_dir, nnunet_dir, rt_single = "Task511_rtvolrt_single", rt_slice = "Task516_rtvolrt"):
 	""""
