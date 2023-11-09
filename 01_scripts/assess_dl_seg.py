@@ -719,65 +719,98 @@ def write_parameter_files_nnunet_auto(out_dir, rtvol_dict=rtvol,
 	output_file = os.path.join(out_dir,"cardiac_function_nnunet_semi-auto_rt.txt")
 	write_output_cardiac_function_parameters(output_file, edv_nnunet, esv_nnunet, ef_nnunet, rtvol_dict=rtvol_dict, precision=1, header="Semi-automatic evaluation of nnU-Net with manual slice selection")
 
-def plot_BA_nnunet_auto(rtvol_dict, out_dir_fig, plot=False, file_extensions=["pdf"]):
+def save_figba_nnunet_auto(out_dir, rtvol_dict=rtvol, param_dir="", file_extension="pdf"):
 	"""
 	Bland-Altman plots for comparison of manually corrected contours and nnU-Net segmentations with automatic evaluation.
 	"""
-	assess_utils.identify_ED_ES_mc_nnunet(rtvol_dict, restrict_slices=False)
-	edv_mc = [data["edv_mc"] for data in rtvol_dict]
-	esv_mc = [data["esv_mc"] for data in rtvol_dict]
-	ef_mc  = [data["ef_mc"]  for data in rtvol_dict]
-	edv_nnunet = [data["edv_nnunet"] for data in rtvol_dict]
-	esv_nnunet = [data["esv_nnunet"] for data in rtvol_dict]
-	ef_nnunet  = [data["ef_nnunet"]  for data in rtvol_dict]
+	file_extensions=file_extension.split(",")
 
-	xlabel="LV blood volume [mL]"
-	ylabel="mcc - nnU-Net auto [mL]"
+	if "" == param_dir:
+		param_dir = out_dir
+		write_parameter_files_nnunet_auto(out_dir, rtvol_dict=rtvol_dict)
+
+	file_mc = os.path.join(param_dir,"cardiac_function_mc_rt.txt")
+	file_nnunet_auto = os.path.join(param_dir,"cardiac_function_nnunet_auto_rt.txt")
+	file_nnunet_semi_auto = os.path.join(param_dir,"cardiac_function_nnunet_semi-auto_rt.txt")
+	edv_mc, esv_mc, ef_mc = read_clinical_measures(file_mc, no_dict=True)
+	edv_nnunet_auto, esv_nnunet_auto, ef_nnunet_auto = read_clinical_measures(file_nnunet_auto, no_dict=True)
+	edv_nnunet_semi_auto, esv_nnunet_semi_auto, ef_nnunet_semi_auto = read_clinical_measures(file_nnunet_semi_auto, no_dict=True)
+
+	rows=1
+	columns=3
+	fig, axes = plt.subplots(rows, columns, figsize=(columns*8,rows*6))
+	axes = axes.flatten()
+	save_paths = [os.path.join(out_dir, "figure_b4_cf_nnunet_automatic."+f) for f in file_extensions]
+
+	xlabel="LV end-diastolic volume [mL]"
+	ylabel="mcc EDV - nnU-Net auto EDV [mL]"
 	labels = ["EDV"]
-	ylim=[-60,20]
-	save_paths = [os.path.join(out_dir_fig, "BA_nnunet_auto_EDV."+f) for f in file_extensions]
-	assess_utils.plot_bland_altman_multi([edv_mc], [edv_nnunet], labels=labels, ylabel=ylabel, xlabel=xlabel, ylim=ylim, scale=0.001,
-					save_paths=save_paths, plot=plot)
+	ylim=[-55,55]
+	assess_utils.plot_bland_altman_axes([edv_mc], [edv_nnunet_auto], ax=axes[0], labels=labels, ylabel=ylabel, xlabel=xlabel,
+								ylim=ylim, scale=1)
+	xlabel="LV end-systolic volume [mL]"
+	ylabel="mcc ESV - nnU-Net auto ESV [mL]"
 	labels = ["ESV"]
-	ylim=[-20,12]
-	save_paths = [os.path.join(out_dir_fig, "BA_nnunet_auto_ESV."+f) for f in file_extensions]
-	assess_utils.plot_bland_altman_multi([esv_mc], [esv_nnunet], labels=labels, ylabel=ylabel, xlabel=xlabel, ylim=ylim, scale=0.001,
-					save_paths=save_paths, plot=plot)
+	ylim=[-20,20]
+	assess_utils.plot_bland_altman_axes([esv_mc], [esv_nnunet_auto], ax=axes[1], labels=labels, ylabel=ylabel, xlabel=xlabel,
+				      				ylim=ylim, scale=1)
 	xlabel="LV ejection fraction [%]"
 	ylabel="mcc EF - nnU-Net auto EF [%]"
 	labels = ["EF"]
-	ylim=[-12,12]
-	save_paths = [os.path.join(out_dir_fig, "BA_nnunet_auto_EF."+f) for f in file_extensions]
-	assess_utils.plot_bland_altman_multi([ef_mc], [ef_nnunet], labels=labels, ylabel=ylabel, xlabel=xlabel, ylim=ylim,
-					save_paths=save_paths, plot=plot)
+	ylim=[-20,20]
+	assess_utils.plot_bland_altman_axes([ef_mc], [ef_nnunet_auto], ax=axes[2], labels=labels, ylabel=ylabel, xlabel=xlabel,
+				      				ylim=ylim, scale=1)
+	if 0 != len(save_paths):
+		if list == type(save_paths):
+			for s in save_paths:
+				if ".png" in s:
+					fig.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
+				else:
+					fig.savefig(s, bbox_inches='tight', pad_inches=0.01)
+		else:
+			if ".png" in save_paths:
+				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
+			else:
+				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
+	plt.close()
 
-	assess_utils.identify_ED_ES_mc_nnunet(rtvol_dict, restrict_slices=True)
-	edv_mc = [data["edv_mc"] for data in rtvol_dict]
-	esv_mc = [data["esv_mc"] for data in rtvol_dict]
-	ef_mc  = [data["ef_mc"]  for data in rtvol_dict]
-	edv_nnunet = [data["edv_nnunet"] for data in rtvol_dict]
-	esv_nnunet = [data["esv_nnunet"] for data in rtvol_dict]
-	ef_nnunet  = [data["ef_nnunet"]  for data in rtvol_dict]
+	rows=1
+	columns=3
+	fig, axes = plt.subplots(rows, columns, figsize=(columns*8,rows*6))
+	axes = axes.flatten()
+	save_paths = [os.path.join(out_dir, "figure_b5_cf_nnunet_semi_automatic."+f) for f in file_extensions]
 
-	xlabel="LV blood volume [mL]"
-	ylabel="mcc - nnU-Net auto [mL]"
+	xlabel="LV end-diastolic volume [mL]"
+	ylabel="mcc EDV - nnU-Net semi-auto EDV [mL]"
 	labels = ["EDV"]
-	ylim=[-60,20]
-	save_paths = [os.path.join(out_dir_fig, "BA_nnunet_auto_restricted_slices_EDV."+f) for f in file_extensions]
-	assess_utils.plot_bland_altman_multi([edv_mc], [edv_nnunet], labels=labels, ylabel=ylabel, xlabel=xlabel, ylim=ylim, scale=0.001,
-					save_paths=save_paths, plot=plot)
+	ylim=[-30,30]
+	assess_utils.plot_bland_altman_axes([edv_mc], [edv_nnunet_semi_auto], ax=axes[0], labels=labels, ylabel=ylabel, xlabel=xlabel,
+								ylim=ylim, scale=1)
+	xlabel="LV end-systolic volume [mL]"
+	ylabel="mcc ESV - nnU-Net semi-auto ESV [mL]"
 	labels = ["ESV"]
-	ylim=[-20,12]
-	save_paths = [os.path.join(out_dir_fig, "BA_nnunet_auto_restricted_slices_ESV."+f) for f in file_extensions]
-	assess_utils.plot_bland_altman_multi([esv_mc], [esv_nnunet], labels=labels, ylabel=ylabel, xlabel=xlabel, ylim=ylim, scale=0.001,
-					save_paths=save_paths, plot=plot)
+	ylim=[-15,15]
+	assess_utils.plot_bland_altman_axes([esv_mc], [esv_nnunet_semi_auto], ax=axes[1], labels=labels, ylabel=ylabel, xlabel=xlabel,
+				      				ylim=ylim, scale=1)
 	xlabel="LV ejection fraction [%]"
-	ylabel="mcc - nnU-Net auto [%]"
+	ylabel="mcc EF - nnU-Net semi-auto EF [%]"
 	labels = ["EF"]
-	ylim=[-12,12]
-	save_paths = [os.path.join(out_dir_fig, "BA_nnunet_auto_restricted_slices_EF."+f) for f in file_extensions]
-	assess_utils.plot_bland_altman_multi([ef_mc], [ef_nnunet], labels=labels, ylabel=ylabel, xlabel=xlabel, ylim=ylim,
-					save_paths=save_paths, plot=plot)
+	ylim=[-15,15]
+	assess_utils.plot_bland_altman_axes([ef_mc], [ef_nnunet_semi_auto], ax=axes[2], labels=labels, ylabel=ylabel, xlabel=xlabel,
+				      				ylim=ylim, scale=1)
+
+	if 0 != len(save_paths):
+		if list == type(save_paths):
+			for s in save_paths:
+				if ".png" in s:
+					fig.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
+				else:
+					fig.savefig(s, bbox_inches='tight', pad_inches=0.01)
+		else:
+			if ".png" in save_paths:
+				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
+			else:
+				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
 
 def read_clinical_measures(in_file, no_dict=False):
 	"""
@@ -1300,7 +1333,7 @@ def main(out_dir_fig, out_dir_data, plot=False, nnunet_output="/scratch/mschi/nn
 
 	#Bland-Altman Plot
 	write_parameter_files_nnunet_auto(out_dir_data, rtvol)
-	plot_BA_nnunet_auto(rtvol, out_dir_fig, plot=plot)
+	save_figba_nnunet_auto(out_dir_fig, rtvol)
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(
