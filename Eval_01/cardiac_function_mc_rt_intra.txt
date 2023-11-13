@@ -1,4 +1,4 @@
-Manually corrected MEDIS DL ACD
+Intra-observer variability of manually corrected MEDIS DL ACD
 EDV
 vol01	115.4
 vol02	136.9
