@@ -1,0 +1,8 @@
+Absolute mean differences
+EDV 2.8 3.9
+ESV 1.4 1.9
+EF 1.5 1.6
+Relative mean differences
+EDV 1.7 2.3
+ESV 2.7 3.8
+EF 2.5 2.7
