@@ -24,15 +24,15 @@ import assess_dl_seg_utils as assess_utils
 import cfl
 
 if "DATA_DIR" in os.environ:
-	scanner_reco_dir=os.path.join(os.environ["DATA_DIR"], "scanner_reco")
-	contour_files_dir=os.path.join(os.environ["DATA_DIR"], "contour_files")
-	nnunet_output_dir=os.path.join(os.environ["DATA_DIR"], "nnUNet/output")
-	end_exp_dir=os.path.join(os.environ["DATA_DIR"], "end_expiration_indexes")
+	img_dir_default=os.path.join(os.environ["DATA_DIR"], "images")
+	contour_dir_default=os.path.join(os.environ["DATA_DIR"], "contour_files")
+	nnunet_output_dir_default=os.path.join(os.environ["DATA_DIR"], "nnUNet/output")
+	end_exp_dir_default=os.path.join(os.environ["DATA_DIR"], "end_expiration_indexes")
 else:
-	scanner_reco_dir=""
-	contour_files_dir=""
-	nnunet_output_dir=""
-	end_exp_dir=""
+	img_dir_default=""
+	contour_dir_default=""
+	nnunet_output_dir_default=""
+	end_exp_dir_default=""
 
 contour_format = ".txt"
 png_dpi=500
@@ -56,7 +56,7 @@ rtvol = [
 {"id":"vol15",	"reverse":False	, "flip_rot":[-1,0], "gender":"m", "age":49}
 ]
 
-def dice_coeff(rtvol_dict=rtvol, rtvol_dict_maxstress=[], contour_dir=contour_files_dir, nnunet_output=nnunet_output_dir):
+def dice_coeff(rtvol_dict=rtvol, rtvol_dict_maxstress=[], contour_dir=contour_dir_default, nnunet_output=nnunet_output_dir_default):
 	"""
 	Calculate Dice's coefficient for entries in list of dictionaries for
 	Medis DL ACD (comDL) and nnU-Net contours for cine and real-time
@@ -127,8 +127,8 @@ def dice_coeff(rtvol_dict=rtvol, rtvol_dict_maxstress=[], contour_dir=contour_fi
 			title="nnUNet", flag3d=False)
 
 def calc_DC_and_bpm(rtvol_dict, mode=["nnunet"],
-		contour_dir = contour_files_dir,
-		nnunet_output = nnunet_output_dir):
+		contour_dir = contour_dir_default,
+		nnunet_output = nnunet_output_dir_default):
 	"""
 	Calculate Dice's coefficient (DC) and beats per minute (bpm) for a list of dictionaries
 	and add this information to the dictionary entries for Medis DL ACD and/or nnU-Net contours.
@@ -409,8 +409,8 @@ def write_output_dice_coefficients(output_file, rtvol_dict=rtvol, precision=4, n
 					output.write(d["id"]+"\t---\t---\n")
 		output.close()
 
-def calc_mean_stdv_parameters_cine(rtvol_dict, seg_dir = os.path.join(nnunet_output_dir, "rtvol_cine_2d_single_cv/"),
-				   contour_dir = contour_files_dir, flag3d=False,
+def calc_mean_stdv_parameters_cine(rtvol_dict, seg_dir = os.path.join(nnunet_output_dir_default, "rtvol_cine_2d_single_cv/"),
+				   contour_dir = contour_dir_default, flag3d=False,
 				   contour_file_mc_suffix="_cine_manual"+contour_format, contour_file_comDL_suffix="_cine_comDL"+contour_format,
 				   pixel_spacing = 1.328125, slice_selection=False):
 	"""
@@ -484,10 +484,10 @@ def calc_mean_stdv_parameters_cine(rtvol_dict, seg_dir = os.path.join(nnunet_out
 
 	return (ed_vol_mc, ed_vol_comDL, ed_vol_nnunet), (es_vol_mc, es_vol_comDL, es_vol_nnunet), (ef_mc, ef_comDL, ef_nnunet)
 
-def calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=os.path.join(nnunet_output_dir, "rtvol_rt_2d_single_cv/"),
-				contour_dir=contour_files_dir, flag3d=False,
+def calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=os.path.join(nnunet_output_dir_default, "rtvol_rt_2d_single_cv/"),
+				contour_dir=contour_dir_default, flag3d=False,
 				pixel_spacing=1.6, contour_file_mc_suffix="_rt_manual"+contour_format, contour_file_comDL_suffix="_rt_comDL"+contour_format,
-				exp_dir=end_exp_dir, ed_es_phase_file="_rt.txt"):
+				exp_dir=end_exp_dir_default, ed_es_phase_file="_rt.txt"):
 	"""
 	Calculate mean and standard deviation parameters for rt MRI for manual, comDL and nnU-Net contours.
 
@@ -805,9 +805,9 @@ def write_cardiac_function_single(out_dir, rtvol_dict, edv_tuple, esv_tuple, ef_
 	output_file = os.path.join(out_dir,"cardiac_function_nnunet_"+modus+".txt")
 	write_output_cardiac_function_parameters(output_file, edv_nnunet, esv_nnunet, ef_nnunet, rtvol_dict=rtvol_dict, precision=1, header="nnU-Net")
 
-def save_fig1(out_dir, img_dir=scanner_reco_dir,
-			contour_dir=contour_files_dir,
-			nnunet_output=nnunet_output_dir,
+def save_fig1(out_dir, img_dir=img_dir_default,
+			contour_dir=contour_dir_default,
+			nnunet_output=nnunet_output_dir_default,
 			file_extension="pdf"):
 	"""
 	Create figure for plotting measurement types and manually corrected contours
@@ -858,9 +858,9 @@ def save_fig1(out_dir, img_dir=scanner_reco_dir,
 				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
 	plt.close()
 
-def save_fig2(out_dir, img_dir=scanner_reco_dir,
-			contour_dir=contour_files_dir,
-			nnunet_output=nnunet_output_dir,
+def save_fig2(out_dir, img_dir=img_dir_default,
+			contour_dir=contour_dir_default,
+			nnunet_output=nnunet_output_dir_default,
 			file_extension="pdf"):
 	"""
 	Create a figure depicting an example for Dice's coefficients for comDL and nnU-Net segmentations.
@@ -898,7 +898,7 @@ def save_fig2(out_dir, img_dir=scanner_reco_dir,
 	titles = ["cine", "real-time (76 bpm)", "real-time (115 bpm)", "real-time (162 bpm)"]
 	assess_utils.plot_measurement_types_axes(vol, [ax[i] for i in range(columns)], reverse, slice_idx, mask_mode=mask_mode,
 				phase_mode=phase_mode, save_paths=save_paths, contour_dir=contour_dir, img_dir=img_dir,
-				nnunet_output=os.path.join(nnunet_output_dir, "rtvol_rt_stress_2d_single_cv"), crop_dim=crop_dim, vmax_factor=vmax_factor, titles=titles)
+				nnunet_output=os.path.join(nnunet_output_dir_default, "rtvol_rt_stress_2d_single_cv"), crop_dim=crop_dim, vmax_factor=vmax_factor, titles=titles)
 	mask_mode = ["mc"]
 	assess_utils.plot_measurement_types_axes(vol, [ax[columns+i] for i in range(columns)], reverse, slice_idx, mask_mode=mask_mode,
 				phase_mode=phase_mode, save_paths=save_paths, contour_dir=contour_dir, img_dir=img_dir, DC=False,
@@ -926,7 +926,7 @@ def save_fig2(out_dir, img_dir=scanner_reco_dir,
 				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
 	plt.close()
 
-def save_fig3(out_dir, rtvol_dict=rtvol, param_dir="", contour_dir=contour_files_dir, nnunet_output=nnunet_output_dir, file_extension="pdf,png"):
+def save_fig3(out_dir, rtvol_dict=rtvol, param_dir="", contour_dir=contour_dir_default, nnunet_output=nnunet_output_dir_default, file_extension="pdf,png"):
 	"""
 	Create figure for Dice's coefficient depending on heart rate
 	"""
@@ -980,9 +980,9 @@ def save_fig3(out_dir, rtvol_dict=rtvol, param_dir="", contour_dir=contour_files
 				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
 	plt.close()
 
-def save_fig4(out_dir, rtvol_dict=rtvol, img_dir=scanner_reco_dir,
-			contour_dir=contour_files_dir,
-			seg_dir=os.path.join(nnunet_output_dir, "rtvol_rt_stress_2d_single_cv"),
+def save_fig4(out_dir, rtvol_dict=rtvol, img_dir=img_dir_default,
+			contour_dir=contour_dir_default,
+			seg_dir=os.path.join(nnunet_output_dir_default, "rtvol_rt_stress_2d_single_cv"),
 			file_extension="pdf"):
 	"""
 	Create figure for visualizing the limits of neural networks for manuscript.
@@ -996,11 +996,11 @@ def save_fig4(out_dir, rtvol_dict=rtvol, img_dir=scanner_reco_dir,
 	save_paths = [os.path.join(out_dir, "figure_04_nn_limits."+f) for f in file_extensions]
 	param_list = [['vol10', 2, 25], ['vol10', 3, 123], ['vol11', 15, 69], ['vol15', 11, 126]]
 	assess_utils.plot_mc_nnunet(contour_dir, img_dir, seg_dir, rtvol_dict, param_list, flag3d=False, mode = "nnunet",
-					crop_dim=crop_dim, contour_suffix = "_rt_stress_manual"+contour_format, img_suffix="rt_stress_scanner",
+					crop_dim=crop_dim, contour_suffix = "_rt_stress_manual"+contour_format, img_suffix="rt_stress",
 					save_paths=save_paths, check=False, plot=False)
 
-def save_figba(out_dir, rtvol_dict=rtvol, param_dir="", contour_dir=contour_files_dir, exp_dir=end_exp_dir,
-		nnunet_output=nnunet_output_dir, file_extension="pdf"):
+def save_figba(out_dir, rtvol_dict=rtvol, param_dir="", contour_dir=contour_dir_default, exp_dir=end_exp_dir_default,
+		nnunet_output=nnunet_output_dir_default, file_extension="pdf"):
 	"""
 	Bland-Altman plots of EDV, ESV and EF for entries of rtvol for cine, real-time and real-time stress.
 	"""
@@ -1096,8 +1096,8 @@ def save_figba(out_dir, rtvol_dict=rtvol, param_dir="", contour_dir=contour_file
 				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
 	plt.close()
 
-def save_figba_cine_rt(out_dir, rtvol_dict=rtvol, param_dir="", contour_dir=contour_files_dir, exp_dir=end_exp_dir,
-			nnunet_output=nnunet_output_dir, file_extension="pdf"):
+def save_figba_cine_rt(out_dir, rtvol_dict=rtvol, param_dir="", contour_dir=contour_dir_default, exp_dir=end_exp_dir_default,
+			nnunet_output=nnunet_output_dir_default, file_extension="pdf"):
 	"""
 	Bland-Altman plots for end-diastolic volume (EDV), end-systolic volume (ESV) and ejection fraction (EF)
 	between manually corrected contours in cine CMR and real-time free-breathing CMR
@@ -1159,7 +1159,7 @@ def save_figba_cine_rt(out_dir, rtvol_dict=rtvol, param_dir="", contour_dir=cont
 			else:
 				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
 
-def write_DC_all(out_dir, rtvol_dict=rtvol, contour_dir=contour_files_dir, nnunet_output=nnunet_output_dir):
+def write_DC_all(out_dir, rtvol_dict=rtvol, contour_dir=contour_dir_default, nnunet_output=nnunet_output_dir_default):
 	"""
 	Write Dice's coefficients and heart rates in bpm for comDL and nnU-Net.
 	"""
@@ -1182,8 +1182,8 @@ def write_DC_all(out_dir, rtvol_dict=rtvol, contour_dir=contour_files_dir, nnune
 		write_output_dice_coefficients(file_path, rtvol_dict=rtvol_dict, precision=4, network=network, meas=m,
 								header=header)
 
-def write_cardiac_function_all(out_dir, rtvol_dict=rtvol, contour_dir=contour_files_dir, exp_dir=end_exp_dir,
-				nnunet_output=nnunet_output_dir, contour_suffix=contour_format):
+def write_cardiac_function_all(out_dir, rtvol_dict=rtvol, contour_dir=contour_dir_default, exp_dir=end_exp_dir_default,
+				nnunet_output=nnunet_output_dir_default, contour_suffix=contour_format):
 	"""
 	Write cardiac function parameters EDV, ESV and EF into files for manually corrected, comDL and nnU-Net contours.
 	"""
@@ -1207,7 +1207,7 @@ def write_cardiac_function_all(out_dir, rtvol_dict=rtvol, contour_dir=contour_fi
 
 	write_cardiac_function_single(out_dir, rtvol_dict, ed_tuple_rt_stress, es_tuple_rt_stress, ef_tuple_rt_stress, modus="rt_stress")
 
-def write_cardiac_function_intra(out_dir, rtvol_dict=rtvol, contour_dir=contour_files_dir, exp_dir=end_exp_dir, contour_suffix="_intra"+contour_format):
+def write_cardiac_function_intra(out_dir, rtvol_dict=rtvol, contour_dir=contour_dir_default, exp_dir=end_exp_dir_default, contour_suffix="_intra"+contour_format):
 	"""
 	Write cardiac function parameters EDV, ESV and EF into files for intra-observer variability of manually corrected contours.
 	"""
@@ -1245,32 +1245,32 @@ def main(data_dir):
 
 	:param str data_dir: Directory containing data.
 	"""
-	scanner_reco_dir=os.path.join(data_dir, "scanner_reco")
-	contour_files_dir=os.path.join(data_dir, "contour_files")
-	nnunet_output_dir=os.path.join(data_dir, "nnUNet/output")
-	end_exp_dir=os.path.join(data_dir, "end_expiration_indexes")
+	img_dir_default=os.path.join(data_dir, "images")
+	contour_dir_default=os.path.join(data_dir, "contour_files")
+	nnunet_output_dir_default=os.path.join(data_dir, "nnUNet/output")
+	end_exp_dir_default=os.path.join(data_dir, "end_expiration_indexes")
 	param_dir=os.path.join(repo_dir, "Eval_01")
 
 	# Measurement plot
-	save_fig1(out_dir=os.path.join(repo_dir,"Figure_01"), img_dir=scanner_reco_dir,
-		contour_dir=contour_files_dir,
-		nnunet_output=nnunet_output_dir)
+	save_fig1(out_dir=os.path.join(repo_dir,"Figure_01"), img_dir=img_dir_default,
+		contour_dir=contour_dir_default,
+		nnunet_output=nnunet_output_dir_default)
 
 	# examples for DC
-	save_fig2(out_dir=os.path.join(repo_dir,"Figure_02"), img_dir=scanner_reco_dir,
-		contour_dir=contour_files_dir, nnunet_output=nnunet_output_dir)
+	save_fig2(out_dir=os.path.join(repo_dir,"Figure_02"), img_dir=img_dir_default,
+		contour_dir=contour_dir_default, nnunet_output=nnunet_output_dir_default)
 
 	# DC vs bpm
 	save_fig3(out_dir=os.path.join(repo_dir,"Figure_03"), param_dir=param_dir,
-		contour_dir=contour_files_dir, nnunet_output=nnunet_output_dir)
+		contour_dir=contour_dir_default, nnunet_output=nnunet_output_dir_default)
 
 	# Limits of segmentation network
-	save_fig4(out_dir=os.path.join(repo_dir,"Figure_04"), img_dir=scanner_reco_dir, contour_dir=contour_files_dir,
-		seg_dir=os.path.join(nnunet_output_dir, "rtvol_rt_stress_2d_single_cv"))
+	save_fig4(out_dir=os.path.join(repo_dir,"Figure_04"), img_dir=img_dir_default, contour_dir=contour_dir_default,
+		seg_dir=os.path.join(nnunet_output_dir_default, "rtvol_rt_stress_2d_single_cv"))
 
 	#Bland-Altman plots
-	save_figba(out_dir=os.path.join(repo_dir,"Figure_ba"), param_dir=param_dir, contour_dir=contour_files_dir, exp_dir=end_exp_dir, nnunet_output=nnunet_output_dir)
-	save_figba_cine_rt(out_dir=os.path.join(repo_dir,"Figure_ba_cine_rt"), param_dir=param_dir, contour_dir=contour_files_dir, exp_dir=end_exp_dir, nnunet_output=nnunet_output_dir)
+	save_figba(out_dir=os.path.join(repo_dir,"Figure_ba"), param_dir=param_dir, contour_dir=contour_dir_default, exp_dir=end_exp_dir_default, nnunet_output=nnunet_output_dir_default)
+	save_figba_cine_rt(out_dir=os.path.join(repo_dir,"Figure_ba_cine_rt"), param_dir=param_dir, contour_dir=contour_dir_default, exp_dir=end_exp_dir_default, nnunet_output=nnunet_output_dir_default)
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(

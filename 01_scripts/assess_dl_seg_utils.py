@@ -26,15 +26,15 @@ from bart import bart
 import cfl
 
 if "DATA_DIR" in os.environ:
-	scanner_reco_dir=os.path.join(os.environ["DATA_DIR"], "scanner_reco")
-	contour_files_dir=os.path.join(os.environ["DATA_DIR"], "contour_files")
-	nnunet_output_dir=os.path.join(os.environ["DATA_DIR"], "nnUNet/output")
-	end_exp_dir=os.path.join(os.environ["DATA_DIR"], "end_expiration_indexes")
+	img_dir_default=os.path.join(os.environ["DATA_DIR"], "scanner_reco")
+	contour_dir_default=os.path.join(os.environ["DATA_DIR"], "contour_files")
+	nnunet_output_dir_default=os.path.join(os.environ["DATA_DIR"], "nnUNet/output")
+	end_exp_dir_default=os.path.join(os.environ["DATA_DIR"], "end_expiration_indexes")
 else:
-	scanner_reco_dir=""
-	contour_files_dir=""
-	nnunet_output_dir=""
-	end_exp_dir=""
+	img_dir_default=""
+	contour_dir_default=""
+	nnunet_output_dir_default=""
+	end_exp_dir_default=""
 
 contour_format = ".txt"
 png_dpi=500
@@ -1271,9 +1271,9 @@ def flip_rot(arr:np.array, flip:int=1, rot:int=1):
 	return arr
 
 def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es", save_paths=[],
-			contour_dir=contour_files_dir,
-			img_dir = scanner_reco_dir,
-			seg_dir=nnunet_output_dir, crop_dim=160,
+			contour_dir=contour_dir_default,
+			img_dir = img_dir_default,
+			seg_dir=nnunet_output_dir_default, crop_dim=160,
 			vmax_factor=1, DC=False,
 			titles = ["cine", "real-time MRI (rest)", "real-time MRI (stress)", "real-time MRI (max stress)"], plot=True):
 	"""
@@ -1285,7 +1285,7 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 	:param str phase_mode: Mode for cardiac phase. Either 'es' or 'ed'
 	:param list save_paths: List of file paths (for different file extensions) or single string to save plot
 	:param str contour_dir: Directory containing contour files in Medis format
-	:param str img_dir: Directory containing reconstructed images in format <img_dir>/<vol>/cine_scanner.{cfl,hdr}, .../rt_scanner.{cfl,hdr}, etc.
+	:param str img_dir: Directory containing reconstructed images in format <img_dir>/<vol>/cine.{cfl,hdr}, .../rt.{cfl,hdr}, etc.
 	:param str seg_dir: Directory containing nnU-Net segmentations
 	:param int crop_dim: Crop dimension for reconstructed images
 	:param list titles: List of titles for individual subplots
@@ -1293,7 +1293,7 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 	"""
 	slice_select = [slice_idx for i in range(4)]
 
-	img_files = [os.path.join(img_dir, vol, i) for i in ["cine_scanner", "rt_scanner", "rt_stress_scanner", "rt_maxstress_scanner"]]
+	img_files = [os.path.join(img_dir, vol, i) for i in ["cine", "rt", "rt_stress", "rt_maxstress"]]
 
 	contour_files = [os.path.join(contour_dir, vol+"_" + s+"_manual"+contour_format) for s in ["cine", "rt", "rt_stress", "rt_maxstress"]]
 
@@ -1411,9 +1411,9 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 		plt.close()
 
 def plot_measurement_types_axes(vol, axes, reverse, slice_idx, mask_mode=[], phase_mode="es", save_paths=[],
-			contour_dir=contour_files_dir,
-			img_dir = scanner_reco_dir,
-			nnunet_output=nnunet_output_dir, crop_dim=160,
+			contour_dir=contour_dir_default,
+			img_dir = img_dir_default,
+			nnunet_output=nnunet_output_dir_default, crop_dim=160,
 			vmax_factor=1, DC=False,
 			titles = ["cine", "real-time MRI (rest)", "real-time MRI (stress)", "real-time MRI (max stress)"]):
 	"""
@@ -1425,7 +1425,7 @@ def plot_measurement_types_axes(vol, axes, reverse, slice_idx, mask_mode=[], pha
 	:param str phase_mode: Mode for cardiac phase. Either 'es' or 'ed'
 	:param list save_paths: List of file paths (for different file extensions) or single string to save plot
 	:param str contour_dir: Directory containing contour files in Medis format
-	:param str img_dir: Directory containing reconstructed images in format <img_dir>/<vol>/cine_scanner.{cfl,hdr}, .../rt_scanner.{cfl,hdr}, etc.
+	:param str img_dir: Directory containing reconstructed images in format <img_dir>/<vol>/cine.{cfl,hdr}, .../rt.{cfl,hdr}, etc.
 	:param str seg_dir: Directory containing nnU-Net segmentations
 	:param int crop_dim: Crop dimension for reconstructed images
 	:param list titles: List of titles for individual subplots
@@ -1434,7 +1434,7 @@ def plot_measurement_types_axes(vol, axes, reverse, slice_idx, mask_mode=[], pha
 	slice_select = [slice_idx for i in range(4)]
 	label_size = "xx-large"
 	label_size = 18
-	img_files = [os.path.join(img_dir, vol, i) for i in ["cine_scanner", "rt_scanner", "rt_stress_scanner", "rt_maxstress_scanner"]]
+	img_files = [os.path.join(img_dir, vol, i) for i in ["cine", "rt", "rt_stress", "rt_maxstress"]]
 
 	contour_files = [os.path.join(contour_dir, vol+"_" + s+"_manual"+contour_format) for s in ["cine", "rt", "rt_stress", "rt_maxstress"]]
 
@@ -1528,14 +1528,14 @@ def plot_measurement_types_axes(vol, axes, reverse, slice_idx, mask_mode=[], pha
 				ax.set_title(second_row_title, size=label_size)
 
 def plot_mc_nnunet(contour_dir, img_dir, seg_dir, rtvol_dict, param_list, flag3d=True, mode = "nnunet",
-			crop_dim=160, contour_suffix = "_cine.txt", save_paths=[], img_suffix="cine_scanner",
+			crop_dim=160, contour_suffix = "_cine.txt", save_paths=[], img_suffix="cine",
 			check=False, plot=True):
 	"""
 	Plot a selection of images and segmentation masks for Medis contours and neural network segmentation.
 	Parameters for the image selection are given with idx_list in format (id, slice, phase).
 
 	:param str contour_dir: Directory containing contour files in format <contour_dir>/<id><contour_suffix>
-	:param str img_dir: Directory containing images in format <img_dir>/<id>/cine_scanner
+	:param str img_dir: Directory containing images in format <img_dir>/<id>/cine
 	:param str seg_dir: Directory containing BART nnet or nnU-Net segmentations.
 	:param list rtvol_dict: List of dictionaries in format [{"id":<id>, "reverse":bool}]
 	:param list param_list: List of parameters in format (<id>, slice, phase)
@@ -1582,7 +1582,7 @@ def plot_mc_nnunet(contour_dir, img_dir, seg_dir, rtvol_dict, param_list, flag3d
 		mask_dl = np.zeros(mask_mc.shape, dtype=float)
 
 		comp_title = ""
-		#BART nnet segmentation, format: <seg_dir>/<id>/cine_scanner
+		#BART nnet segmentation, format: <seg_dir>/<id>/cine
 		if "nnet" == mode:
 			segm_file = os.path.join(seg_dir, vol, img_suffix)
 			segm = cfl.readcfl(segm_file)
@@ -1668,7 +1668,7 @@ def prepare_nnunet_cine(rtvol, img_dir, contour_dir, nnunet_dir,
 	for data in rtvol:
 		vol = data["id"]
 		reverse = data["reverse"]
-		img_file = os.path.join(img_dir, vol, "cine_scanner")
+		img_file = os.path.join(img_dir, vol, "cine")
 		contour_file = os.path.join(contour_dir, vol + "_cine_manual"+contour_format)
 		if "" != cine_single:
 			if not os.path.isdir(os.path.join(output_dir, cine_single, "imagesTs")):
@@ -1695,7 +1695,7 @@ def prepare_nnunet_rt(rtvol, img_dir, nnunet_dir, rt_single = "Task511_rtvolrt_s
 	prefix = "rtvol_"
 	for data in rtvol:
 		vol = data["id"]
-		img_file = os.path.join(img_dir, vol, "rt_scanner")
+		img_file = os.path.join(img_dir, vol, "rt")
 		if "" != rt_single:
 			if not os.path.isdir(os.path.join(output_dir, rt_single, "imagesTs")):
 				os.makedirs(os.path.join(output_dir, rt_single, "imagesTs"))
@@ -1716,7 +1716,7 @@ def prepare_nnunet_rt_stress(rtvol, img_dir, nnunet_dir, rt_single = "Task512_rt
 	prefix = "rtvol_"
 	for data in rtvol:
 		vol = data["id"]
-		img_file = os.path.join(img_dir, vol, "rt_stress_scanner")
+		img_file = os.path.join(img_dir, vol, "rt_stress")
 		if "" != rt_single:
 			if not os.path.isdir(os.path.join(output_dir, rt_single, "imagesTs")):
 				os.makedirs(os.path.join(output_dir, rt_single, "imagesTs"))
@@ -1737,7 +1737,7 @@ def prepare_nnunet_rt_maxstress(rtvol, img_dir, nnunet_dir, rt_single = "Task513
 	prefix = "rtvol_"
 	for data in rtvol:
 		vol = data["id"]
-		img_file = os.path.join(img_dir, vol, "rt_maxstress_scanner")
+		img_file = os.path.join(img_dir, vol, "rt_maxstress")
 		if "" != rt_single:
 			if not os.path.isdir(os.path.join(output_dir, rt_single, "imagesTs")):
 				os.makedirs(os.path.join(output_dir, rt_single, "imagesTs"))
