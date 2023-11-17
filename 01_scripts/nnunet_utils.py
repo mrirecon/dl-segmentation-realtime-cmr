@@ -146,7 +146,7 @@ def cfl2nifti_3d(input_file:os.path, output_prefix:os.path, phase_selection:list
 	Transform a CFL file into multiple Nifti files featuring 3D images, which are suitable as input for nnUNet.
 
 	:param os.path input_file: Input CFL file in format [xdim, ydim, 1,1,1,1,1,1,1,1,phase, slice]
-	:param os.path output_prefix: Prefix for nnUNet files. Files will have the format <prefi>xxyyy where xx
+	:param os.path output_prefix: Prefix for nnUNet files. Files will have the format <prefix>xxyyy where xx
 		represents the slice index, yyy the phase index
 	:param list selection: Optional input for sole transformation selected images. Entries have format [slice, phase]
 	:param tuple pixel_spacing: Pixel spacing [mm] of input

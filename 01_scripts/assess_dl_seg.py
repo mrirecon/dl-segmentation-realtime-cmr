@@ -26,7 +26,7 @@ import cfl
 if "DATA_DIR" in os.environ:
 	img_dir_default=os.path.join(os.environ["DATA_DIR"], "images")
 	contour_dir_default=os.path.join(os.environ["DATA_DIR"], "contour_files")
-	nnunet_output_dir_default=os.path.join(os.environ["DATA_DIR"], "nnUNet/output")
+	nnunet_output_dir_default=os.path.join(os.environ["DATA_DIR"], "nnUNet_inference")
 	end_exp_dir_default=os.path.join(os.environ["DATA_DIR"], "end_expiration_indexes")
 else:
 	img_dir_default=""
@@ -38,7 +38,7 @@ contour_format = ".txt"
 png_dpi=500
 repo_dir=os.path.dirname(os.path.dirname(getsourcefile(lambda:0)))
 
-rtvol = [
+vol_dict_default = [
 {"id":"vol01",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":61},
 {"id":"vol02",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":55},
 {"id":"vol03",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":64},
@@ -56,7 +56,7 @@ rtvol = [
 {"id":"vol15",	"reverse":False	, "flip_rot":[-1,0], "gender":"m", "age":49}
 ]
 
-def dice_coeff(rtvol_dict=rtvol, rtvol_dict_maxstress=[], contour_dir=contour_dir_default, nnunet_output=nnunet_output_dir_default):
+def dice_coeff(vol_dict=vol_dict_default, vol_dict_maxstress=[], contour_dir=contour_dir_default, nnunet_output=nnunet_output_dir_default):
 	"""
 	Calculate Dice's coefficient for entries in list of dictionaries for
 	Medis DL ACD (comDL) and nnU-Net contours for cine and real-time
@@ -64,17 +64,17 @@ def dice_coeff(rtvol_dict=rtvol, rtvol_dict_maxstress=[], contour_dir=contour_di
 	As some measurements are not evaluated at max stress, the list of dictionaries
 	is different.
 
-	:param list rtvol_dict: List of dictionaries with entries ['id'] and ['reverse']
-	:param list rtvol_dict_maxstress: List of dictionaries for maximal stress
+	:param list vol_dict: List of dictionaries with entries ['id'] and ['reverse']
+	:param list vol_dict_maxstress: List of dictionaries for maximal stress
 	:param str contour_dir: Path to directory containing contour files in '.txt' file format
 	:param str nnunet_output: Directory containing subdirectories for nnU-Net segmentation outputs
 	"""
-	if 0 == len(rtvol_dict_maxstress):
-		rtvol_dict_maxstress = [rtvol_dict[i] for i in [0,1,2,3,5,6,7,8,9,11,13,14]]
+	if 0 == len(vol_dict_maxstress):
+		vol_dict_maxstress = [vol_dict[i] for i in [0,1,2,3,5,6,7,8,9,11,13,14]]
 
 	# cine
 	flag3D = False
-	seg_dir = os.path.join(nnunet_output,"rtvol_cine_2d_single_cv")
+	seg_dir = os.path.join(nnunet_output,"cine_2d_single_cv")
 
 	manual_contour_suffix = "_cine_manual"+contour_format
 	comp_contour_suffix = "_cine_comDL"+contour_format
@@ -83,70 +83,70 @@ def dice_coeff(rtvol_dict=rtvol, rtvol_dict_maxstress=[], contour_dir=contour_di
 
 	print("DC for cine")
 	#automatic contours
-	ed_dc_list, es_dc_list, ed_dict_list, es_dict_list = assess_utils.get_ed_es_dice_from_contour_file_multi(contour_dir, rtvol_dict, manual_contour_suffix, comp_contour_suffix=comp_contour_suffix, nnunet_prefix="", phase_select=phase_select,
+	ed_dc_list, es_dc_list, ed_dict_list, es_dict_list = assess_utils.get_ed_es_dice_from_contour_file_multi(contour_dir, vol_dict, manual_contour_suffix, comp_contour_suffix=comp_contour_suffix, nnunet_prefix="", phase_select=phase_select,
 			title="automatic contours", flag3d=True, mode="cine")
 	#nnU-Net contours
-	nnunet_prefix = os.path.join(seg_dir, "rtvol_")
-	_,_,_,_ = assess_utils.get_ed_es_dice_from_contour_file_multi(contour_dir, rtvol_dict, manual_contour_suffix, comp_contour_suffix="", nnunet_prefix=nnunet_prefix, phase_select=phase_select,
+	nnunet_prefix = os.path.join(seg_dir, "vol_")
+	_,_,_,_ = assess_utils.get_ed_es_dice_from_contour_file_multi(contour_dir, vol_dict, manual_contour_suffix, comp_contour_suffix="", nnunet_prefix=nnunet_prefix, phase_select=phase_select,
 			title="nnUNet", flag3d=flag3D, mode="cine")
 
 	#rt
 	print("DC for real-time rest")
-	seg_dir = os.path.join(nnunet_output,"rtvol_rt_2d_single_cv")
+	seg_dir = os.path.join(nnunet_output,"rt_2d_single_cv")
 
-	nnunet_prefix = os.path.join(seg_dir, "rtvol_")
+	nnunet_prefix = os.path.join(seg_dir, "vol_")
 	manual_contour_suffix = "_rt_manual"+contour_format
 	comp_contour_suffix = "_rt_automatic"+contour_format
-	_,_,_,_ = assess_utils.get_ed_es_dice_from_contour_file_multi(contour_dir, rtvol_dict, manual_contour_suffix, comp_contour_suffix=comp_contour_suffix, nnunet_prefix="", phase_select=phase_select,
+	_,_,_,_ = assess_utils.get_ed_es_dice_from_contour_file_multi(contour_dir, vol_dict, manual_contour_suffix, comp_contour_suffix=comp_contour_suffix, nnunet_prefix="", phase_select=phase_select,
 			title="automatic contours", flag3d=False)
-	_,_,_,_ = assess_utils.get_ed_es_dice_from_contour_file_multi(contour_dir, rtvol_dict, manual_contour_suffix, comp_contour_suffix="", nnunet_prefix=nnunet_prefix, phase_select=phase_select,
+	_,_,_,_ = assess_utils.get_ed_es_dice_from_contour_file_multi(contour_dir, vol_dict, manual_contour_suffix, comp_contour_suffix="", nnunet_prefix=nnunet_prefix, phase_select=phase_select,
 			title="nnUNet", flag3d=False)
 
 	print("DC for real-time stress")
 	flag3D = False
-	seg_dir = os.path.join(nnunet_output,"rtvol_rt_stress_2d_single_cv")
+	seg_dir = os.path.join(nnunet_output,"rt_stress_2d_single_cv")
 
-	nnunet_prefix = os.path.join(seg_dir, "rtvol_")
+	nnunet_prefix = os.path.join(seg_dir, "vol_")
 	manual_contour_suffix = "_rt_stress_manual"+contour_format
 	comp_contour_suffix = "_rt_stress_comDL"+contour_format
-	_,_,_,_ = assess_utils.get_ed_es_dice_from_contour_file_multi(contour_dir, rtvol_dict, manual_contour_suffix, comp_contour_suffix=comp_contour_suffix, nnunet_prefix="", phase_select=phase_select,
+	_,_,_,_ = assess_utils.get_ed_es_dice_from_contour_file_multi(contour_dir, vol_dict, manual_contour_suffix, comp_contour_suffix=comp_contour_suffix, nnunet_prefix="", phase_select=phase_select,
 			title="automatic contours", flag3d=False)
-	_,_,_,_ = assess_utils.get_ed_es_dice_from_contour_file_multi(contour_dir, rtvol_dict, manual_contour_suffix, comp_contour_suffix="", nnunet_prefix=nnunet_prefix, phase_select=phase_select,
+	_,_,_,_ = assess_utils.get_ed_es_dice_from_contour_file_multi(contour_dir, vol_dict, manual_contour_suffix, comp_contour_suffix="", nnunet_prefix=nnunet_prefix, phase_select=phase_select,
 			title="nnUNet", flag3d=False)
 
 	print("DC for real-time max stress")
 
-	seg_dir = os.path.join(nnunet_output,"rtvol_rt_maxstress_2d_single_cv")
+	seg_dir = os.path.join(nnunet_output,"rt_maxstress_2d_single_cv")
 
-	nnunet_prefix = os.path.join(seg_dir, "rtvol_")
+	nnunet_prefix = os.path.join(seg_dir, "vol_")
 	manual_contour_suffix = "_rt_maxstress_manual"+contour_format
 	comp_contour_suffix = "_rt_maxstress_automatic"+contour_format
-	_,_,_,_ = assess_utils.get_ed_es_dice_from_contour_file_multi(contour_dir, rtvol_dict_maxstress, manual_contour_suffix, comp_contour_suffix=comp_contour_suffix, nnunet_prefix="", phase_select=phase_select,
+	_,_,_,_ = assess_utils.get_ed_es_dice_from_contour_file_multi(contour_dir, vol_dict_maxstress, manual_contour_suffix, comp_contour_suffix=comp_contour_suffix, nnunet_prefix="", phase_select=phase_select,
 			title="automatic contours", flag3d=False)
-	_,_,_,_ = assess_utils.get_ed_es_dice_from_contour_file_multi(contour_dir, rtvol_dict_maxstress, manual_contour_suffix, comp_contour_suffix="", nnunet_prefix=nnunet_prefix, phase_select=phase_select,
+	_,_,_,_ = assess_utils.get_ed_es_dice_from_contour_file_multi(contour_dir, vol_dict_maxstress, manual_contour_suffix, comp_contour_suffix="", nnunet_prefix=nnunet_prefix, phase_select=phase_select,
 			title="nnUNet", flag3d=False)
 
-def calc_DC_and_bpm(rtvol_dict, mode=["nnunet"],
+def calc_DC_and_bpm(vol_dict, mode=["nnunet"],
 		contour_dir = contour_dir_default,
 		nnunet_output = nnunet_output_dir_default):
 	"""
 	Calculate Dice's coefficient (DC) and beats per minute (bpm) for a list of dictionaries
 	and add this information to the dictionary entries for Medis DL ACD and/or nnU-Net contours.
 
-	:param list rtvol_dict: List of dictionaries with entries ['id'] and ['reverse']
+	:param list vol_dict: List of dictionaries with entries ['id'] and ['reverse']
 	:param list mode: List of modes for calculation of Dice's coefficient. Entries can be 'nnunet' and/or 'comDL
 	:param str contour_dir: Path to directory containing contour files in '.txt' file format
 	:param str nnunet_output: Directory containing subdirectories for nnU-Net segmentation outputs
 	"""
 	segm_classes = 3
 	phase_select = "combined"
-	seg_subdirs = ["rtvol_rt_2d_single_cv", "rtvol_rt_stress_2d_single_cv", "rtvol_rt_maxstress_2d_single_cv"]
+	seg_subdirs = ["rt_2d_single_cv", "rt_stress_2d_single_cv", "rt_maxstress_2d_single_cv"]
 	modes = ["rt", "rt_stress", "rt_maxstress"]
 	manual_contour_suffixes = ["_rt_manual"+contour_format, "_rt_stress_manual"+contour_format, "_rt_maxstress_manual"+contour_format]
 	comDL_contour_suffixes = ["_rt_comDL"+contour_format, "_rt_stress_comDL"+contour_format, "_rt_maxstress_comDL"+contour_format]
 	descr = ["RV", "MYO", "LV"]
 
-	for d in rtvol_dict:
+	for d in vol_dict:
 		vol = d["id"]
 		reverse = d["reverse"]
 		print(vol)
@@ -166,7 +166,7 @@ def calc_DC_and_bpm(rtvol_dict, mode=["nnunet"],
 
 			if "nnunet" in mode:
 				class_acc = [[] for _ in range(segm_classes)]
-				segm_input = os.path.join(os.path.join(nnunet_output, seg_subdirs[i]), "rtvol_"+vol[3:])
+				segm_input = os.path.join(os.path.join(nnunet_output, seg_subdirs[i]), "vol_"+vol[3:])
 				ed_dc, ed_dict, es_dc, es_dict = assess_utils.get_ed_es_dice_from_contour_file_rt(contour_file, reverse, segm_input, phase_select=phase_select)
 				for e in ed_dict:
 					for j in range(segm_classes):
@@ -186,11 +186,11 @@ def calc_DC_and_bpm(rtvol_dict, mode=["nnunet"],
 					d['DC'+"comDL"+m+tag] = sum(class_acc[j]) / len(class_acc[j])
 					d['DCstd'+"comDL"+m+tag] = np.std(class_acc[j])
 
-def plot_DC_vs_bpm(rtvol_dict, save_paths=[], contour_mode="nnunet", ylim=[], plot=True, mode="noerror", title=""):
+def plot_DC_vs_bpm(vol_dict, save_paths=[], contour_mode="nnunet", ylim=[], plot=True, mode="noerror", title=""):
 	"""
 	Plot Dice's coefficient of a list of input dictionaries.
 
-	:param list rtvol_dict: List of dictionaries
+	:param list vol_dict: List of dictionaries
 	:param str save_paths: Path to save plot. Default: Output is not saved
 	:param str contour_mode: Contour mode for plotting. Either 'nnunet' or 'comDL'
 	:param list ylim: Limits for y-axis
@@ -207,7 +207,7 @@ def plot_DC_vs_bpm(rtvol_dict, save_paths=[], contour_mode="nnunet", ylim=[], pl
 	dice_scores_std = [[] for i in descr]
 	heartrates = []
 	heartrates_std = []
-	for d in rtvol_dict:
+	for d in vol_dict:
 		for m in modes:
 			heartrate_key = "bpm"+m
 			heartrate_std_key = "bpmstd"+m
@@ -259,11 +259,11 @@ def plot_DC_vs_bpm(rtvol_dict, save_paths=[], contour_mode="nnunet", ylim=[], pl
 	else:
 		plt.close()
 
-def plot_DC_vs_bpm_axes(rtvol_dict, ax, network="nnunet", ylim=[], mode="noerror", title=""):
+def plot_DC_vs_bpm_axes(vol_dict, ax, network="nnunet", ylim=[], mode="noerror", title=""):
 	"""
 	Plot Dice's coefficient of a list of input dictionaries on an axis for the creation of a subplot.
 
-	:param list rtvol_dict: List of dictionaries
+	:param list vol_dict: List of dictionaries
 	:param matplotlib.axes ax: Axis of a sublot
 	:param str network: Network for segmentation. Either "nnunet" or "comDL"
 	:param list ylim: Limits for y-axis
@@ -279,7 +279,7 @@ def plot_DC_vs_bpm_axes(rtvol_dict, ax, network="nnunet", ylim=[], mode="noerror
 	dice_scores_std = [[] for i in descr]
 	heartrates = []
 	heartrates_std = []
-	for d in rtvol_dict:
+	for d in vol_dict:
 		for m in modes:
 			heartrate_key = "bpm"+m
 			heartrate_std_key = "bpmstd"+m
@@ -333,7 +333,7 @@ def calc_mean_stdv_two_sets(setA, setB, mode="absolute", scale=1, precision=None
 		return round(mean_diff, precision), round(stdv_diff, precision), round(mean,precision), round(stdv_mean, precision)
 	return mean_diff, stdv_diff, mean, stdv_mean
 
-def write_output_cardiac_function_parameters(output_file, edv, esv, ef, rtvol_dict=rtvol, scale = 0.001, precision=1,
+def write_output_cardiac_function_parameters(output_file, edv, esv, ef, vol_dict=vol_dict_default, scale = 0.001, precision=1,
 						header="Manually corrected MEDIS DL ACD"):
 	"""
 	Write output mean and standard deviation parameters.
@@ -342,7 +342,7 @@ def write_output_cardiac_function_parameters(output_file, edv, esv, ef, rtvol_di
 	:param list edv: List of end-diastolic LV volume
 	:param list esv: List of end-systolic LV volume
 	:param list ef: List of LV ejection fraction
-	:param list rtvol_dict: List of dictionaries with volunteer id
+	:param list vol_dict: List of dictionaries with volunteer id
 	:param float scale: Scale for parameters
 	:param int precision: Precision for output data
 	"""
@@ -351,22 +351,22 @@ def write_output_cardiac_function_parameters(output_file, edv, esv, ef, rtvol_di
 			output.write(header+"\n")
 			output.write("EDV\n")
 			for num, e in enumerate(edv):
-				output.write(rtvol_dict[num]["id"]+"\t"+str(round(e*scale,precision))+"\n")
+				output.write(vol_dict[num]["id"]+"\t"+str(round(e*scale,precision))+"\n")
 			output.write("ESV\n")
 			for num, e in enumerate(esv):
-				output.write(rtvol_dict[num]["id"]+"\t"+str(round(e*scale,precision))+"\n")
+				output.write(vol_dict[num]["id"]+"\t"+str(round(e*scale,precision))+"\n")
 			output.write("EF\n")
 			for num, e in enumerate(ef):
-				output.write(rtvol_dict[num]["id"]+"\t"+str(round(e,precision))+"\n")
+				output.write(vol_dict[num]["id"]+"\t"+str(round(e,precision))+"\n")
 		output.close()
 
-def write_output_dice_coefficients(output_file, rtvol_dict=rtvol, precision=4, network="nnunet", meas="rt",
+def write_output_dice_coefficients(output_file, vol_dict=vol_dict_default, precision=4, network="nnunet", meas="rt",
 						header="nnU-Net"):
 	"""
 	Write output mean and standard deviation parameters of output Dice's coefficients.
 
 	:param str output_file: File path to output text file
-	:param list rtvol_dict: List of dictionaries with volunteer id and Dice's coefficients for each volunteer
+	:param list vol_dict: List of dictionaries with volunteer id and Dice's coefficients for each volunteer
 	:param int precision: Precision for output data
 	:param str network: Neural network for segmentation. Either "nnunet" or "comDL"
 	:param str meas: Measurement mode. Either "rt", "rt_stress" or "rt_maxstress"
@@ -376,7 +376,7 @@ def write_output_dice_coefficients(output_file, rtvol_dict=rtvol, precision=4, n
 		with open (output_file, 'w', encoding="utf8", errors='ignore') as output:
 			output.write(header+"\n")
 			output.write("BPM\n")
-			for d in rtvol_dict:
+			for d in vol_dict:
 				val_key = 'bpm'+meas
 				std_key = 'bpmstd'+meas
 				if val_key in d:
@@ -384,7 +384,7 @@ def write_output_dice_coefficients(output_file, rtvol_dict=rtvol, precision=4, n
 				else:
 					output.write(d["id"]+"\t---\t---\n")
 			output.write("LV\n")
-			for d in rtvol_dict:
+			for d in vol_dict:
 				val_key = 'DC'+network+meas+'LV'
 				std_key = 'DCstd'+network+meas+'LV'
 				if val_key in d:
@@ -392,7 +392,7 @@ def write_output_dice_coefficients(output_file, rtvol_dict=rtvol, precision=4, n
 				else:
 					output.write(d["id"]+"\t---\t---\n")
 			output.write("MYO\n")
-			for d in rtvol_dict:
+			for d in vol_dict:
 				val_key = 'DC'+network+meas+'Myo'
 				std_key = 'DCstd'+network+meas+'Myo'
 				if val_key in d:
@@ -400,7 +400,7 @@ def write_output_dice_coefficients(output_file, rtvol_dict=rtvol, precision=4, n
 				else:
 					output.write(d["id"]+"\t---\t---\n")
 			output.write("RV\n")
-			for d in rtvol_dict:
+			for d in vol_dict:
 				val_key = 'DC'+network+meas+'RV'
 				std_key = 'DCstd'+network+meas+'RV'
 				if val_key in d:
@@ -409,14 +409,14 @@ def write_output_dice_coefficients(output_file, rtvol_dict=rtvol, precision=4, n
 					output.write(d["id"]+"\t---\t---\n")
 		output.close()
 
-def calc_mean_stdv_parameters_cine(rtvol_dict, seg_dir = os.path.join(nnunet_output_dir_default, "rtvol_cine_2d_single_cv/"),
+def calc_mean_stdv_parameters_cine(vol_dict, seg_dir = os.path.join(nnunet_output_dir_default, "cine_2d_single_cv/"),
 				   contour_dir = contour_dir_default, flag3d=False,
 				   contour_file_mc_suffix="_cine_manual"+contour_format, contour_file_comDL_suffix="_cine_comDL"+contour_format,
 				   pixel_spacing = 1.328125, slice_selection=False):
 	"""
 	Calculate mean and standard deviation parameters for cine MRI for manually corrected contours, comDL contours and nnU-Net contours.
 
-	:param list rtvol_dict: List of dictionaries with volunteer id and reverse flag
+	:param list vol_dict: List of dictionaries with volunteer id and reverse flag
 	:param str seg_dir: Directory containing segmentation of nnU-Net for cine measurements
 	:param str contour_dir: Directory containing comDL contour files in format <vol_id>_cine_manual.con and <vol_id>_cine_comDL.con
 	:param bool flag3d: Flag for marking input data as 2D or 3D data
@@ -431,7 +431,7 @@ def calc_mean_stdv_parameters_cine(rtvol_dict, seg_dir = os.path.join(nnunet_out
 
 	segm_class = 3
 
-	for data in rtvol_dict:
+	for data in vol_dict:
 		vol = data["id"]
 		reverse = data["reverse"]
 		contour_file = os.path.join(contour_dir, vol + contour_file_mc_suffix)
@@ -469,7 +469,7 @@ def calc_mean_stdv_parameters_cine(rtvol_dict, seg_dir = os.path.join(nnunet_out
 			es_vol_comDL.append(es_vol)
 			ef_comDL.append( (ed_vol - es_vol) / ed_vol * 100)
 
-		segm_prefix = os.path.join(seg_dir, "rtvol_" + vol[3:])
+		segm_prefix = os.path.join(seg_dir, "vol_" + vol[3:])
 		if os.path.isdir(seg_dir):
 			#for single nnUNet images, ed_plist is list of parameters, for 3D images, it is only the phase value
 			ed_nnunet = assess_utils.get_phase_area_from_nnunet(segm_prefix, ed_plist, segm_class = 3, pixel_spacing = pixel_spacing,
@@ -484,14 +484,14 @@ def calc_mean_stdv_parameters_cine(rtvol_dict, seg_dir = os.path.join(nnunet_out
 
 	return (ed_vol_mc, ed_vol_comDL, ed_vol_nnunet), (es_vol_mc, es_vol_comDL, es_vol_nnunet), (ef_mc, ef_comDL, ef_nnunet)
 
-def calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=os.path.join(nnunet_output_dir_default, "rtvol_rt_2d_single_cv/"),
+def calc_mean_stdv_parameters_rt(vol_dict, seg_dir=os.path.join(nnunet_output_dir_default, "rt_2d_single_cv/"),
 				contour_dir=contour_dir_default, flag3d=False,
 				pixel_spacing=1.6, contour_file_mc_suffix="_rt_manual"+contour_format, contour_file_comDL_suffix="_rt_comDL"+contour_format,
 				exp_dir=end_exp_dir_default, ed_es_phase_file="_rt.txt"):
 	"""
 	Calculate mean and standard deviation parameters for rt MRI for manual, comDL and nnU-Net contours.
 
-	:param list rtvol_dict: List of dictionaries with volunteer id and reverse flag
+	:param list vol_dict: List of dictionaries with volunteer id and reverse flag
 	:param str seg_dir: Directory containing segmentation of nnU-Net for cine measurements
 	:param str contour_dir: Directory containing Medis contour files in format <vol_id>_cine_manual.con and <vol_id>_cine_comDL.con
 	:param bool flag3d: Flag for marking input data as 2D or 3D data
@@ -508,7 +508,7 @@ def calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=os.path.join(nnunet_output_
 	ef_mc, ef_comDL, ef_nnunet = [], [], []
 
 	segm_class = 3
-	for data in rtvol_dict:
+	for data in vol_dict:
 		vol = data["id"]
 		reverse = data["reverse"]
 		file_path = os.path.join(exp_dir, vol+ed_es_phase_file)
@@ -556,7 +556,7 @@ def calc_mean_stdv_parameters_rt(rtvol_dict, seg_dir=os.path.join(nnunet_output_
 			es_vol_comDL.append(es_vol)
 			ef_comDL.append( (ed_vol - es_vol) / ed_vol * 100)
 
-		segm_prefix = os.path.join(seg_dir, "rtvol_" + vol[3:])
+		segm_prefix = os.path.join(seg_dir, "vol_" + vol[3:])
 		if os.path.isdir(seg_dir):
 			#for single nnUNet images, ed_plist is list of parameters, for 3D images, it is only the phase value
 			ed_nnet = assess_utils.get_phase_area_from_nnunet(segm_prefix, ed_plist, segm_class = 3, pixel_spacing = pixel_spacing, flag3d=flag3d)
@@ -733,7 +733,7 @@ def read_clinical_measures(in_file, no_dict=False):
 		return [d["value"] for d in EDV_dict], [d["value"] for d in ESV_dict], [d["value"] for d in EF_dict]
 	return EDV_dict, ESV_dict, EF_dict
 
-def read_DC(in_file, rtvol_dict, network, meas):
+def read_DC(in_file, vol_dict, network, meas):
 	"""
 	Read Dice's coefficients and bpm from text file
 	"""
@@ -748,13 +748,13 @@ def read_DC(in_file, rtvol_dict, network, meas):
 			if "BPM" == readout:
 				if "---" == content[1]:
 					continue
-				for d in rtvol_dict:
+				for d in vol_dict:
 					if content[0] == d["id"]:
 						d["bpm"+meas] = int(content[1])
 						d["bpmstd"+meas] = int(content[2])
 						continue
 			if "" != readout:
-				for d in rtvol_dict:
+				for d in vol_dict:
 					if content[0] == d["id"] and "bpm"+meas in d:
 						d["DC"+network+meas+readout] = float(content[1])
 						d["DCstd"+network+meas+readout] = float(content[2])
@@ -791,7 +791,7 @@ def print_abs_rel_diff(file_ref, file_comp, precision=1):
 	print("ESV", mdiff_rel_esv, stdv_rel_esv)
 	print("EF", mdiff_rel_ef, stdv_rel_ef)
 
-def write_cardiac_function_single(out_dir, rtvol_dict, edv_tuple, esv_tuple, ef_tuple, modus="cine"):
+def write_cardiac_function_single(out_dir, vol_dict, edv_tuple, esv_tuple, ef_tuple, modus="cine"):
 	"""
 	Write cardiac function parameters into text files
 	"""
@@ -799,11 +799,11 @@ def write_cardiac_function_single(out_dir, rtvol_dict, edv_tuple, esv_tuple, ef_
 	(esv_mc, esv_comDL, esv_nnunet) = esv_tuple
 	(ef_mc, ef_comDL, ef_nnunet) = ef_tuple
 	output_file = os.path.join(out_dir,"cardiac_function_mc_"+modus+".txt")
-	write_output_cardiac_function_parameters(output_file, edv_mc, esv_mc, ef_mc, rtvol_dict=rtvol_dict, precision=1, header="Manually corrected MEDIS DL ACD")
+	write_output_cardiac_function_parameters(output_file, edv_mc, esv_mc, ef_mc, vol_dict=vol_dict, precision=1, header="Manually corrected MEDIS DL ACD")
 	output_file = os.path.join(out_dir,"cardiac_function_comDL_"+modus+".txt")
-	write_output_cardiac_function_parameters(output_file, edv_comDL, esv_comDL, ef_comDL, rtvol_dict=rtvol_dict, precision=1, header="MEDIS DL ACD")
+	write_output_cardiac_function_parameters(output_file, edv_comDL, esv_comDL, ef_comDL, vol_dict=vol_dict, precision=1, header="MEDIS DL ACD")
 	output_file = os.path.join(out_dir,"cardiac_function_nnunet_"+modus+".txt")
-	write_output_cardiac_function_parameters(output_file, edv_nnunet, esv_nnunet, ef_nnunet, rtvol_dict=rtvol_dict, precision=1, header="nnU-Net")
+	write_output_cardiac_function_parameters(output_file, edv_nnunet, esv_nnunet, ef_nnunet, vol_dict=vol_dict, precision=1, header="nnU-Net")
 
 def save_fig1(out_dir, img_dir=img_dir_default,
 			contour_dir=contour_dir_default,
@@ -898,7 +898,7 @@ def save_fig2(out_dir, img_dir=img_dir_default,
 	titles = ["cine", "real-time (76 bpm)", "real-time (115 bpm)", "real-time (162 bpm)"]
 	assess_utils.plot_measurement_types_axes(vol, [ax[i] for i in range(columns)], reverse, slice_idx, mask_mode=mask_mode,
 				phase_mode=phase_mode, save_paths=save_paths, contour_dir=contour_dir, img_dir=img_dir,
-				nnunet_output=os.path.join(nnunet_output_dir_default, "rtvol_rt_stress_2d_single_cv"), crop_dim=crop_dim, vmax_factor=vmax_factor, titles=titles)
+				nnunet_output=os.path.join(nnunet_output_dir_default, "rt_stress_2d_single_cv"), crop_dim=crop_dim, vmax_factor=vmax_factor, titles=titles)
 	mask_mode = ["mc"]
 	assess_utils.plot_measurement_types_axes(vol, [ax[columns+i] for i in range(columns)], reverse, slice_idx, mask_mode=mask_mode,
 				phase_mode=phase_mode, save_paths=save_paths, contour_dir=contour_dir, img_dir=img_dir, DC=False,
@@ -926,7 +926,7 @@ def save_fig2(out_dir, img_dir=img_dir_default,
 				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
 	plt.close()
 
-def save_fig3(out_dir, rtvol_dict=rtvol, param_dir="", contour_dir=contour_dir_default, nnunet_output=nnunet_output_dir_default, file_extension="pdf,png"):
+def save_fig3(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=contour_dir_default, nnunet_output=nnunet_output_dir_default, file_extension="pdf,png"):
 	"""
 	Create figure for Dice's coefficient depending on heart rate
 	"""
@@ -941,7 +941,7 @@ def save_fig3(out_dir, rtvol_dict=rtvol, param_dir="", contour_dir=contour_dir_d
 	if "" == param_dir:
 		param_dir = out_dir
 	if not os.path.isfile(os.path.join(param_dir,"DC_nnunet_rt.txt")):
-		write_DC_all(out_dir, rtvol_dict=rtvol_dict, contour_dir=contour_dir, nnunet_output=nnunet_output)
+		write_DC_all(out_dir, vol_dict=vol_dict, contour_dir=contour_dir, nnunet_output=nnunet_output)
 
 	rows=1
 	columns=2
@@ -955,16 +955,16 @@ def save_fig3(out_dir, rtvol_dict=rtvol, param_dir="", contour_dir=contour_dir_d
 	title="nnU-Net"
 	for m in meas:
 		file_DC = os.path.join(param_dir,"DC_"+network+"_"+m+".txt")
-		read_DC(file_DC, rtvol_dict, network, m)
-	plot_DC_vs_bpm_axes(rtvol_dict, axes[0], network=network, ylim=ylim, title=title)
+		read_DC(file_DC, vol_dict, network, m)
+	plot_DC_vs_bpm_axes(vol_dict, axes[0], network=network, ylim=ylim, title=title)
 
 	# comDL
 	network = "comDL"
 	title="comDL"
 	for m in meas:
 		file_DC = os.path.join(param_dir,"DC_"+network+"_"+m+".txt")
-		read_DC(file_DC, rtvol_dict, network, m)
-	plot_DC_vs_bpm_axes(rtvol_dict, axes[1], network=network, ylim=ylim, title=title)
+		read_DC(file_DC, vol_dict, network, m)
+	plot_DC_vs_bpm_axes(vol_dict, axes[1], network=network, ylim=ylim, title=title)
 
 	if 0 != len(save_paths):
 		if list == type(save_paths):
@@ -980,9 +980,9 @@ def save_fig3(out_dir, rtvol_dict=rtvol, param_dir="", contour_dir=contour_dir_d
 				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
 	plt.close()
 
-def save_fig4(out_dir, rtvol_dict=rtvol, img_dir=img_dir_default,
+def save_fig4(out_dir, vol_dict=vol_dict_default, img_dir=img_dir_default,
 			contour_dir=contour_dir_default,
-			seg_dir=os.path.join(nnunet_output_dir_default, "rtvol_rt_stress_2d_single_cv"),
+			seg_dir=os.path.join(nnunet_output_dir_default, "rt_stress_2d_single_cv"),
 			file_extension="pdf"):
 	"""
 	Create figure for visualizing the limits of neural networks for manuscript.
@@ -995,14 +995,14 @@ def save_fig4(out_dir, rtvol_dict=rtvol, img_dir=img_dir_default,
 
 	save_paths = [os.path.join(out_dir, "figure_04_nn_limits."+f) for f in file_extensions]
 	param_list = [['vol10', 2, 25], ['vol10', 3, 123], ['vol11', 15, 69], ['vol15', 11, 126]]
-	assess_utils.plot_mc_nnunet(contour_dir, img_dir, seg_dir, rtvol_dict, param_list, flag3d=False, mode = "nnunet",
+	assess_utils.plot_mc_nnunet(contour_dir, img_dir, seg_dir, vol_dict, param_list, flag3d=False, mode = "nnunet",
 					crop_dim=crop_dim, contour_suffix = "_rt_stress_manual"+contour_format, img_suffix="rt_stress",
 					save_paths=save_paths, check=False, plot=False)
 
-def save_figba(out_dir, rtvol_dict=rtvol, param_dir="", contour_dir=contour_dir_default, exp_dir=end_exp_dir_default,
+def save_figba(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=contour_dir_default, exp_dir=end_exp_dir_default,
 		nnunet_output=nnunet_output_dir_default, file_extension="pdf"):
 	"""
-	Bland-Altman plots of EDV, ESV and EF for entries of rtvol for cine, real-time and real-time stress.
+	Bland-Altman plots of EDV, ESV and EF for entries of vol_dict for cine, real-time and real-time stress.
 	"""
 	file_extensions=file_extension.split(",")
 	if not os.path.isdir(out_dir):
@@ -1011,7 +1011,7 @@ def save_figba(out_dir, rtvol_dict=rtvol, param_dir="", contour_dir=contour_dir_
 	if "" == param_dir:
 		param_dir = out_dir
 	if not os.path.isfile(os.path.join(param_dir,"cardiac_function_mc_cine.txt")):
-		write_cardiac_function_all(out_dir, rtvol_dict=rtvol_dict, contour_dir=contour_dir, exp_dir=exp_dir, nnunet_output=nnunet_output)
+		write_cardiac_function_all(out_dir, vol_dict=vol_dict, contour_dir=contour_dir, exp_dir=exp_dir, nnunet_output=nnunet_output)
 
 	modus = "cine"
 	file_mc = os.path.join(param_dir,"cardiac_function_mc_"+modus+".txt")
@@ -1096,7 +1096,7 @@ def save_figba(out_dir, rtvol_dict=rtvol, param_dir="", contour_dir=contour_dir_
 				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
 	plt.close()
 
-def save_figba_cine_rt(out_dir, rtvol_dict=rtvol, param_dir="", contour_dir=contour_dir_default, exp_dir=end_exp_dir_default,
+def save_figba_cine_rt(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=contour_dir_default, exp_dir=end_exp_dir_default,
 			nnunet_output=nnunet_output_dir_default, file_extension="pdf"):
 	"""
 	Bland-Altman plots for end-diastolic volume (EDV), end-systolic volume (ESV) and ejection fraction (EF)
@@ -1114,7 +1114,7 @@ def save_figba_cine_rt(out_dir, rtvol_dict=rtvol, param_dir="", contour_dir=cont
 	if "" == param_dir:
 		param_dir = out_dir
 	if not os.path.isfile(os.path.join(param_dir,"cardiac_function_mc_cine.txt")):
-		write_cardiac_function_all(out_dir, rtvol_dict=rtvol_dict, contour_dir=contour_dir, exp_dir=exp_dir, nnunet_output=nnunet_output)
+		write_cardiac_function_all(out_dir, vol_dict=vol_dict, contour_dir=contour_dir, exp_dir=exp_dir, nnunet_output=nnunet_output)
 
 	modus = "cine"
 	file_mc = os.path.join(param_dir,"cardiac_function_mc_"+modus+".txt")
@@ -1159,85 +1159,85 @@ def save_figba_cine_rt(out_dir, rtvol_dict=rtvol, param_dir="", contour_dir=cont
 			else:
 				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
 
-def write_DC_all(out_dir, rtvol_dict=rtvol, contour_dir=contour_dir_default, nnunet_output=nnunet_output_dir_default):
+def write_DC_all(out_dir, vol_dict=vol_dict_default, contour_dir=contour_dir_default, nnunet_output=nnunet_output_dir_default):
 	"""
 	Write Dice's coefficients and heart rates in bpm for comDL and nnU-Net.
 	"""
 	meas = "rt", "rt_stress", "rt_maxstress"
 	#nnU-Net
-	calc_DC_and_bpm(rtvol_dict, mode=["nnunet"], contour_dir = contour_dir, nnunet_output = nnunet_output)
+	calc_DC_and_bpm(vol_dict, mode=["nnunet"], contour_dir = contour_dir, nnunet_output = nnunet_output)
 	network="nnunet"
 	header="nnU-Net"
 	for m in meas:
 		file_path = os.path.join(out_dir,"DC_"+network+"_"+m+".txt")
-		write_output_dice_coefficients(file_path, rtvol_dict=rtvol_dict, precision=4, network=network, meas=m,
+		write_output_dice_coefficients(file_path, vol_dict=vol_dict, precision=4, network=network, meas=m,
 								header=header)
 
 	#comDL
-	calc_DC_and_bpm(rtvol_dict, mode=["comDL"], contour_dir = contour_dir, nnunet_output = nnunet_output)
+	calc_DC_and_bpm(vol_dict, mode=["comDL"], contour_dir = contour_dir, nnunet_output = nnunet_output)
 	network="comDL"
 	header="comDL"
 	for m in meas:
 		file_path = os.path.join(out_dir,"DC_"+network+"_"+m+".txt")
-		write_output_dice_coefficients(file_path, rtvol_dict=rtvol_dict, precision=4, network=network, meas=m,
+		write_output_dice_coefficients(file_path, vol_dict=vol_dict, precision=4, network=network, meas=m,
 								header=header)
 
-def write_cardiac_function_all(out_dir, rtvol_dict=rtvol, contour_dir=contour_dir_default, exp_dir=end_exp_dir_default,
+def write_cardiac_function_all(out_dir, vol_dict=vol_dict_default, contour_dir=contour_dir_default, exp_dir=end_exp_dir_default,
 				nnunet_output=nnunet_output_dir_default, contour_suffix=contour_format):
 	"""
 	Write cardiac function parameters EDV, ESV and EF into files for manually corrected, comDL and nnU-Net contours.
 	"""
 	# cine CMR
-	seg_dir = os.path.join(nnunet_output, "rtvol_cine_2d_single_cv/")
-	ed_tuple_cine, es_tuple_cine, ef_tuple_cine = calc_mean_stdv_parameters_cine(rtvol_dict, contour_dir=contour_dir, seg_dir=seg_dir,
+	seg_dir = os.path.join(nnunet_output, "cine_2d_single_cv/")
+	ed_tuple_cine, es_tuple_cine, ef_tuple_cine = calc_mean_stdv_parameters_cine(vol_dict, contour_dir=contour_dir, seg_dir=seg_dir,
 									flag3d=False, slice_selection=False)
-	write_cardiac_function_single(out_dir, rtvol_dict, ed_tuple_cine, es_tuple_cine, ef_tuple_cine, modus="cine")
+	write_cardiac_function_single(out_dir, vol_dict, ed_tuple_cine, es_tuple_cine, ef_tuple_cine, modus="cine")
 
 	# real-time CMR at rest
-	seg_dir = os.path.join(nnunet_output, "rtvol_rt_2d_single_cv/")
-	ed_tuple_rt, es_tuple_rt, ef_tuple_rt = calc_mean_stdv_parameters_rt(rtvol_dict, contour_dir=contour_dir, seg_dir=seg_dir, exp_dir=exp_dir,
+	seg_dir = os.path.join(nnunet_output, "rt_2d_single_cv/")
+	ed_tuple_rt, es_tuple_rt, ef_tuple_rt = calc_mean_stdv_parameters_rt(vol_dict, contour_dir=contour_dir, seg_dir=seg_dir, exp_dir=exp_dir,
 									contour_file_mc_suffix="_rt_manual"+contour_suffix)
-	write_cardiac_function_single(out_dir, rtvol_dict, ed_tuple_rt, es_tuple_rt, ef_tuple_rt, modus="rt")
+	write_cardiac_function_single(out_dir, vol_dict, ed_tuple_rt, es_tuple_rt, ef_tuple_rt, modus="rt")
 
 	# real-time CMR at stress
-	seg_dir = os.path.join(nnunet_output, "rtvol_rt_stress_2d_single_cv/")
-	ed_tuple_rt_stress, es_tuple_rt_stress, ef_tuple_rt_stress = calc_mean_stdv_parameters_rt(rtvol_dict, contour_dir=contour_dir, seg_dir=seg_dir,
+	seg_dir = os.path.join(nnunet_output, "rt_stress_2d_single_cv/")
+	ed_tuple_rt_stress, es_tuple_rt_stress, ef_tuple_rt_stress = calc_mean_stdv_parameters_rt(vol_dict, contour_dir=contour_dir, seg_dir=seg_dir,
 					contour_file_mc_suffix="_rt_stress_manual"+contour_suffix, contour_file_comDL_suffix="_rt_stress_comDL"+contour_suffix,
 					exp_dir = exp_dir, ed_es_phase_file="_rt_stress.txt")
 
-	write_cardiac_function_single(out_dir, rtvol_dict, ed_tuple_rt_stress, es_tuple_rt_stress, ef_tuple_rt_stress, modus="rt_stress")
+	write_cardiac_function_single(out_dir, vol_dict, ed_tuple_rt_stress, es_tuple_rt_stress, ef_tuple_rt_stress, modus="rt_stress")
 
-def write_cardiac_function_intra(out_dir, rtvol_dict=rtvol, contour_dir=contour_dir_default, exp_dir=end_exp_dir_default, contour_suffix="_intra"+contour_format):
+def write_cardiac_function_intra(out_dir, vol_dict=vol_dict_default, contour_dir=contour_dir_default, exp_dir=end_exp_dir_default, contour_suffix="_intra"+contour_format):
 	"""
 	Write cardiac function parameters EDV, ESV and EF into files for intra-observer variability of manually corrected contours.
 	"""
 	# cine CMR
 	seg_dir = ""
-	ed_tuple_cine, es_tuple_cine, ef_tuple_cine = calc_mean_stdv_parameters_cine(rtvol_dict, contour_dir=contour_dir, seg_dir=seg_dir,
+	ed_tuple_cine, es_tuple_cine, ef_tuple_cine = calc_mean_stdv_parameters_cine(vol_dict, contour_dir=contour_dir, seg_dir=seg_dir,
 									flag3d=False, slice_selection=False, contour_file_mc_suffix="_cine_manual"+contour_suffix,
 									contour_file_comDL_suffix="")
 
 	output_file = os.path.join(out_dir,"cardiac_function_mc_cine_intra.txt")
 	write_output_cardiac_function_parameters(output_file, ed_tuple_cine[0], es_tuple_cine[0], ef_tuple_cine[0],
-					rtvol_dict=rtvol_dict, precision=1, header="Intra-observer variability of manually corrected MEDIS DL ACD")
+					vol_dict=vol_dict, precision=1, header="Intra-observer variability of manually corrected MEDIS DL ACD")
 
 	# real-time CMR at rest
-	ed_tuple_rt, es_tuple_rt, ef_tuple_rt = calc_mean_stdv_parameters_rt(rtvol_dict, contour_dir=contour_dir, seg_dir=seg_dir, exp_dir=exp_dir,
+	ed_tuple_rt, es_tuple_rt, ef_tuple_rt = calc_mean_stdv_parameters_rt(vol_dict, contour_dir=contour_dir, seg_dir=seg_dir, exp_dir=exp_dir,
 				contour_file_mc_suffix="_rt_manual"+contour_suffix, contour_file_comDL_suffix="_rt_comDL"+contour_suffix,
 				ed_es_phase_file="_rt_intra.txt")
 
 	output_file = os.path.join(out_dir,"cardiac_function_mc_rt_intra.txt")
 	write_output_cardiac_function_parameters(output_file, ed_tuple_rt[0], es_tuple_rt[0], ef_tuple_rt[0],
-					rtvol_dict=rtvol_dict, precision=1, header="Intra-observer variability of manually corrected MEDIS DL ACD")
+					vol_dict=vol_dict, precision=1, header="Intra-observer variability of manually corrected MEDIS DL ACD")
 
 	# real-time CMR at stress
-	ed_tuple_rt_stress, es_tuple_rt_stress, ef_tuple_rt_stress = calc_mean_stdv_parameters_rt(rtvol_dict, contour_dir=contour_dir, seg_dir=seg_dir, exp_dir = exp_dir,
+	ed_tuple_rt_stress, es_tuple_rt_stress, ef_tuple_rt_stress = calc_mean_stdv_parameters_rt(vol_dict, contour_dir=contour_dir, seg_dir=seg_dir, exp_dir = exp_dir,
 				contour_file_mc_suffix="_rt_stress_manual"+contour_suffix, contour_file_comDL_suffix="_rt_stress_comDL"+contour_suffix,
 				ed_es_phase_file="_rt_stress_intra.txt")
 
 	output_file = os.path.join(out_dir,"cardiac_function_mc_rt_stress_intra.txt")
 	write_output_cardiac_function_parameters(output_file, ed_tuple_rt_stress[0], es_tuple_rt_stress[0], ef_tuple_rt_stress[0],
-					rtvol_dict=rtvol_dict, precision=1, header="Intra-observer variability of manually corrected MEDIS DL ACD")
+					vol_dict=vol_dict, precision=1, header="Intra-observer variability of manually corrected MEDIS DL ACD")
 
 def main(data_dir):
 	"""
@@ -1266,7 +1266,7 @@ def main(data_dir):
 
 	# Limits of segmentation network
 	save_fig4(out_dir=os.path.join(repo_dir,"Figure_04"), img_dir=img_dir_default, contour_dir=contour_dir_default,
-		seg_dir=os.path.join(nnunet_output_dir_default, "rtvol_rt_stress_2d_single_cv"))
+		seg_dir=os.path.join(nnunet_output_dir_default, "rt_stress_2d_single_cv"))
 
 	#Bland-Altman plots
 	save_figba(out_dir=os.path.join(repo_dir,"Figure_ba"), param_dir=param_dir, contour_dir=contour_dir_default, exp_dir=end_exp_dir_default, nnunet_output=nnunet_output_dir_default)

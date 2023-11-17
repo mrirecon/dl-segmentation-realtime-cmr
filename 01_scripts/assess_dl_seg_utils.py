@@ -1299,8 +1299,8 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 
 	if 0 != len(mask_mode):
 		comDL_contour_files = [os.path.join(contour_dir, vol+"_" + s+"_comDL"+contour_format) for s in ["cine", "rt", "rt_stress", "rt_maxstress"]]
-		seg_subdirs = ["rtvol_cine_2d_single_cv", "rtvol_rt_2d_single_cv","rtvol_rt_stress_2d_single_cv", "rtvol_rt_maxstress_2d_single_cv"]
-		seg_dirs = [os.path.join(seg_dir, s, "rtvol_"+vol[3:]) for s in seg_subdirs]
+		seg_subdirs = ["cine_2d_single_cv", "rt_2d_single_cv","rt_stress_2d_single_cv", "rt_maxstress_2d_single_cv"]
+		seg_dirs = [os.path.join(seg_dir, s, "vol_"+vol[3:]) for s in seg_subdirs]
 
 	rows = 1 if 0 == len(mask_mode) else len(mask_mode)
 	columns = 4
@@ -1440,8 +1440,8 @@ def plot_measurement_types_axes(vol, axes, reverse, slice_idx, mask_mode=[], pha
 
 	if 0 != len(mask_mode):
 		comDL_contour_files = [os.path.join(contour_dir, vol+"_" + s+"_comDL"+contour_format) for s in ["cine", "rt", "rt_stress", "rt_maxstress"]]
-		seg_subdirs = ["rtvol_cine_2d_single_cv", "rtvol_rt_2d_single_cv","rtvol_rt_stress_2d_single_cv", "rtvol_rt_maxstress_2d_single_cv"]
-		seg_dirs = [os.path.join(nnunet_output, s, "rtvol_"+vol[3:]) for s in seg_subdirs]
+		seg_subdirs = ["cine_2d_single_cv", "rt_2d_single_cv","rt_stress_2d_single_cv", "rt_maxstress_2d_single_cv"]
+		seg_dirs = [os.path.join(nnunet_output, s, "vol_"+vol[3:]) for s in seg_subdirs]
 
 	for num, (contour_file, ax) in enumerate(zip(contour_files, axes)):
 
@@ -1527,7 +1527,7 @@ def plot_measurement_types_axes(vol, axes, reverse, slice_idx, mask_mode=[], pha
 				ax.imshow(masked_plt, cmap=light_jet,interpolation='none', alpha=0.4)
 				ax.set_title(second_row_title, size=label_size)
 
-def plot_mc_nnunet(contour_dir, img_dir, seg_dir, rtvol_dict, param_list, flag3d=True, mode = "nnunet",
+def plot_mc_nnunet(contour_dir, img_dir, seg_dir, vol_dict, param_list, flag3d=True, mode = "nnunet",
 			crop_dim=160, contour_suffix = "_cine.txt", save_paths=[], img_suffix="cine",
 			check=False, plot=True):
 	"""
@@ -1537,7 +1537,7 @@ def plot_mc_nnunet(contour_dir, img_dir, seg_dir, rtvol_dict, param_list, flag3d
 	:param str contour_dir: Directory containing contour files in format <contour_dir>/<id><contour_suffix>
 	:param str img_dir: Directory containing images in format <img_dir>/<id>/cine
 	:param str seg_dir: Directory containing BART nnet or nnU-Net segmentations.
-	:param list rtvol_dict: List of dictionaries in format [{"id":<id>, "reverse":bool}]
+	:param list vol_dict: List of dictionaries in format [{"id":<id>, "reverse":bool}]
 	:param list param_list: List of parameters in format (<id>, slice, phase)
 	:param bool flag3d: Flag for 3D segmentation of nnU-Net
 	:param str mode: Mode for segmentation. 'nnunet' or 'nnet'
@@ -1558,9 +1558,9 @@ def plot_mc_nnunet(contour_dir, img_dir, seg_dir, rtvol_dict, param_list, flag3d
 
 	for num,e in enumerate(param_list):
 		(vol, slice, phase) = tuple(e)
-		reverse = [data["reverse"] for data in rtvol_dict if vol == data["id"]][0]
-		if "flip_rot" in rtvol_dict[0]:
-			f = [data["flip_rot"] for data in rtvol_dict if vol == data["id"]][0]
+		reverse = [data["reverse"] for data in vol_dict if vol == data["id"]][0]
+		if "flip_rot" in vol_dict[0]:
+			f = [data["flip_rot"] for data in vol_dict if vol == data["id"]][0]
 		else:
 			f = [-1,0]
 
@@ -1588,9 +1588,9 @@ def plot_mc_nnunet(contour_dir, img_dir, seg_dir, rtvol_dict, param_list, flag3d
 			segm = cfl.readcfl(segm_file)
 			mask_dl = np.abs(segm[0,:,:,0,phase,slice])
 			comp_title = "BART nnet Segmentation"
-		#nnUNet segmentation, format: <seg_dir>/rtvol_<id[3:]>
+		#nnUNet segmentation, format: <seg_dir>/vol_<id[3:]>
 		elif "nnunet" == mode:
-			nnunet_prefix = os.path.join(seg_dir, "rtvol_" + vol[3:])
+			nnunet_prefix = os.path.join(seg_dir, "vol_" + vol[3:])
 			if flag3d:
 				mask_nnunet = nnunet.read_nnunet_segm(nnunet_prefix+str(phase).zfill(3)+".nii.gz")
 				mask_nnunet = mask_nnunet[:,:,slice]
@@ -1656,16 +1656,16 @@ def plot_mc_nnunet(contour_dir, img_dir, seg_dir, rtvol_dict, param_list, flag3d
 
 #---Prepare nnU-Net input---
 
-def prepare_nnunet_cine(rtvol, img_dir, contour_dir, nnunet_dir,
-			cine_single = "Task501_rtvolcine_single", cine_3d = "Task502_rtvolcine3d", cine_3d_LV = "Task503_rtvolcine3d_LV"):
+def prepare_nnunet_cine(vol, img_dir, contour_dir, nnunet_dir,
+			cine_single = "Task501_cine_single", cine_3d = "Task502_cine3d", cine_3d_LV = "Task503_cine3d_LV"):
 	""""
 	Pre-process reconstructed images of cine MRI for application of nnU-Net.
 	Creates directories for single cine 2D images, cine 3D images (along cardiac phase dimension)
 	and cine 3D images only containing slices containing the heart.
 	"""
 	output_dir = os.path.join(nnunet_dir, "nnUNet_raw_data")
-	prefix = "rtvol_"
-	for data in rtvol:
+	prefix = "vol_"
+	for data in vol:
 		vol = data["id"]
 		reverse = data["reverse"]
 		img_file = os.path.join(img_dir, vol, "cine")
@@ -1686,14 +1686,14 @@ def prepare_nnunet_cine(rtvol, img_dir, contour_dir, nnunet_dir,
 			output_prefix = os.path.join(output_dir, cine_3d_LV, "imagesTs", prefix+vol[3:])
 			create_nnunet_input_cine(img_file, output_prefix, contour_file=contour_file, reverse=reverse, output_mode="3d", slice_selection=True)
 
-def prepare_nnunet_rt(rtvol, img_dir, nnunet_dir, rt_single = "Task511_rtvolrt_single", rt_slice = "Task516_rtvolrt"):
+def prepare_nnunet_rt(vol, img_dir, nnunet_dir, rt_single = "Task511_rt_single", rt_slice = "Task516_rt"):
 	""""
 	Pre-process reconstructed images of real-time MRI for application of nnU-Net.
 	Creates directories for single images and a time series within a slice.
 	"""
 	output_dir = os.path.join(nnunet_dir, "nnUNet_raw_data")
-	prefix = "rtvol_"
-	for data in rtvol:
+	prefix = "vol_"
+	for data in vol:
 		vol = data["id"]
 		img_file = os.path.join(img_dir, vol, "rt")
 		if "" != rt_single:
@@ -1707,14 +1707,14 @@ def prepare_nnunet_rt(rtvol, img_dir, nnunet_dir, rt_single = "Task511_rtvolrt_s
 			output_prefix = os.path.join(output_dir, rt_slice, "imagesTs", prefix+vol[3:])
 			create_nnunet_input_rt(img_file, output_prefix, mode="slice")
 
-def prepare_nnunet_rt_stress(rtvol, img_dir, nnunet_dir, rt_single = "Task512_rtvolrt_stress_single", rt_slice = "Task517_rtvolrt_stress"):
+def prepare_nnunet_rt_stress(vol, img_dir, nnunet_dir, rt_single = "Task512_rt_stress_single", rt_slice = "Task517_rt_stress"):
 	""""
 	Pre-process reconstructed images of real-time MRI under stress for application of nnU-Net.
 	Creates directories for single images and a time series within a slice.
 	"""
 	output_dir = os.path.join(nnunet_dir, "nnUNet_raw_data")
-	prefix = "rtvol_"
-	for data in rtvol:
+	prefix = "vol_"
+	for data in vol:
 		vol = data["id"]
 		img_file = os.path.join(img_dir, vol, "rt_stress")
 		if "" != rt_single:
@@ -1728,14 +1728,14 @@ def prepare_nnunet_rt_stress(rtvol, img_dir, nnunet_dir, rt_single = "Task512_rt
 			output_prefix = os.path.join(output_dir, rt_slice, "imagesTs", prefix+vol[3:])
 			create_nnunet_input_rt(img_file, output_prefix, mode="slice")
 
-def prepare_nnunet_rt_maxstress(rtvol, img_dir, nnunet_dir, rt_single = "Task513_rtvolrt_maxstress_single", rt_slice = "Task518_rtvolrt_maxstress"):
+def prepare_nnunet_rt_maxstress(vol, img_dir, nnunet_dir, rt_single = "Task513_rt_maxstress_single", rt_slice = "Task518_rt_maxstress"):
 	""""
 	Pre-process reconstructed images of real-time MRI under maximal stress for application of nnU-Net.
 	Creates directories for single images and a time series within a slice.
 	"""
 	output_dir = os.path.join(nnunet_dir, "nnUNet_raw_data")
-	prefix = "rtvol_"
-	for data in rtvol:
+	prefix = "vol_"
+	for data in vol:
 		vol = data["id"]
 		img_file = os.path.join(img_dir, vol, "rt_maxstress")
 		if "" != rt_single:
@@ -1756,7 +1756,7 @@ def prepare_nnunet(img_dir, contour_dir, nnunet_dir):
 	and cine 3D images only containing slices containing the heart.
 	For real-time: Creates directories for single images and a time series within a slice.
 	"""
-	rtvol = [
+	vol_dict_default = [
 	{"id":"vol01",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":61},
 	{"id":"vol02",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":55},
 	{"id":"vol03",	"reverse":False	, "flip_rot":[-1,0], "gender":"f", "age":64},
@@ -1774,7 +1774,7 @@ def prepare_nnunet(img_dir, contour_dir, nnunet_dir):
 	{"id":"vol15",	"reverse":False	, "flip_rot":[-1,0], "gender":"m", "age":49}
 	]
 
-	prepare_nnunet_cine(rtvol, img_dir, contour_dir, nnunet_dir)
-	prepare_nnunet_rt(rtvol, img_dir, nnunet_dir)
-	prepare_nnunet_rt_stress(rtvol, img_dir, nnunet_dir)
-	prepare_nnunet_rt_maxstress(rtvol, img_dir, nnunet_dir)
+	prepare_nnunet_cine(vol_dict_default, img_dir, contour_dir, nnunet_dir)
+	prepare_nnunet_rt(vol_dict_default, img_dir, nnunet_dir)
+	prepare_nnunet_rt_stress(vol_dict_default, img_dir, nnunet_dir)
+	prepare_nnunet_rt_maxstress(vol_dict_default, img_dir, nnunet_dir)
