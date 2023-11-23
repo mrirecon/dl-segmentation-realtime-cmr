@@ -7,18 +7,18 @@
 #
 
 SCRIPT_REPO="$( cd "$( dirname "$( dirname "$(readlink -f "${BASH_SOURCE[0]}")" )" )" >/dev/null 2>&1 && pwd )"
-cd "$SCRIPT_REPO"/01_scripts/ || exit
+cd "$SCRIPT_REPO"/scripts/ || exit
 
 read -ra param < <(grep -v '^#' assess_dl.env | xargs)
 export "${param[@]}"
 
-export SCRIPT_DIR=$SCRIPT_REPO/01_scripts
-export FIGURE_OUT=$SCRIPT_REPO/Figure_01
+export SCRIPT_DIR=$SCRIPT_REPO/scripts
+export FIGURE_OUT=$SCRIPT_REPO/Figure_02
 
 cmd_array=(	'import sys,os;'
 	'sys.path.insert(0,os.environ["SCRIPT_DIR"]);'
 	'import assess_dl_seg;'
-	'assess_dl_seg.save_fig1(out_dir=os.environ["FIGURE_OUT"])')
+	'assess_dl_seg.save_fig2(out_dir=os.environ["FIGURE_OUT"])')
 
 cmd="${cmd_array[*]}"
 python3 -c "$cmd"

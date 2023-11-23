@@ -10,7 +10,7 @@
 # run this script in interactive mode with bash -i assess_dl_conda_env.sh
 
 SCRIPT_REPO="$( cd "$( dirname "$( dirname "$(readlink -f "${BASH_SOURCE[0]}")" )" )" >/dev/null 2>&1 && pwd )"
-cd "$SCRIPT_REPO"/01_scripts || exit
+cd "$SCRIPT_REPO"/scripts || exit
 
 read -ra param < <(grep -v '^#' assess_dl.env | xargs)
 export "${param[@]}"

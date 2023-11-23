@@ -1000,7 +1000,7 @@ def save_fig4(out_dir, vol_dict=vol_dict_default, img_dir=img_dir_default,
 					save_paths=save_paths, check=False, plot=False)
 
 def save_figba(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=contour_dir_default, exp_dir=end_exp_dir_default,
-		nnunet_output=nnunet_output_dir_default, file_extension="pdf"):
+		nnunet_output=nnunet_output_dir_default, plot_mode="nnunet", file_extension="pdf"):
 	"""
 	Bland-Altman plots of EDV, ESV and EF for entries of vol_dict for cine, real-time and real-time stress.
 	"""
@@ -1035,68 +1035,67 @@ def save_figba(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=con
 	columns=3
 	fig, axes = plt.subplots(rows, columns, figsize=(columns*8,rows*6))
 	axes = axes.flatten()
-	save_paths = [os.path.join(out_dir, "figure_b1_cf_nnunet."+f) for f in file_extensions]
 
-	ylims_edv= [[-20,20], [-20,20], [-80,80]]
-	ylims_esv= [[-20,20], [-20,20], [-20,20]]
-	ylims_ef = [[-20,20], [-20,20], [-20,20]]
+	if "nnunet" == plot_mode:
+		save_paths = [os.path.join(out_dir, "figure_s1_cf_nnunet."+f) for f in file_extensions]
 
-	for i in range(columns):
-		plot_ba_edv(axes[i], edv_tuple_cine, edv_tuple_rt, edv_tuple_rt_stress,
-			plot_indexes=[i], ylim=ylims_edv[i], plot_mode="nnunet")
-		plot_ba_esv(axes[columns+i], esv_tuple_cine, esv_tuple_rt, esv_tuple_rt_stress,
-			plot_indexes=[i], ylim=ylims_esv[i], plot_mode="nnunet")
-		plot_ba_ef(axes[2*columns+i], ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_stress,
-			plot_indexes=[i], ylim=ylims_ef[i], plot_mode="nnunet")
+		ylims_edv= [[-20,20], [-20,20], [-80,80]]
+		ylims_esv= [[-20,20], [-20,20], [-20,20]]
+		ylims_ef = [[-20,20], [-20,20], [-20,20]]
 
-	if 0 != len(save_paths):
-		if list == type(save_paths):
-			for s in save_paths:
-				if ".png" in s:
-					fig.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
-				else:
-					fig.savefig(s, bbox_inches='tight', pad_inches=0.01)
-		else:
-			if ".png" in save_paths:
-				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
+		for i in range(columns):
+			plot_ba_edv(axes[i], edv_tuple_cine, edv_tuple_rt, edv_tuple_rt_stress,
+				plot_indexes=[i], ylim=ylims_edv[i], plot_mode="nnunet")
+			plot_ba_esv(axes[columns+i], esv_tuple_cine, esv_tuple_rt, esv_tuple_rt_stress,
+				plot_indexes=[i], ylim=ylims_esv[i], plot_mode="nnunet")
+			plot_ba_ef(axes[2*columns+i], ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_stress,
+				plot_indexes=[i], ylim=ylims_ef[i], plot_mode="nnunet")
+
+		if 0 != len(save_paths):
+			if list == type(save_paths):
+				for s in save_paths:
+					if ".png" in s:
+						fig.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
+					else:
+						fig.savefig(s, bbox_inches='tight', pad_inches=0.01)
 			else:
-				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
-	plt.close()
-
-	rows=3
-	columns=3
-	fig, axes = plt.subplots(rows, columns, figsize=(columns*8,rows*6))
-	axes = axes.flatten()
-	save_paths = [os.path.join(out_dir, "figure_b2_cf_comDL."+f) for f in file_extensions]
-	ef_tuple_rt_stress = [[x for i, x in enumerate(a) if i!= 2] for a in ef_tuple_rt_stress]
-
-	ylims_edv= [[-25,25], [-25,25], [-100,100]]
-	ylims_esv= [[-25,25], [-25,25], [-25,25]]
-	ylims_ef = [[-25,25], [-25,25], [-50,50]]
-
-	for i in range(3):
-		plot_ba_edv(axes[i], edv_tuple_cine, edv_tuple_rt, edv_tuple_rt_stress,
-			plot_indexes=[i], ylim=ylims_edv[i], plot_mode="comDL")
-		plot_ba_esv(axes[columns+i], esv_tuple_cine, esv_tuple_rt, esv_tuple_rt_stress,
-			plot_indexes=[i], ylim=ylims_esv[i], plot_mode="comDL")
-		plot_ba_ef(axes[2*columns+i], ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_stress,
-			plot_indexes=[i], ylim=ylims_ef[i], plot_mode="comDL")
-
-	if 0 != len(save_paths):
-		if list == type(save_paths):
-			for s in save_paths:
-				if ".png" in s:
-					fig.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
+				if ".png" in save_paths:
+					fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 				else:
-					fig.savefig(s, bbox_inches='tight', pad_inches=0.01)
-		else:
-			if ".png" in save_paths:
-				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
-			else:
-				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
-	plt.close()
+					fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
+		plt.close()
 
-def save_figba_cine_rt(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=contour_dir_default, exp_dir=end_exp_dir_default,
+	elif "comDL" == plot_mode:
+		save_paths = [os.path.join(out_dir, "figure_s2_cf_comDL."+f) for f in file_extensions]
+		ef_tuple_rt_stress = [[x for i, x in enumerate(a) if i!= 2] for a in ef_tuple_rt_stress]
+
+		ylims_edv= [[-25,25], [-25,25], [-100,100]]
+		ylims_esv= [[-25,25], [-25,25], [-25,25]]
+		ylims_ef = [[-25,25], [-25,25], [-50,50]]
+
+		for i in range(3):
+			plot_ba_edv(axes[i], edv_tuple_cine, edv_tuple_rt, edv_tuple_rt_stress,
+				plot_indexes=[i], ylim=ylims_edv[i], plot_mode="comDL")
+			plot_ba_esv(axes[columns+i], esv_tuple_cine, esv_tuple_rt, esv_tuple_rt_stress,
+				plot_indexes=[i], ylim=ylims_esv[i], plot_mode="comDL")
+			plot_ba_ef(axes[2*columns+i], ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_stress,
+				plot_indexes=[i], ylim=ylims_ef[i], plot_mode="comDL")
+
+		if 0 != len(save_paths):
+			if list == type(save_paths):
+				for s in save_paths:
+					if ".png" in s:
+						fig.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
+					else:
+						fig.savefig(s, bbox_inches='tight', pad_inches=0.01)
+			else:
+				if ".png" in save_paths:
+					fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
+				else:
+					fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
+		plt.close()
+
+def save_figs3(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=contour_dir_default, exp_dir=end_exp_dir_default,
 			nnunet_output=nnunet_output_dir_default, file_extension="pdf"):
 	"""
 	Bland-Altman plots for end-diastolic volume (EDV), end-systolic volume (ESV) and ejection fraction (EF)
@@ -1268,9 +1267,10 @@ def main(data_dir):
 	save_fig4(out_dir=os.path.join(repo_dir,"Figure_04"), img_dir=img_dir_default, contour_dir=contour_dir_default,
 		seg_dir=os.path.join(nnunet_output_dir_default, "rt_stress_2d_single_cv"))
 
-	#Bland-Altman plots
-	save_figba(out_dir=os.path.join(repo_dir,"Figure_ba"), param_dir=param_dir, contour_dir=contour_dir_default, exp_dir=end_exp_dir_default, nnunet_output=nnunet_output_dir_default)
-	save_figba_cine_rt(out_dir=os.path.join(repo_dir,"Figure_ba_cine_rt"), param_dir=param_dir, contour_dir=contour_dir_default, exp_dir=end_exp_dir_default, nnunet_output=nnunet_output_dir_default)
+	# Bland-Altman plots for supplementary material
+	save_figba(out_dir=os.path.join(repo_dir,"Figure_s1"), param_dir=param_dir, contour_dir=contour_dir_default, exp_dir=end_exp_dir_default, nnunet_output=nnunet_output_dir_default, plot_mode="nnunet")
+	save_figba(out_dir=os.path.join(repo_dir,"Figure_s2"), param_dir=param_dir, contour_dir=contour_dir_default, exp_dir=end_exp_dir_default, nnunet_output=nnunet_output_dir_default, plot_mode="comDL")
+	save_figs3(out_dir=os.path.join(repo_dir,"Figure_s3"), param_dir=param_dir, contour_dir=contour_dir_default, exp_dir=end_exp_dir_default, nnunet_output=nnunet_output_dir_default)
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(

@@ -7,7 +7,7 @@
 #
 
 SCRIPT_REPO="$( cd "$( dirname "$(readlink -f "${BASH_SOURCE[0]}")" )" >/dev/null 2>&1 && pwd )"
-cd "$SCRIPT_REPO"/01_scripts/ || exit
+cd "$SCRIPT_REPO"/scripts/ || exit
 
 read -ra param < <(grep -v '^#' assess_dl.env | xargs)
 export "${param[@]}"
@@ -23,13 +23,14 @@ done
 
 # Install required conda environment
 if ! { conda env list | grep "$CONDA_ENV_EVAL" ; } >/dev/null 2>&1 ; then
-	bash "$SCRIPT_REPO"/01_scripts/assess_dl_conda_env.sh
+	bash "$SCRIPT_REPO"/scripts/assess_dl_conda_env.sh
 fi
 
 # Reproduce figures
-conda run -n "$CONDA_ENV_EVAL" bash "$SCRIPT_REPO"/Figure_01/00_run.sh
-conda run -n "$CONDA_ENV_EVAL" bash "$SCRIPT_REPO"/Figure_02/00_run.sh
-conda run -n "$CONDA_ENV_EVAL" bash "$SCRIPT_REPO"/Figure_03/00_run.sh
-conda run -n "$CONDA_ENV_EVAL" bash "$SCRIPT_REPO"/Figure_04/00_run.sh
-conda run -n "$CONDA_ENV_EVAL" bash "$SCRIPT_REPO"/Figure_ba/00_run.sh
-conda run -n "$CONDA_ENV_EVAL" bash "$SCRIPT_REPO"/Figure_ba_cine_rt/00_run.sh
+conda run -n "$CONDA_ENV_EVAL" bash "$SCRIPT_REPO"/Figure_01/run.sh
+conda run -n "$CONDA_ENV_EVAL" bash "$SCRIPT_REPO"/Figure_02/run.sh
+conda run -n "$CONDA_ENV_EVAL" bash "$SCRIPT_REPO"/Figure_03/run.sh
+conda run -n "$CONDA_ENV_EVAL" bash "$SCRIPT_REPO"/Figure_04/run.sh
+conda run -n "$CONDA_ENV_EVAL" bash "$SCRIPT_REPO"/Figure_s1/run.sh
+conda run -n "$CONDA_ENV_EVAL" bash "$SCRIPT_REPO"/Figure_s2/run.sh
+conda run -n "$CONDA_ENV_EVAL" bash "$SCRIPT_REPO"/Figure_s3/run.sh
