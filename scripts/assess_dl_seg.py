@@ -12,8 +12,6 @@ in Real-Time Free-Breathing Cardiac Magnetic Resonance Imaging".
 import numpy as np
 import sys, os
 import matplotlib.pyplot as plt
-import math
-import argparse
 
 from inspect import getsourcefile
 
@@ -1237,47 +1235,3 @@ def write_cardiac_function_intra(out_dir, vol_dict=vol_dict_default, contour_dir
 	output_file = os.path.join(out_dir,"cardiac_function_mc_rt_stress_intra.txt")
 	write_output_cardiac_function_parameters(output_file, ed_tuple_rt_stress[0], es_tuple_rt_stress[0], ef_tuple_rt_stress[0],
 					vol_dict=vol_dict, precision=1, header="Intra-observer variability of manually corrected MEDIS DL ACD")
-
-def main(data_dir):
-	"""
-	Create figures used for the manuscript "Assessment of Deep Learning Segmentation for Real-Time Free-Breathing Cardiac Magnetic Resonance Imaging"
-
-	:param str data_dir: Directory containing data.
-	"""
-	img_dir_default=os.path.join(data_dir, "images")
-	contour_dir_default=os.path.join(data_dir, "contour_files")
-	nnunet_output_dir_default=os.path.join(data_dir, "nnUNet/output")
-	end_exp_dir_default=os.path.join(data_dir, "end_expiration_indexes")
-	param_dir=os.path.join(repo_dir, "Eval_01")
-
-	# Measurement plot
-	save_fig1(out_dir=os.path.join(repo_dir,"Figure_01"), img_dir=img_dir_default,
-		contour_dir=contour_dir_default,
-		nnunet_output=nnunet_output_dir_default)
-
-	# examples for DC
-	save_fig2(out_dir=os.path.join(repo_dir,"Figure_02"), img_dir=img_dir_default,
-		contour_dir=contour_dir_default, nnunet_output=nnunet_output_dir_default)
-
-	# DC vs bpm
-	save_fig3(out_dir=os.path.join(repo_dir,"Figure_03"), param_dir=param_dir,
-		contour_dir=contour_dir_default, nnunet_output=nnunet_output_dir_default)
-
-	# Limits of segmentation network
-	save_fig4(out_dir=os.path.join(repo_dir,"Figure_04"), img_dir=img_dir_default, contour_dir=contour_dir_default,
-		seg_dir=os.path.join(nnunet_output_dir_default, "rt_stress_2d_single_cv"))
-
-	# Bland-Altman plots for supplementary material
-	save_figba(out_dir=os.path.join(repo_dir,"Figure_s1"), param_dir=param_dir, contour_dir=contour_dir_default, exp_dir=end_exp_dir_default, nnunet_output=nnunet_output_dir_default, plot_mode="nnunet")
-	save_figba(out_dir=os.path.join(repo_dir,"Figure_s2"), param_dir=param_dir, contour_dir=contour_dir_default, exp_dir=end_exp_dir_default, nnunet_output=nnunet_output_dir_default, plot_mode="comDL")
-	save_figs3(out_dir=os.path.join(repo_dir,"Figure_s3"), param_dir=param_dir, contour_dir=contour_dir_default, exp_dir=end_exp_dir_default, nnunet_output=nnunet_output_dir_default)
-
-if __name__ == "__main__":
-	parser = argparse.ArgumentParser(
-		description="Script to create figures used for the manuscript 'Assessment of Deep Learning Segmentation for Real-Time Free-Breathing Cardiac Magnetic Resonance Imaging'")
-	optional = parser._action_groups.pop()
-	required = parser.add_argument_group('required arguments')
-	required.add_argument('data_dir', type=str, help="Data directory")
-	parser._action_groups.append(optional)
-	args = parser.parse_args()
-	main(args.data_dir)
