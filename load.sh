@@ -8,33 +8,31 @@
 
 set -e
 
-usage="Usage: $0 <name> <outdir>"
+SCRIPT_REPO="$( cd "$( dirname "$(readlink -f "${BASH_SOURCE[0]}")" )" >/dev/null 2>&1 && pwd )"
+cd "$SCRIPT_REPO"/scripts/ || exit
 
-if [ $# -lt 2 ] ; then
+read -ra param < <(grep -v '^#' assess_dl.env | xargs)
+export "${param[@]}"
 
-        echo "$usage" >&2
-        exit 1
+if  [ "$DATA_DIR" = "" ] ; then
+	echo "Environment variable DATA_DIR was not set in scripts/assess_dl.env"
+	echo "Data will be downloaded into this directory by default"
+	export DATA_DIR="$SCRIPT_REPO"
 fi
-
-# name in [images, contour_files, end_expiration_indexes, nnUNet_inference]
 
 record=10117944
+FOLDERS=(contour_files end_expiration_indexes images nnUNet_inference)
 
-name=$1
-outdir=$(readlink -f "$2")
+cd "${DATA_DIR}"
+for name in "${FOLDERS[@]}"
+do
 
-if [ ! -d "$outdir" ] ; then
-        echo "Output directory does not exist." >&2
-        echo "$usage" >&2
-        exit 1
-fi
+	if [[ ! -f ${name}.tgz ]]; then
+		echo Downloading "${name}"
+		wget -q https://zenodo.org/record/"${record}"/files/"${name}".tgz
+	fi
 
-cd "${outdir}"
-if [[ ! -f ${name}.tgz ]]; then
-	echo Downloading "${name}"
-	wget -q https://zenodo.org/record/"${record}"/files/"${name}".tgz
-fi
-
-if [[ ! -d $outdir/$name  ]] ; then
-	tar -xzvf "${name}".tgz
-fi
+	if [[ ! -d $DATA_DIR/$name  ]] ; then
+		tar -xzvf "${name}".tgz
+	fi
+done

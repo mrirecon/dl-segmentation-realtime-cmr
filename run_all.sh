@@ -17,7 +17,7 @@ FOLDERS=(contour_files end_expiration_indexes images nnUNet_inference)
 for f in "${FOLDERS[@]}"
 do
 	if [[ ! -d $DATA_DIR/$f  ]] ; then
-		bash "$SCRIPT_REPO"/load.sh "$f" "$DATA_DIR"
+		bash "$SCRIPT_REPO"/load.sh
 	fi
 done
 
