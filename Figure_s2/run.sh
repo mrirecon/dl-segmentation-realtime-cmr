@@ -19,6 +19,7 @@ export FIGURE_OUT=$SCRIPT_REPO/Figure_s2
 cmd_array=(	'import sys,os;'
 	'sys.path.insert(0,os.environ["SCRIPT_DIR"]);'
 	'import assess_dl_seg;'
-	'assess_dl_seg.save_figba(out_dir=os.environ["FIGURE_OUT"],param_dir=os.environ["PARAM_DIR"],plot_mode="comDL",file_extension="eps")')
+	'assess_dl_seg.save_figba(out_dir=os.environ["FIGURE_OUT"],'
+	'param_dir=os.environ["PARAM_DIR"],plot_mode="comDL",file_extension="eps",annotate="yes")')
 cmd="${cmd_array[*]}"
 python3 -c "$cmd"

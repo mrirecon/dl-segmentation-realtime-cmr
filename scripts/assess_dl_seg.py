@@ -135,6 +135,63 @@ def dice_coeff(vol_dict=vol_dict_default, vol_dict_maxstress=[], contour_dir=con
 	_,_,_,_ = assess_utils.get_ed_es_dice_from_contour_file_multi(contour_dir, vol_dict_maxstress, manual_contour_suffix, comp_contour_suffix="", nnunet_prefix=nnunet_prefix, phase_select=phase_select,
 			title="nnUNet", flag3d=False)
 
+def dice_coeff_stack(vol_dict=vol_dict_default, vol_dict_maxstress=[], contour_dir=contour_dir_default, nnunet_output=nnunet_output_dir_default):
+	"""
+	Calculate Dice's coefficient for entries in list of dictionaries for
+	Medis DL ACD (comDL) and nnU-Net contours for cine and real-time
+	measurements at rest, under stress and under max stress.
+	As some measurements are not evaluated at max stress, the list of dictionaries
+	is different.
+
+	:param list vol_dict: List of dictionaries with entries ['id'] and ['reverse']
+	:param list vol_dict_maxstress: List of dictionaries for maximal stress
+	:param str contour_dir: Path to directory containing contour files in '.txt' file format
+	:param str nnunet_output: Directory containing subdirectories for nnU-Net segmentation outputs
+	"""
+	if 0 == len(vol_dict_maxstress):
+		vol_dict_maxstress = [vol_dict[i] for i in [0,1,2,3,5,6,7,8,9,11,13,14]]
+
+	# cine
+	flag3D = True
+	seg_dir = os.path.join(nnunet_output,"cine_2d_LV_cv")
+
+	manual_contour_suffix = "_cine_manual"+contour_format
+
+	phase_select = "combined"
+
+	print("DC for cine")
+	#nnU-Net contours
+	nnunet_prefix = os.path.join(seg_dir, "vol_")
+	_,_,_,_ = assess_utils.get_ed_es_dice_from_contour_file_multi(contour_dir, vol_dict, manual_contour_suffix, comp_contour_suffix="", nnunet_prefix=nnunet_prefix, phase_select=phase_select,
+			title="nnUNet", flag3d=flag3D, mode="cine", slice_selection=True)
+
+	#rt
+	flag3D=False
+	print("DC for real-time rest")
+	seg_dir = os.path.join(nnunet_output,"rt_2d_cv")
+
+	nnunet_prefix = os.path.join(seg_dir, "vol_")
+	manual_contour_suffix = "_rt_manual"+contour_format
+	_,_,_,_ = assess_utils.get_ed_es_dice_from_contour_file_multi(contour_dir, vol_dict, manual_contour_suffix, comp_contour_suffix="", nnunet_prefix=nnunet_prefix, phase_select=phase_select,
+			title="nnUNet", flag3d=flag3D)
+
+	print("DC for real-time stress")
+	seg_dir = os.path.join(nnunet_output,"rt_stress_2d_cv")
+
+	nnunet_prefix = os.path.join(seg_dir, "vol_")
+	manual_contour_suffix = "_rt_stress_manual"+contour_format
+	_,_,_,_ = assess_utils.get_ed_es_dice_from_contour_file_multi(contour_dir, vol_dict, manual_contour_suffix, comp_contour_suffix="", nnunet_prefix=nnunet_prefix, phase_select=phase_select,
+			title="nnUNet", flag3d=flag3D)
+
+	print("DC for real-time max stress")
+
+	seg_dir = os.path.join(nnunet_output,"rt_maxstress_2d_cv")
+
+	nnunet_prefix = os.path.join(seg_dir, "vol_")
+	manual_contour_suffix = "_rt_maxstress_manual"+contour_format
+	_,_,_,_ = assess_utils.get_ed_es_dice_from_contour_file_multi(contour_dir, vol_dict_maxstress, manual_contour_suffix, comp_contour_suffix="", nnunet_prefix=nnunet_prefix, phase_select=phase_select,
+			title="nnUNet", flag3d=flag3D)
+
 def calc_DC_and_bpm(vol_dict, mode=["nnunet"],
 		contour_dir = contour_dir_default,
 		nnunet_output = nnunet_output_dir_default):
@@ -935,7 +992,8 @@ def save_fig2(out_dir, img_dir=img_dir_default,
 				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
 	plt.close()
 
-def save_fig3(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=contour_dir_default, nnunet_output=nnunet_output_dir_default, file_extension="pdf,png"):
+def save_fig3(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=contour_dir_default,
+		nnunet_output=nnunet_output_dir_default, file_extension="pdf,png", annotate=""):
 	"""
 	Create figure for Dice's coefficient depending on heart rate
 	"""
@@ -975,6 +1033,10 @@ def save_fig3(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=cont
 		read_DC(file_DC, vol_dict, network, m)
 	plot_DC_vs_bpm_axes(vol_dict, axes[1], network=network, ylim=ylim, title=title)
 
+	if annotate:
+		axes[0].annotate("a", xy=(-0.12,1), xycoords="axes fraction", size=20, weight="bold")
+		axes[1].annotate("b", xy=(-0.12,1), xycoords="axes fraction", size=20, weight="bold")
+
 	if 0 != len(save_paths):
 		if list == type(save_paths):
 			for s in save_paths:
@@ -1009,7 +1071,7 @@ def save_fig4(out_dir, vol_dict=vol_dict_default, img_dir=img_dir_default,
 					save_paths=save_paths, check=False, plot=False)
 
 def save_figba(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=contour_dir_default, exp_dir=end_exp_dir_default,
-		nnunet_output=nnunet_output_dir_default, plot_mode="nnunet", file_extension="pdf"):
+		nnunet_output=nnunet_output_dir_default, plot_mode="nnunet", file_extension="pdf", annotate=""):
 	"""
 	Bland-Altman plots of EDV, ESV and EF for entries of vol_dict for cine, real-time and real-time stress.
 	"""
@@ -1060,6 +1122,11 @@ def save_figba(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=con
 			plot_ba_ef(axes[2*columns+i], ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_stress,
 				plot_indexes=[i], ylim=ylims_ef[i], plot_mode="nnunet")
 
+		if annotate:
+			annotations = ["a", "b", "c", "d", "e", "f", "g", "h", "i"]
+			for num, a in enumerate(annotations):
+				axes[num].annotate(a, xy=(-0.12,1), xycoords="axes fraction", size=20, weight="bold")
+
 		if 0 != len(save_paths):
 			if list == type(save_paths):
 				for s in save_paths:
@@ -1090,6 +1157,11 @@ def save_figba(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=con
 			plot_ba_ef(axes[2*columns+i], ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_stress,
 				plot_indexes=[i], ylim=ylims_ef[i], plot_mode="comDL")
 
+		if annotate:
+			annotations = ["a", "b", "c", "d", "e", "f", "g", "h", "i"]
+			for num, a in enumerate(annotations):
+				axes[num].annotate(a, xy=(-0.12,1), xycoords="axes fraction", size=20, weight="bold")
+
 		if 0 != len(save_paths):
 			if list == type(save_paths):
 				for s in save_paths:
@@ -1105,7 +1177,7 @@ def save_figba(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=con
 		plt.close()
 
 def save_figs3(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=contour_dir_default, exp_dir=end_exp_dir_default,
-			nnunet_output=nnunet_output_dir_default, file_extension="pdf"):
+			nnunet_output=nnunet_output_dir_default, file_extension="pdf", annotate=""):
 	"""
 	Bland-Altman plots for end-diastolic volume (EDV), end-systolic volume (ESV) and ejection fraction (EF)
 	between manually corrected contours in cine CMR and real-time free-breathing CMR
@@ -1154,6 +1226,12 @@ def save_figs3(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=con
 	ylabel="EF cine - EF rt [%]"
 	assess_utils.plot_bland_altman_axes([ef_cine], [ef_rt], ax=axes[2], labels=set_labels, colors=set_colors, ylabel=ylabel, xlabel=xlabel,
 				      				ylim=ylim, scale=1)
+
+	if annotate:
+		annotations = ["a", "b", "c"]
+		for num, a in enumerate(annotations):
+			axes[num].annotate(a, xy=(-0.12,1), xycoords="axes fraction", size=20, weight="bold")
+
 	if 0 != len(save_paths):
 		if list == type(save_paths):
 			for s in save_paths:
