@@ -33,7 +33,8 @@ else:
 	end_exp_dir_default=""
 
 contour_format = ".txt"
-png_dpi=500
+png_dpi=600
+bitmap_formats=["png","jpg"]
 repo_dir=os.path.dirname(os.path.dirname(getsourcefile(lambda:0)))
 
 vol_dict_default = [
@@ -242,12 +243,12 @@ def plot_DC_vs_bpm(vol_dict, save_paths=[], contour_mode="nnunet", ylim=[], plot
 	if 0 != len(save_paths):
 		if list == type(save_paths):
 			for s in save_paths:
-				if ".png" in s:
+				if any(ext in s for ext in bitmap_formats):
 					plt.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 				else:
 					plt.savefig(s, bbox_inches='tight', pad_inches=0.01)
 		else:
-			if ".png" in save_paths:
+			if any(ext in save_paths for ext in bitmap_formats):
 				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 			else:
 				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
@@ -845,12 +846,12 @@ def save_fig1(out_dir, img_dir=img_dir_default,
 	if 0 != len(save_paths):
 		if list == type(save_paths):
 			for s in save_paths:
-				if ".png" in s:
+				if any(ext in s for ext in bitmap_formats):
 					fig.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 				else:
 					fig.savefig(s, bbox_inches='tight', pad_inches=0.01)
 		else:
-			if ".png" in save_paths:
+			if any(ext in save_paths for ext in bitmap_formats):
 				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 			else:
 				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
@@ -913,12 +914,12 @@ def save_fig2(out_dir, img_dir=img_dir_default,
 	if 0 != len(save_paths):
 		if list == type(save_paths):
 			for s in save_paths:
-				if ".png" in s:
+				if any(ext in s for ext in bitmap_formats):
 					fig.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 				else:
 					fig.savefig(s, bbox_inches='tight', pad_inches=0.01)
 		else:
-			if ".png" in save_paths:
+			if any(ext in save_paths for ext in bitmap_formats):
 				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 			else:
 				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
@@ -967,12 +968,12 @@ def save_fig3(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=cont
 	if 0 != len(save_paths):
 		if list == type(save_paths):
 			for s in save_paths:
-				if ".png" in s:
+				if any(ext in s for ext in bitmap_formats):
 					plt.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 				else:
 					plt.savefig(s, bbox_inches='tight', pad_inches=0.01)
 		else:
-			if ".png" in save_paths:
+			if any(ext in save_paths for ext in bitmap_formats):
 				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 			else:
 				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
@@ -1052,12 +1053,12 @@ def save_figba(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=con
 		if 0 != len(save_paths):
 			if list == type(save_paths):
 				for s in save_paths:
-					if ".png" in s:
+					if any(ext in s for ext in bitmap_formats):
 						fig.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 					else:
 						fig.savefig(s, bbox_inches='tight', pad_inches=0.01)
 			else:
-				if ".png" in save_paths:
+				if any(ext in save_paths for ext in bitmap_formats):
 					fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 				else:
 					fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
@@ -1082,12 +1083,12 @@ def save_figba(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=con
 		if 0 != len(save_paths):
 			if list == type(save_paths):
 				for s in save_paths:
-					if ".png" in s:
+					if any(ext in s for ext in bitmap_formats):
 						fig.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 					else:
 						fig.savefig(s, bbox_inches='tight', pad_inches=0.01)
 			else:
-				if ".png" in save_paths:
+				if any(ext in save_paths for ext in bitmap_formats):
 					fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 				else:
 					fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
@@ -1127,7 +1128,7 @@ def save_figs3(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=con
 	columns=3
 	fig, axes = plt.subplots(rows, columns, figsize=(columns*8,rows*6))
 	axes = axes.flatten()
-	save_paths = [os.path.join(out_dir, "figure_b3_cf_cine_rt."+f) for f in file_extensions]
+	save_paths = [os.path.join(out_dir, "figure_s3_cf_cine_rt."+f) for f in file_extensions]
 
 	xlabel="LV end-diastolic volume [mL]"
 	ylabel="EDV cine - EDV rt [mL]"
@@ -1146,12 +1147,12 @@ def save_figs3(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=con
 	if 0 != len(save_paths):
 		if list == type(save_paths):
 			for s in save_paths:
-				if ".png" in s:
+				if any(ext in s for ext in bitmap_formats):
 					fig.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 				else:
 					fig.savefig(s, bbox_inches='tight', pad_inches=0.01)
 		else:
-			if ".png" in save_paths:
+			if any(ext in save_paths for ext in bitmap_formats):
 				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 			else:
 				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)

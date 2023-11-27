@@ -37,7 +37,8 @@ else:
 	end_exp_dir_default=""
 
 contour_format = ".txt"
-png_dpi=500
+png_dpi=600
+bitmap_formats=["png","jpg"]
 
 #---Analyze Contour file---
 
@@ -254,12 +255,12 @@ def plot_bland_altman_multi(setA:list, setB:list, header:str="", save_paths:list
 	if 0 != len(save_paths):
 		if list == type(save_paths):
 			for s in save_paths:
-				if ".png" in s:
+				if any(ext in s for ext in bitmap_formats):
 					plt.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 				else:
 					plt.savefig(s, bbox_inches='tight', pad_inches=0)
 		else:
-			if ".png" in save_paths:
+			if any(ext in save_paths for ext in bitmap_formats):
 				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 			else:
 				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0)
@@ -1396,12 +1397,12 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 	if 0 != len(save_paths):
 		if list == type(save_paths):
 			for s in save_paths:
-				if ".png" in s:
+				if any(ext in s for ext in bitmap_formats):
 					plt.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 				else:
 					plt.savefig(s, bbox_inches='tight', pad_inches=0)
 		else:
-			if ".png" in save_paths:
+			if any(ext in save_paths for ext in bitmap_formats):
 				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 			else:
 				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0)
@@ -1640,12 +1641,12 @@ def plot_mc_nnunet(contour_dir, img_dir, seg_dir, vol_dict, param_list, flag3d=T
 	if 0 != len(save_paths):
 		if list == type(save_paths):
 			for s in save_paths:
-				if ".png" in s:
+				if any(ext in s for ext in bitmap_formats):
 					plt.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 				else:
 					plt.savefig(s, bbox_inches='tight', pad_inches=0)
 		else:
-			if ".png" in save_paths:
+			if any(ext in save_paths for ext in bitmap_formats):
 				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 			else:
 				plt.savefig(save_paths, bbox_inches='tight', pad_inches=0)
