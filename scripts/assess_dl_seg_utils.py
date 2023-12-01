@@ -770,7 +770,7 @@ def get_phase_mask_from_nnunet(segm_prefix:os.path, plist:list, flag3d=False):
 			masks.append(img)
 	return masks
 
-def get_ed_es_dice_from_contour_file(contour_file:os.path, reverse:bool, segm_input:str, flag3d=False, phase_select="both", slice_selection=False)->tuple:
+def get_ed_es_dice_from_contour_file(contour_file:os.path, reverse:bool, segm_input:str, flag3d=False, phase_select="separate", slice_selection=False)->tuple:
 	"""
 	Determine the end-diastolic (ED) and end-systolic (ES) Dice's coefficient between comDL or nnU-Net segmentation
 	and manually corrected contours.
@@ -779,7 +779,7 @@ def get_ed_es_dice_from_contour_file(contour_file:os.path, reverse:bool, segm_in
 	:param bool reverse: Flag for reversing the slice indexing. Some contour files feature the slices in reversed order
 	:param str segm_input: Single segmentation file (nnet segmentation) or directory/prefix (nnU-Net) containing segmentations
 	:param bool flag3d: Flag for 3D segmentation of nnU-Net
-	:param str phase_select: Individual output of ED and ES phase with "both" or combined output with "combined"
+	:param str phase_select: Individual output of ED and ES phase with "separate" or combined output with "combined"
 	:param bool slice_selection:
 	:returns: tuple (ed_dc, ed_dict, es_dc, es_dict)
 		WHERE
@@ -834,7 +834,7 @@ def get_ed_es_dice_from_contour_file(contour_file:os.path, reverse:bool, segm_in
 
 	segm_classes = 4
 
-	if "both" == phase_select:
+	if "separate" == phase_select:
 		ed_dc, ed_dict = calc_dice_coeff(ed_masks_mc, ed_masks_seg, segm_classes, plist = ed_plist, reverse=reverse)
 		es_dc, es_dict = calc_dice_coeff(es_masks_mc, es_masks_seg, segm_classes, plist = es_plist, reverse=reverse)
 
@@ -846,7 +846,7 @@ def get_ed_es_dice_from_contour_file(contour_file:os.path, reverse:bool, segm_in
 		es_dc = [[] for i in range(segm_classes)]
 		es_dict = []
 	else:
-		sys.exit("Choose either 'both' or 'combined' mode for phase selection.")
+		sys.exit("Choose either 'separate' or 'combined' mode for phase selection.")
 
 	return ed_dc, ed_dict, es_dc, es_dict
 
@@ -898,7 +898,7 @@ def get_ed_es_from_manual_rt(mlist:list, plist:list, segm_class:int=3, pixel_spa
 	return ed_idx, es_idx, ed_list, es_list
 
 def get_ed_es_dice_from_contour_file_rt(contour_file:os.path, reverse:bool, segm_input:str,
-			flag3d:bool=False, phase_select="both", slices_string="", mode="output")->tuple:
+			flag3d:bool=False, phase_select="separate", slices_string="", mode="output")->tuple:
 	"""
 	Determine the end-diastolic (ED) and end-systolic (ES) Dice's coefficient (DC) for a given contour file featuring contours in Medis format.
 	A dictionary for each image with its DC is given, class labels are in order: "BG", "RV", "Myo", "LV"
@@ -907,7 +907,7 @@ def get_ed_es_dice_from_contour_file_rt(contour_file:os.path, reverse:bool, segm
 	:param bool reverse: Flag for reversing the slice indexing. Some contour files feature the slices in reversed order
 	:param str segm_input: Single segmentation file (nnet segmentation) or directory/prefix (nnU-Net) containing segmentations
 	:param bool flag3d: Flag for 3D segmentation of nnU-Net
-	:param str phase_select: Selection of phases. 'both' for individual calculation for ED and ES phase. 'combined' for combined calculation.
+	:param str phase_select: Selection of phases. 'separate' for individual calculation for ED and ES phase. 'combined' for combined calculation.
 	:param str slices_string: String of slice indexes for slice selection. Separate slices indexes with spaces "<slice1> <slice2> ..."
 	:param str mode: Set mode to "no output" for directly printing Dice's coefficients
 	:returns: tuple (ed_dc, ed_dict, es_dc, es_dict)
@@ -966,7 +966,7 @@ def get_ed_es_dice_from_contour_file_rt(contour_file:os.path, reverse:bool, segm
 
 	segm_classes = 4
 
-	if "both" == phase_select:
+	if "separate" == phase_select:
 		ed_dc, ed_dict = calc_dice_coeff(ed_masks_mc, ed_masks_seg, segm_classes, plist = ed_idx, reverse=reverse)
 		es_dc, es_dict = calc_dice_coeff(es_masks_mc, es_masks_seg, segm_classes, plist = es_idx, reverse=reverse)
 
@@ -978,7 +978,7 @@ def get_ed_es_dice_from_contour_file_rt(contour_file:os.path, reverse:bool, segm
 		es_dc = [[] for i in range(segm_classes)]
 		es_dict = []
 	else:
-		sys.exit("Choose either 'both' or 'combined' mode for phase selection.")
+		sys.exit("Choose either 'separate' or 'combined' mode for phase selection.")
 	if "no output" == mode:
 		class_labels=["BG", "RV", "Myo", "LV"]
 		for i in range(len(ed_dc)):
@@ -987,7 +987,7 @@ def get_ed_es_dice_from_contour_file_rt(contour_file:os.path, reverse:bool, segm
 
 		return ed_dc, ed_dict, es_dc, es_dict
 
-def get_ed_es_dice_from_contour_file_multi(contour_dir, data_dict, manual_contour_suffix, comp_contour_suffix="", nnunet_prefix="", phase_select="both",
+def get_ed_es_dice_from_contour_file_multi(contour_dir, data_dict, manual_contour_suffix, comp_contour_suffix="", nnunet_prefix="", phase_select="separate",
 		title="nnUNet", class_labels=["BG", "RV", "Myo", "LV"], flag3d=True, labels=4, mode="rt", print_output=True, slice_selection=False):
 	"""
 	Return Dice coefficient for multiple datasets.
@@ -997,14 +997,14 @@ def get_ed_es_dice_from_contour_file_multi(contour_dir, data_dict, manual_contou
 	:param str manual_contour_suffix: Suffix for manual contours, e.g. '_rt_manual.con'
 	:param str comp_contour_suffix: Suffix for comparison contour
 	:param str nnunet_prefix: Prefix for nnU-Net segmentations
-	:param str phase_select: Selection for calculation of ED and ES phase. Either 'both' or 'combined'
+	:param str phase_select: Selection for calculation of ED and ES phase. Either 'separate' or 'combined'
 	:param str title: Title for output
 	:param list class_labels: List of string descriptions for class labels
 	:param bool flag3d: Flag for 3D segmentation of nnU-Net
 	:param int labels: Number of labels
 	:param str mode: Mode of measurement. Either 'rt' or 'cine'
-	:param bool print_output:
-	:param bool slice_selection:
+	:param bool print_output: Flag for printing segmentation accuracy
+	:param bool slice_selection: Flag for selection of slices containing the heart
 	:returns: tuple (ed_dc, ed_dict, es_dc, es_dict)
 		WHERE
 		list ed_dc is Dice's coefficient for end-diastolic phases
@@ -1052,7 +1052,7 @@ def get_ed_es_dice_from_contour_file_multi(contour_dir, data_dict, manual_contou
 
 	if print_output:
 		print(title)
-		if "both" == phase_select:
+		if "separate" == phase_select:
 			for i in range(len(ed_dc_list)):
 				print("ED: " + class_labels[i], round(sum(ed_dc_list[i]) / len(ed_dc_list[i]),3), round(np.std(ed_dc_list[i]),3))
 			for i in range(len(es_dc_list)):

@@ -22,7 +22,7 @@ if ! [ -f "$FIGURE_OUT"/DC_vs_bpm_nnunet.png ] ; then
 		'sys.path.insert(0,os.environ["SCRIPT_DIR"]);'
 		'import assess_dl_seg;'
 		'assess_dl_seg.save_fig3(out_dir=os.environ["FIGURE_OUT"],'
-		'param_dir=os.environ["PARAM_DIR"],file_extension="eps",annotate="yes")')
+		'param_dir=os.environ["PARAM_DIR"],file_extension="eps,jpg",annotate="yes")')
 
 	cmd="${cmd_array[*]}"
 	python3 -c "$cmd"

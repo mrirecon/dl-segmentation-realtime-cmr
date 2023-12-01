@@ -78,7 +78,7 @@ def dice_coeff(vol_dict=vol_dict_default, vol_dict_maxstress=[], contour_dir=con
 	manual_contour_suffix = "_cine_manual"+contour_format
 	comp_contour_suffix = "_cine_comDL"+contour_format
 
-	phase_select = "both"
+	phase_select = "separate"
 	print("DC for cine (ED and ES separate)")
 	#automatic contours
 	ed_dc_list, es_dc_list, ed_dict_list, es_dict_list = assess_utils.get_ed_es_dice_from_contour_file_multi(contour_dir, vol_dict, manual_contour_suffix, comp_contour_suffix=comp_contour_suffix, nnunet_prefix="", phase_select=phase_select,
