@@ -1196,11 +1196,9 @@ def save_figs3(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=con
 	if not os.path.isfile(os.path.join(param_dir,"cardiac_function_mc_cine.txt")):
 		write_cardiac_function_all(out_dir, vol_dict=vol_dict, contour_dir=contour_dir, exp_dir=exp_dir, nnunet_output=nnunet_output)
 
-	modus = "cine"
-	file_mc = os.path.join(param_dir,"cardiac_function_mc_"+modus+".txt")
-	file_comDL = os.path.join(param_dir,"cardiac_function_comDL_"+modus+".txt")
-	file_nnunet = os.path.join(param_dir,"cardiac_function_nnunet_"+modus+".txt")
-	edv_tuple_cine, esv_tuple_cine, ef_tuple_cine = read_cardiac_function_parameters(file_mc, file_comDL, file_nnunet)
+	file_mc = os.path.join(param_dir,"cardiac_function_mc_cine.txt")
+	file_mc_rt = os.path.join(param_dir,"cardiac_function_mc_rt.txt")
+	edv_tuple_cine, esv_tuple_cine, ef_tuple_cine = read_cardiac_function_parameters(file_mc, file_mc_rt, file_mc_rt)
 
 	(edv_cine, edv_rt, _) = edv_tuple_cine
 	(esv_cine, esv_rt, _) = esv_tuple_cine
@@ -1215,17 +1213,17 @@ def save_figs3(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=con
 	xlabel="LV end-diastolic volume [mL]"
 	ylabel="EDV cine - EDV rt [mL]"
 	assess_utils.plot_bland_altman_axes([edv_cine], [edv_rt], ax=axes[0], labels=set_labels, colors=set_colors, ylabel=ylabel, xlabel=xlabel,
-								ylim=ylim, scale=1)
+								ylim=[-8,28], scale=1)
 
 	xlabel="LV end-systolic volume [mL]"
 	ylabel="ESV cine - ESV rt [mL]"
 	assess_utils.plot_bland_altman_axes([esv_cine], [esv_rt], ax=axes[1], labels=set_labels, colors=set_colors, ylabel=ylabel, xlabel=xlabel,
-				      				ylim=ylim, scale=1)
+				      				ylim=[-20,12], scale=1)
 
 	xlabel="EF [%]"
 	ylabel="EF cine - EF rt [%]"
 	assess_utils.plot_bland_altman_axes([ef_cine], [ef_rt], ax=axes[2], labels=set_labels, colors=set_colors, ylabel=ylabel, xlabel=xlabel,
-				      				ylim=ylim, scale=1)
+				      				ylim=[-5,18], scale=1)
 
 	if annotate:
 		annotations = ["a", "b", "c"]
