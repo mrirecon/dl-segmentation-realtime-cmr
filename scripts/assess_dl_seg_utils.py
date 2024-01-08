@@ -271,7 +271,7 @@ def plot_bland_altman_multi(setA:list, setB:list, header:str="", save_paths:list
 	return dev_list
 
 def plot_bland_altman_axes(setA:list, setB:list, ax, header:str="", lower_bound:float=None, upper_bound:float=None, point_size:float=15,
-	check:bool=False, scale:float=1, precision:int = 2, ylim = [],
+	check:bool=False, scale:float=1, precision:int = 2, ylim = [], xticks=[],
 	labels:list = ["label1", "label2", "label3", "label4", "label5", "label6"],
 	colors:list = ["royalblue", "dodgerblue", "palegreen", "yellowgreen", "darkorange", "indianred"],
 	xlabel:str = "average of set A and set B", ylabel:str = "set A - set B [-]"):
@@ -289,6 +289,7 @@ def plot_bland_altman_axes(setA:list, setB:list, ax, header:str="", lower_bound:
 	:param float scale: Values are scaled by this value
 	:param int precision: Precision for rounding values in plot
 	:param list ylim: Limits for y-axis
+	:param list xticks: List of xticks
 	:param list labels: Labels for groups in sets
 	:param list colors: Colors for groups in sets
 	:param str xlabel: Label for x-axis
@@ -339,6 +340,8 @@ def plot_bland_altman_axes(setA:list, setB:list, ax, header:str="", lower_bound:
 	framealpha=0.8
 
 	ax.tick_params(axis='both', labelsize=tick_size)
+	if 0 != len(xticks):
+		ax.set_xticks(xticks)
 	ax.set_xlabel(xlabel, size=label_size)
 	ax.set_ylabel(ylabel, size=label_size, labelpad=0)
 	ax.set_title(header, size=label_size)

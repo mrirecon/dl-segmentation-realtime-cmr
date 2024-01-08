@@ -1223,7 +1223,7 @@ def save_figs3(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=con
 	xlabel="EF [%]"
 	ylabel="EF cine - EF rt [%]"
 	assess_utils.plot_bland_altman_axes([ef_cine], [ef_rt], ax=axes[2], labels=set_labels, colors=set_colors, ylabel=ylabel, xlabel=xlabel,
-				      				ylim=[-5,18], scale=1)
+				      				ylim=[-5,18], xticks=[50, 55, 60 , 65, 70], scale=1)
 
 	if annotate:
 		annotations = ["a", "b", "c"]
