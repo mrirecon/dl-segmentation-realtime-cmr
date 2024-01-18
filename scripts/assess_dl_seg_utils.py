@@ -1394,7 +1394,7 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 				mask = flip_rot(mask, -1, 1)
 				ax[enum*columns+num].imshow(img, cmap="gray", vmax=np.max(img)*vmax_factor)
 				masked_plt = np.ma.masked_where(mask == 0, mask)
-				ax[enum*columns+num].imshow(masked_plt, cmap=light_jet,interpolation='none', alpha=0.4)
+				ax[enum*columns+num].imshow(masked_plt, cmap=light_jet,interpolation='none', alpha=0.4, vmin=1, vmax=3)
 				ax[enum*columns+num].set_title(second_row_title)
 
 	if 0 != len(save_paths):
@@ -1418,7 +1418,7 @@ def plot_measurement_types_axes(vol, axes, reverse, slice_idx, mask_mode=[], pha
 			contour_dir=contour_dir_default,
 			img_dir = img_dir_default,
 			nnunet_output=nnunet_output_dir_default, crop_dim=160,
-			vmax_factor=1, DC=False,
+			vmax_factor=1, DC=False, flip_rot_mod = [-1,0],
 			titles = ["cine", "real-time MRI (rest)", "real-time MRI (stress)", "real-time MRI (max stress)"]):
 	"""
 	Visualize different measurement forms (cine, real-time rest, rt stressm rt max stress) in a combined plot with optional segmentation.
@@ -1436,6 +1436,8 @@ def plot_measurement_types_axes(vol, axes, reverse, slice_idx, mask_mode=[], pha
 	:param bool plot: Flag for showing the plot. This way the plot can be saved without showing the plot.
 	"""
 	slice_select = [slice_idx for i in range(4)]
+	if list != type(vmax_factor):
+		vmax_factor = [vmax_factor for i in range(4)]
 	label_size = "xx-large"
 	label_size = 18
 	img_files = [os.path.join(img_dir, vol, i) for i in ["cine", "rt", "rt_stress", "rt_maxstress"]]
@@ -1473,17 +1475,19 @@ def plot_measurement_types_axes(vol, axes, reverse, slice_idx, mask_mode=[], pha
 
 		img = cfl.readcfl(img_files[num])
 		img = np.abs(img[:,:,0,0,0,0,0,0,0,0,phase,0,0,slice_select[num]])
+		xdim = img.shape[0]
+		ydim = img.shape[1]
 		img = crop_2darray(img, crop_dim)
-		img = flip_rot(img, -1, 1)
+		img = flip_rot(img, flip_rot_mod[0], flip_rot_mod[1])
 
-		mask_mc = np.zeros((crop_dim, crop_dim))
+		mask_mc = np.zeros((xdim, ydim))
 		for i,ps in enumerate(plist):
 			for j,p in enumerate(ps):
 				if [slice_select[num], phase] == p:
 					mask_mc = mlist[i][j]
 					continue
 
-		ax.imshow(img, cmap="gray", vmax=np.max(img)*vmax_factor)
+		ax.imshow(img, cmap="gray", vmax=np.max(img)*vmax_factor[num])
 		if 0 != len(titles):
 			ax.set_title(titles[num], size=label_size)
 
@@ -1492,7 +1496,7 @@ def plot_measurement_types_axes(vol, axes, reverse, slice_idx, mask_mode=[], pha
 			for enum,m in enumerate(mask_mode):
 				# find segmentation for slice and phase combination
 				second_row_title = ""
-				mask = np.zeros((crop_dim, crop_dim))
+				mask = np.zeros((xdim, ydim))
 				if "mc" == m:
 					second_row_title = "Manually corrected contours"
 					mask = mask_mc.copy()
@@ -1525,10 +1529,9 @@ def plot_measurement_types_axes(vol, axes, reverse, slice_idx, mask_mode=[], pha
 						second_row_title = "nnU-Net"
 
 				mask = crop_2darray(mask, crop_dim)
-				mask = flip_rot(mask, -1, 1)
-				ax.imshow(img, cmap="gray", vmax=np.max(img)*vmax_factor)
+				mask = flip_rot(mask, flip_rot_mod[0], flip_rot_mod[1])
 				masked_plt = np.ma.masked_where(mask == 0, mask)
-				ax.imshow(masked_plt, cmap=light_jet,interpolation='none', alpha=0.4)
+				ax.imshow(masked_plt, cmap=light_jet,interpolation='none', alpha=0.4, vmin=1, vmax=3)
 				ax.set_title(second_row_title, size=label_size)
 
 def plot_mc_nnunet(contour_dir, img_dir, seg_dir, vol_dict, param_list, flag3d=True, mode = "nnunet",

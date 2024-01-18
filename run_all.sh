@@ -34,3 +34,4 @@ conda run -n "$CONDA_ENV_EVAL" bash "$SCRIPT_REPO"/Figure_04/run.sh
 conda run -n "$CONDA_ENV_EVAL" bash "$SCRIPT_REPO"/Figure_s1/run.sh
 conda run -n "$CONDA_ENV_EVAL" bash "$SCRIPT_REPO"/Figure_s2/run.sh
 conda run -n "$CONDA_ENV_EVAL" bash "$SCRIPT_REPO"/Figure_s3/run.sh
+conda run -n "$CONDA_ENV_EVAL" bash "$SCRIPT_REPO"/Figure_s4/run.sh

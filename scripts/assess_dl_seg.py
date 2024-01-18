@@ -887,6 +887,7 @@ def save_fig1(out_dir, img_dir=img_dir_default,
 	slice_idx=13
 	vmax_factor=0.8
 	crop_dim=80
+	flip_rot_mod = [-1,1]
 
 	rows=2
 	columns=4
@@ -902,13 +903,15 @@ def save_fig1(out_dir, img_dir=img_dir_default,
 	titles = ["cine", "real-time (76 bpm)", "real-time (115 bpm)", "real-time (162 bpm)"]
 	assess_utils.plot_measurement_types_axes(vol, [ax[i] for i in range(columns)], reverse, slice_idx, mask_mode=mask_mode,
 				phase_mode=phase_mode, save_paths=save_paths, contour_dir=contour_dir, img_dir=img_dir,
-				nnunet_output=nnunet_output, crop_dim=crop_dim, vmax_factor=vmax_factor, titles=titles)
+				nnunet_output=nnunet_output, crop_dim=crop_dim, vmax_factor=vmax_factor,
+				flip_rot_mod=flip_rot_mod, titles=titles)
 
 	mask_mode = ["mc"]
 	phase_mode = "ed"
 	assess_utils.plot_measurement_types_axes(vol, [ax[columns+i] for i in range(columns)], reverse, slice_idx, mask_mode=mask_mode,
 				phase_mode=phase_mode, save_paths=save_paths, contour_dir=contour_dir, img_dir=img_dir,
-				nnunet_output=nnunet_output, crop_dim=crop_dim, vmax_factor=vmax_factor, titles=titles)
+				nnunet_output=nnunet_output, crop_dim=crop_dim, vmax_factor=vmax_factor,
+				flip_rot_mod=flip_rot_mod, titles=titles)
 
 	if 0 != len(save_paths):
 		if list == type(save_paths):
@@ -940,6 +943,7 @@ def save_fig2(out_dir, img_dir=img_dir_default,
 	slice_idx=13
 	vmax_factor=0.8
 	crop_dim=80
+	flip_rot_mod = [-1,1]
 	phase_mode = "es"
 
 	rows=4
@@ -964,19 +968,23 @@ def save_fig2(out_dir, img_dir=img_dir_default,
 	titles = ["cine", "real-time (76 bpm)", "real-time (115 bpm)", "real-time (162 bpm)"]
 	assess_utils.plot_measurement_types_axes(vol, [ax[i] for i in range(columns)], reverse, slice_idx, mask_mode=mask_mode,
 				phase_mode=phase_mode, save_paths=save_paths, contour_dir=contour_dir, img_dir=img_dir,
-				nnunet_output=os.path.join(nnunet_output_dir_default, "rt_stress_2d_single_cv"), crop_dim=crop_dim, vmax_factor=vmax_factor, titles=titles)
+				nnunet_output=os.path.join(nnunet_output_dir_default, "rt_stress_2d_single_cv"), crop_dim=crop_dim, vmax_factor=vmax_factor,
+				flip_rot_mod=flip_rot_mod, titles=titles)
 	mask_mode = ["mc"]
 	assess_utils.plot_measurement_types_axes(vol, [ax[columns+i] for i in range(columns)], reverse, slice_idx, mask_mode=mask_mode,
 				phase_mode=phase_mode, save_paths=save_paths, contour_dir=contour_dir, img_dir=img_dir, DC=False,
-				nnunet_output=nnunet_output, crop_dim=crop_dim, vmax_factor=vmax_factor, titles=titles)
+				nnunet_output=nnunet_output, crop_dim=crop_dim, vmax_factor=vmax_factor,
+				flip_rot_mod=flip_rot_mod, titles=titles)
 	mask_mode = ["comDL"]
 	assess_utils.plot_measurement_types_axes(vol, [ax[2*columns+i] for i in range(columns)], reverse, slice_idx, mask_mode=mask_mode,
 				phase_mode=phase_mode, save_paths=save_paths, contour_dir=contour_dir, img_dir=img_dir, DC=True,
-				nnunet_output=nnunet_output, crop_dim=crop_dim, vmax_factor=vmax_factor, titles=titles)
+				nnunet_output=nnunet_output, crop_dim=crop_dim, vmax_factor=vmax_factor,
+				flip_rot_mod=flip_rot_mod, titles=titles)
 	mask_mode = ["nnunet"]
 	assess_utils.plot_measurement_types_axes(vol, [ax[3*columns+i] for i in range(columns)], reverse, slice_idx, mask_mode=mask_mode,
 				phase_mode=phase_mode, save_paths=save_paths, contour_dir=contour_dir, img_dir=img_dir, DC=True,
-				nnunet_output=nnunet_output, crop_dim=crop_dim, vmax_factor=vmax_factor, titles=titles)
+				nnunet_output=nnunet_output, crop_dim=crop_dim, vmax_factor=vmax_factor,
+				flip_rot_mod=flip_rot_mod, titles=titles)
 
 	if 0 != len(save_paths):
 		if list == type(save_paths):
@@ -1108,7 +1116,7 @@ def save_figba(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=con
 	axes = axes.flatten()
 
 	if "nnunet" == plot_mode:
-		save_paths = [os.path.join(out_dir, "figure_s1_cf_nnunet."+f) for f in file_extensions]
+		save_paths = [os.path.join(out_dir, "figure_s2_cf_nnunet."+f) for f in file_extensions]
 
 		ylims_edv= [[-20,20], [-20,20], [-80,80]]
 		ylims_esv= [[-20,20], [-20,20], [-20,20]]
@@ -1142,7 +1150,7 @@ def save_figba(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=con
 		plt.close()
 
 	elif "comDL" == plot_mode:
-		save_paths = [os.path.join(out_dir, "figure_s2_cf_comDL."+f) for f in file_extensions]
+		save_paths = [os.path.join(out_dir, "figure_s3_cf_comDL."+f) for f in file_extensions]
 		ef_tuple_rt_stress = [[x for i, x in enumerate(a) if i!= 2] for a in ef_tuple_rt_stress]
 
 		ylims_edv= [[-25,25], [-25,25], [-100,100]]
@@ -1208,7 +1216,7 @@ def save_figs3(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=con
 	columns=3
 	fig, axes = plt.subplots(rows, columns, figsize=(columns*8,rows*6))
 	axes = axes.flatten()
-	save_paths = [os.path.join(out_dir, "figure_s3_cf_cine_rt."+f) for f in file_extensions]
+	save_paths = [os.path.join(out_dir, "figure_s4_cf_cine_rt."+f) for f in file_extensions]
 
 	xlabel="LV end-diastolic volume [mL]"
 	ylabel="EDV cine - EDV rt [mL]"
@@ -1242,6 +1250,80 @@ def save_figs3(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=con
 				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
 			else:
 				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
+
+def save_figs4(out_dir, img_dir=img_dir_default,
+			contour_dir=contour_dir_default,
+			nnunet_output=nnunet_output_dir_default,
+			file_extension="pdf"):
+	"""
+	Create a figure depicting an example for Dice's coefficients for comDL and nnU-Net segmentations.
+	"""
+	file_extensions=file_extension.split(",")
+	if not os.path.isdir(out_dir):
+		os.makedirs(out_dir)
+
+	vol = "vol04"
+	reverse = False
+	slice_idx=8
+	vmax_factor=[0.8,0.5,1,1]
+	crop_dim=80
+	flip_rot_mod = [-1,0]
+	phase_mode = "es"
+
+	rows=4
+	columns=4
+	fig, axes = plt.subplots(rows, columns, figsize=(columns*6,rows*6))
+	ax = axes.flatten()
+	for i in range(rows*columns):
+		ax[i].set_axis_off()
+
+	save_paths = [os.path.join(out_dir, "figure_s1_rv_outlier."+f) for f in file_extensions]
+
+	pad=-3
+
+	ax[2*columns].annotate("comDL", xy=(0,0.5), xytext=(-ax[2*columns].yaxis.labelpad - pad, 0),
+		xycoords=ax[2*columns].yaxis.label, textcoords='offset points',
+		size=60, ha='right', va='center', rotation=90)
+
+	ax[3*columns].annotate("nnU-Net", xy=(0,0.5), xytext=(-ax[3*columns].yaxis.labelpad - pad, 0),
+		xycoords=ax[3*columns].yaxis.label, textcoords='offset points',
+		size=60, ha='right', va='center', rotation=90)
+
+	mask_mode = []
+	titles = ["cine", "real-time (55 bpm)", "real-time (109 bpm)", "real-time (134 bpm)"]
+	assess_utils.plot_measurement_types_axes(vol, [ax[i] for i in range(columns)], reverse, slice_idx, mask_mode=mask_mode,
+				phase_mode=phase_mode, save_paths=save_paths, contour_dir=contour_dir, img_dir=img_dir,
+				nnunet_output=os.path.join(nnunet_output_dir_default, "rt_stress_2d_single_cv"), crop_dim=crop_dim, vmax_factor=vmax_factor,
+				flip_rot_mod=flip_rot_mod, titles=titles)
+	mask_mode = ["mc"]
+	assess_utils.plot_measurement_types_axes(vol, [ax[columns+i] for i in range(columns)], reverse, slice_idx, mask_mode=mask_mode,
+				phase_mode=phase_mode, save_paths=save_paths, contour_dir=contour_dir, img_dir=img_dir, DC=False,
+				nnunet_output=nnunet_output, crop_dim=crop_dim, vmax_factor=vmax_factor,
+				flip_rot_mod=flip_rot_mod, titles=titles)
+	mask_mode = ["comDL"]
+	assess_utils.plot_measurement_types_axes(vol, [ax[2*columns+i] for i in range(columns)], reverse, slice_idx, mask_mode=mask_mode,
+				phase_mode=phase_mode, save_paths=save_paths, contour_dir=contour_dir, img_dir=img_dir, DC=True,
+				nnunet_output=nnunet_output, crop_dim=crop_dim, vmax_factor=vmax_factor,
+				flip_rot_mod=flip_rot_mod, titles=titles)
+	mask_mode = ["nnunet"]
+	assess_utils.plot_measurement_types_axes(vol, [ax[3*columns+i] for i in range(columns)], reverse, slice_idx, mask_mode=mask_mode,
+				phase_mode=phase_mode, save_paths=save_paths, contour_dir=contour_dir, img_dir=img_dir, DC=True,
+				nnunet_output=nnunet_output, crop_dim=crop_dim, vmax_factor=vmax_factor,
+				flip_rot_mod=flip_rot_mod, titles=titles)
+
+	if 0 != len(save_paths):
+		if list == type(save_paths):
+			for s in save_paths:
+				if any(ext in s for ext in bitmap_formats):
+					fig.savefig(s, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
+				else:
+					fig.savefig(s, bbox_inches='tight', pad_inches=0.01)
+		else:
+			if any(ext in save_paths for ext in bitmap_formats):
+				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.1, dpi=png_dpi)
+			else:
+				fig.savefig(save_paths, bbox_inches='tight', pad_inches=0.01)
+	plt.close()
 
 def write_DC_all(out_dir, vol_dict=vol_dict_default, contour_dir=contour_dir_default, nnunet_output=nnunet_output_dir_default):
 	"""
@@ -1322,3 +1404,35 @@ def write_cardiac_function_intra(out_dir, vol_dict=vol_dict_default, contour_dir
 	output_file = os.path.join(out_dir,"cardiac_function_mc_rt_stress_intra.txt")
 	write_output_cardiac_function_parameters(output_file, ed_tuple_rt_stress[0], es_tuple_rt_stress[0], ef_tuple_rt_stress[0],
 					vol_dict=vol_dict, precision=1, header="Intra-observer variability of manually corrected MEDIS DL ACD")
+
+def write_cardiac_function_inter(out_dir, vol_dict=vol_dict_default[:3], contour_dir=contour_dir_default, exp_dir=end_exp_dir_default, contour_suffix="_inter"+contour_format):
+	"""
+	Write cardiac function parameters EDV, ESV and EF into files for inter-observer variability of manually corrected contours.
+	"""
+	# cine CMR
+	seg_dir = ""
+	ed_tuple_cine, es_tuple_cine, ef_tuple_cine = calc_mean_stdv_parameters_cine(vol_dict, contour_dir=contour_dir, seg_dir=seg_dir,
+									flag3d=False, slice_selection=False, contour_file_mc_suffix="_cine_manual"+contour_suffix,
+									contour_file_comDL_suffix="")
+
+	output_file = os.path.join(out_dir,"cardiac_function_mc_cine_inter.txt")
+	write_output_cardiac_function_parameters(output_file, ed_tuple_cine[0], es_tuple_cine[0], ef_tuple_cine[0],
+					vol_dict=vol_dict, precision=1, header="Inter-observer variability of manually corrected MEDIS DL ACD")
+
+	# real-time CMR at rest
+	ed_tuple_rt, es_tuple_rt, ef_tuple_rt = calc_mean_stdv_parameters_rt(vol_dict, contour_dir=contour_dir, seg_dir=seg_dir, exp_dir=exp_dir,
+				contour_file_mc_suffix="_rt_manual"+contour_suffix, contour_file_comDL_suffix="_rt_comDL"+contour_suffix,
+				ed_es_phase_file="_rt_inter.txt")
+
+	output_file = os.path.join(out_dir,"cardiac_function_mc_rt_inter.txt")
+	write_output_cardiac_function_parameters(output_file, ed_tuple_rt[0], es_tuple_rt[0], ef_tuple_rt[0],
+					vol_dict=vol_dict, precision=1, header="Inter-observer variability of manually corrected MEDIS DL ACD")
+
+	# real-time CMR at stress
+	ed_tuple_rt_stress, es_tuple_rt_stress, ef_tuple_rt_stress = calc_mean_stdv_parameters_rt(vol_dict, contour_dir=contour_dir, seg_dir=seg_dir, exp_dir = exp_dir,
+				contour_file_mc_suffix="_rt_stress_manual"+contour_suffix, contour_file_comDL_suffix="_rt_stress_comDL"+contour_suffix,
+				ed_es_phase_file="_rt_stress_inter.txt")
+
+	output_file = os.path.join(out_dir,"cardiac_function_mc_rt_stress_inter.txt")
+	write_output_cardiac_function_parameters(output_file, ed_tuple_rt_stress[0], es_tuple_rt_stress[0], ef_tuple_rt_stress[0],
+					vol_dict=vol_dict, precision=1, header="Inter-observer variability of manually corrected MEDIS DL ACD")
