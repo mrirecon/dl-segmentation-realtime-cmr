@@ -1116,7 +1116,7 @@ def save_figba(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=con
 	axes = axes.flatten()
 
 	if "nnunet" == plot_mode:
-		save_paths = [os.path.join(out_dir, "figure_s2_cf_nnunet."+f) for f in file_extensions]
+		save_paths = [os.path.join(out_dir, "figure_s1_cf_nnunet."+f) for f in file_extensions]
 
 		ylims_edv= [[-20,20], [-20,20], [-80,80]]
 		ylims_esv= [[-20,20], [-20,20], [-20,20]]
@@ -1132,8 +1132,10 @@ def save_figba(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=con
 
 		if annotate:
 			annotations = ["a", "b", "c", "d", "e", "f", "g", "h", "i"]
+			p_values = ["P=.23", "P=.72", "P=.61", "P<.001", "P=.6", "P=.91", "P<.001", "P=.72", "P=.58"]
 			for num, a in enumerate(annotations):
 				axes[num].annotate(a, xy=(-0.12,1), xycoords="axes fraction", size=20, weight="bold")
+				axes[num].text(.01, .99, p_values[num], ha='left', va='top', size=14, transform=axes[num].transAxes)
 
 		if 0 != len(save_paths):
 			if list == type(save_paths):
@@ -1150,7 +1152,7 @@ def save_figba(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=con
 		plt.close()
 
 	elif "comDL" == plot_mode:
-		save_paths = [os.path.join(out_dir, "figure_s3_cf_comDL."+f) for f in file_extensions]
+		save_paths = [os.path.join(out_dir, "figure_s2_cf_comDL."+f) for f in file_extensions]
 		ef_tuple_rt_stress = [[x for i, x in enumerate(a) if i!= 2] for a in ef_tuple_rt_stress]
 
 		ylims_edv= [[-25,25], [-25,25], [-100,100]]
@@ -1167,8 +1169,10 @@ def save_figba(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=con
 
 		if annotate:
 			annotations = ["a", "b", "c", "d", "e", "f", "g", "h", "i"]
+			p_values = ["P=.16", "P=.61", "P=.002", "P=.001", "P=.001", "P=.02", "P<.001", "P=.01", "P=.05"]
 			for num, a in enumerate(annotations):
 				axes[num].annotate(a, xy=(-0.12,1), xycoords="axes fraction", size=20, weight="bold")
+				axes[num].text(.01, .99, p_values[num], ha='left', va='top', size=14, transform=axes[num].transAxes)
 
 		if 0 != len(save_paths):
 			if list == type(save_paths):
@@ -1216,7 +1220,7 @@ def save_figs3(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=con
 	columns=3
 	fig, axes = plt.subplots(rows, columns, figsize=(columns*8,rows*6))
 	axes = axes.flatten()
-	save_paths = [os.path.join(out_dir, "figure_s4_cf_cine_rt."+f) for f in file_extensions]
+	save_paths = [os.path.join(out_dir, "figure_s3_cf_cine_rt."+f) for f in file_extensions]
 
 	xlabel="LV end-diastolic volume [mL]"
 	ylabel="EDV cine - EDV rt [mL]"
@@ -1235,8 +1239,10 @@ def save_figs3(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=con
 
 	if annotate:
 		annotations = ["a", "b", "c"]
+		p_values = ["P<.001", "P=.03", "P<.001"]
 		for num, a in enumerate(annotations):
 			axes[num].annotate(a, xy=(-0.12,1), xycoords="axes fraction", size=20, weight="bold")
+			axes[num].text(.01, .99, p_values[num], ha='left', va='top', size=14, transform=axes[num].transAxes)
 
 	if 0 != len(save_paths):
 		if list == type(save_paths):
@@ -1277,7 +1283,7 @@ def save_figs4(out_dir, img_dir=img_dir_default,
 	for i in range(rows*columns):
 		ax[i].set_axis_off()
 
-	save_paths = [os.path.join(out_dir, "figure_s1_rv_outlier."+f) for f in file_extensions]
+	save_paths = [os.path.join(out_dir, "figure_s4_rv_outlier."+f) for f in file_extensions]
 
 	pad=-3
 
