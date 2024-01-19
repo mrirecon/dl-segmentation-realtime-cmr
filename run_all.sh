@@ -21,17 +21,12 @@ do
 	fi
 done
 
-# Install required conda environment
-if ! { conda env list | grep "$CONDA_ENV_EVAL" ; } >/dev/null 2>&1 ; then
-	bash "$SCRIPT_REPO"/scripts/assess_dl_conda_env.sh
-fi
-
 # Reproduce figures
-conda run -n "$CONDA_ENV_EVAL" bash "$SCRIPT_REPO"/Figure_01/run.sh
-conda run -n "$CONDA_ENV_EVAL" bash "$SCRIPT_REPO"/Figure_02/run.sh
-conda run -n "$CONDA_ENV_EVAL" bash "$SCRIPT_REPO"/Figure_03/run.sh
-conda run -n "$CONDA_ENV_EVAL" bash "$SCRIPT_REPO"/Figure_04/run.sh
-conda run -n "$CONDA_ENV_EVAL" bash "$SCRIPT_REPO"/Figure_s1/run.sh
-conda run -n "$CONDA_ENV_EVAL" bash "$SCRIPT_REPO"/Figure_s2/run.sh
-conda run -n "$CONDA_ENV_EVAL" bash "$SCRIPT_REPO"/Figure_s3/run.sh
-conda run -n "$CONDA_ENV_EVAL" bash "$SCRIPT_REPO"/Figure_s4/run.sh
+bash "$SCRIPT_REPO"/Figure_01/run.sh
+bash "$SCRIPT_REPO"/Figure_02/run.sh
+bash "$SCRIPT_REPO"/Figure_03/run.sh
+bash "$SCRIPT_REPO"/Figure_04/run.sh
+bash "$SCRIPT_REPO"/Figure_s1/run.sh
+bash "$SCRIPT_REPO"/Figure_s2/run.sh
+bash "$SCRIPT_REPO"/Figure_s3/run.sh
+bash "$SCRIPT_REPO"/Figure_s4/run.sh
