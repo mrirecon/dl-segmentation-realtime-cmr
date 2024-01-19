@@ -19,7 +19,6 @@ sys.path.append(os.path.join(os.environ["TOOLBOX_PATH"], "python"))
 sys.path.append(os.path.dirname(getsourcefile(lambda:0)))
 
 import assess_dl_seg_utils as assess_utils
-import cfl
 
 if "DATA_DIR" in os.environ:
 	img_dir_default=os.path.join(os.environ["DATA_DIR"], "images")
@@ -361,8 +360,8 @@ def plot_DC_vs_bpm_axes(vol_dict, ax, network="nnunet", ylim=[], mode="noerror",
 			label=desc, markersize=markersize, ecolor=colors[i])
 
 	else:
-			for i, desc in enumerate(descr):
-				ax.scatter(heartrates, dice_scores[i], label=desc, s=markersize, c=colors[i], marker=markers[i])
+		for i, desc in enumerate(descr):
+			ax.scatter(heartrates, dice_scores[i], label=desc, s=markersize, c=colors[i], marker=markers[i])
 
 	tick_size="large"
 	label_size="xx-large"
@@ -1169,7 +1168,7 @@ def save_figba(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=con
 
 		if annotate:
 			annotations = ["a", "b", "c", "d", "e", "f", "g", "h", "i"]
-			p_values = ["P=.16", "P=.61", "P=.002", "P=.001", "P=.001", "P=.02", "P<.001", "P=.01", "P=.05"]
+			p_values = ["P=.16", "P=.61", "P=.002", "P=.001", "P=.001", "P=.02", "P<.001", "P=.01", "P=.049"]
 			for num, a in enumerate(annotations):
 				axes[num].annotate(a, xy=(-0.12,1), xycoords="axes fraction", size=20, weight="bold")
 				axes[num].text(.01, .99, p_values[num], ha='left', va='top', size=14, transform=axes[num].transAxes)

@@ -22,7 +22,6 @@ sys.path.append(os.path.join(os.environ["TOOLBOX_PATH"], "python"))
 sys.path.append(os.path.dirname(getsourcefile(lambda:0)))
 
 import nnunet_utils as nnunet
-from bart import bart
 import cfl
 
 if "DATA_DIR" in os.environ:
