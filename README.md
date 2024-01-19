@@ -10,7 +10,7 @@ By default, this repository folder will be used for data storage.
 All data downloaded from zenodo will be decompressed by default.
 Images are stored in CFL format, so the TOOLBOX_PATH environment variable needs to be set and point to a folder containing [BART](https://github.com/mrirecon/bart).
 
-[nnU-Net version 1](https://github.com/MIC-DKFZ/nnUNet/tree/nnunetv1) was used for segmentation, which can be reproduced after a correct installation of nnU-Net and pre-processing of the images (scripts/assess_dl_preprocess.sh)
+[nnU-Net version 1](https://github.com/MIC-DKFZ/nnUNet/tree/nnunetv1) was used for segmentation, which can be reproduced after a correct installation of nnU-Net (nnunet==1.7.1, commit 579c897) and pre-processing of the images (scripts/assess_dl_preprocess.sh)
 with scripts/assess_dl_apply_nnunet.sh.
 The application of nnU-Net is optional because the inference can be found on [zenodo](https://doi.org/10.5281/zenodo.10117944).
 
