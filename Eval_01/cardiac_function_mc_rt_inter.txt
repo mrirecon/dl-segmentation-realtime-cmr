@@ -1,0 +1,19 @@
+Inter-observer variability of manually corrected MEDIS DL ACD
+EDV
+vol01	117.9
+vol02	130.3
+vol03	88.4
+vol04	185.0
+vol05	217.1
+ESV
+vol01	47.8
+vol02	76.7
+vol03	37.9
+vol04	87.7
+vol05	92.9
+EF
+vol01	59.4
+vol02	41.2
+vol03	57.1
+vol04	52.6
+vol05	57.2

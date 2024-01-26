@@ -33,6 +33,15 @@ cmd_array=(	'import sys,os;'
 cmd="${cmd_array[*]}"
 python3 -c "$cmd"
 
+# Write cardiac function values for manually corrected contours inter-observer variability
+cmd_array=(	'import sys,os;'
+	'sys.path.insert(0,os.environ["SCRIPT_DIR"]);'
+	'import assess_dl_seg;'
+	'assess_dl_seg.write_cardiac_function_inter(out_dir=os.environ["FIGURE_OUT"])')
+
+cmd="${cmd_array[*]}"
+python3 -c "$cmd"
+
 # Write Dice's coefficient values
 cmd_array=(	'import sys,os;'
 	'sys.path.insert(0,os.environ["SCRIPT_DIR"]);'

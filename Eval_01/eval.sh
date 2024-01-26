@@ -84,3 +84,7 @@ eval_cardiac_function "$REF_RT_STRESS"  "$FIGURE_OUT"/cardiac_function_comDL_rt_
 eval_cardiac_function "$REF_CINE"  "$FIGURE_OUT"/cardiac_function_mc_cine_intra.txt "$FIGURE_OUT"/diff_mc_cine_intra.txt
 eval_cardiac_function "$REF_RT"  "$FIGURE_OUT"/cardiac_function_mc_rt_intra.txt "$FIGURE_OUT"/diff_mc_rt_intra.txt
 eval_cardiac_function "$REF_RT_STRESS"  "$FIGURE_OUT"/cardiac_function_mc_rt_stress_intra.txt "$FIGURE_OUT"/diff_mc_rt_stress_intra.txt
+
+eval_cardiac_function "$REF_CINE"  "$FIGURE_OUT"/cardiac_function_mc_cine_inter.txt "$FIGURE_OUT"/diff_mc_cine_inter.txt
+eval_cardiac_function "$REF_RT"  "$FIGURE_OUT"/cardiac_function_mc_rt_inter.txt "$FIGURE_OUT"/diff_mc_rt_inter.txt
+eval_cardiac_function "$REF_RT_STRESS"  "$FIGURE_OUT"/cardiac_function_mc_rt_stress_inter.txt "$FIGURE_OUT"/diff_mc_rt_stress_inter.txt
