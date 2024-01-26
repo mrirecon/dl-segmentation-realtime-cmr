@@ -554,7 +554,7 @@ def calc_mean_stdv_parameters_rt(vol_dict, seg_dir=os.path.join(nnunet_output_di
 				pixel_spacing=1.6, contour_file_mc_suffix="_rt_manual"+contour_format, contour_file_comDL_suffix="_rt_comDL"+contour_format,
 				exp_dir=end_exp_dir_default, ed_es_phase_file="_rt.txt"):
 	"""
-	Calculate mean and standard deviation parameters for rt MRI for manual, comDL and nnU-Net contours.
+	Calculate mean and standard deviation parameters for real-time MRI for manual, comDL and nnU-Net contours.
 
 	:param list vol_dict: List of dictionaries with volunteer id and reverse flag
 	:param str seg_dir: Directory containing segmentation of nnU-Net for cine measurements
@@ -654,7 +654,7 @@ def plot_ba_ef(ax, ef_tuple_cine, ef_tuple_rt, ef_tuple_rt_stress, set_colors=["
 
 	xlabel="EF [%]"
 	save_labels = ["cine", "rt", "rt_stress"]
-	set_labels = ["cine", "rt", "rt stress"]
+	set_labels = ["cine", "RT", "RT stress"]
 	set_mc = [ef_mc_cine, ef_mc_rt, ef_mc_rt_stress]
 	set_nnunet = [ef_nnunet_cine, ef_nnunet_rt, ef_nnunet_rt_stress]
 	set_comDL = [ef_comDL_cine, ef_comDL_rt, ef_comDL_rt_stress]
@@ -695,7 +695,7 @@ def plot_ba_edv(ax, ed_tuple_cine, ed_tuple_rt, ed_tuple_rt_stress, set_colors=[
 
 	xlabel="LV end-diastolic volume [mL]"
 	save_labels = ["cine", "rt", "rt_stress"]
-	set_labels = ["cine", "rt", "rt stress"]
+	set_labels = ["cine", "RT", "RT stress"]
 	set_mc = [ed_vol_mc_cine, ed_vol_mc_rt, ed_vol_mc_rt_stress]
 	set_nnunet = [ed_vol_nnunet_cine, ed_vol_nnunet_rt, ed_vol_nnunet_rt_stress]
 	set_comDL = [ed_vol_comDL_cine, ed_vol_comDL_rt, ed_vol_comDL_rt_stress]
@@ -735,7 +735,7 @@ def plot_ba_esv(ax, es_tuple_cine, es_tuple_rt, es_tuple_rt_stress, set_colors=[
 	(es_vol_mc_rt_stress, es_vol_comDL_rt_stress, es_vol_nnunet_rt_stress) = es_tuple_rt_stress
 	xlabel="LV end-systolic volume [mL]"
 	save_labels = ["cine", "rt", "rt_stress"]
-	set_labels = ["cine", "rt", "rt stress"]
+	set_labels = ["cine", "RT", "RT stress"]
 	set_mc = [es_vol_mc_cine, es_vol_mc_rt, es_vol_mc_rt_stress]
 	set_nnunet = [es_vol_nnunet_cine, es_vol_nnunet_rt, es_vol_nnunet_rt_stress]
 	set_comDL = [es_vol_comDL_cine, es_vol_comDL_rt, es_vol_comDL_rt_stress]
@@ -1131,7 +1131,7 @@ def save_figba(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=con
 
 		if annotate:
 			annotations = ["a", "b", "c", "d", "e", "f", "g", "h", "i"]
-			p_values = ["P=.23", "P=.72", "P=.61", "P<.001", "P=.6", "P=.91", "P<.001", "P=.72", "P=.58"]
+			p_values = ["P=0.23", "P=0.72", "P=0.61", "P<0.001", "P=0.6", "P=0.91", "P<0.001", "P=0.72", "P=0.58"]
 			for num, a in enumerate(annotations):
 				axes[num].annotate(a, xy=(-0.12,1), xycoords="axes fraction", size=20, weight="bold")
 				axes[num].text(.01, .99, p_values[num], ha='left', va='top', size=14, transform=axes[num].transAxes)
@@ -1168,7 +1168,7 @@ def save_figba(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=con
 
 		if annotate:
 			annotations = ["a", "b", "c", "d", "e", "f", "g", "h", "i"]
-			p_values = ["P=.16", "P=.61", "P=.002", "P=.001", "P=.001", "P=.02", "P<.001", "P=.01", "P=.049"]
+			p_values = ["P=0.16", "P=0.61", "P=0.002", "P=0.001", "P=0.001", "P=0.02", "P<0.001", "P=0.01", "P=0.049"]
 			for num, a in enumerate(annotations):
 				axes[num].annotate(a, xy=(-0.12,1), xycoords="axes fraction", size=20, weight="bold")
 				axes[num].text(.01, .99, p_values[num], ha='left', va='top', size=14, transform=axes[num].transAxes)
@@ -1222,23 +1222,23 @@ def save_figs3(out_dir, vol_dict=vol_dict_default, param_dir="", contour_dir=con
 	save_paths = [os.path.join(out_dir, "figure_s3_cf_cine_rt."+f) for f in file_extensions]
 
 	xlabel="LV end-diastolic volume [mL]"
-	ylabel="EDV cine - EDV rt [mL]"
+	ylabel="EDV cine - EDV RT [mL]"
 	assess_utils.plot_bland_altman_axes([edv_cine], [edv_rt], ax=axes[0], labels=set_labels, colors=set_colors, ylabel=ylabel, xlabel=xlabel,
 								ylim=[-8,28], scale=1)
 
 	xlabel="LV end-systolic volume [mL]"
-	ylabel="ESV cine - ESV rt [mL]"
+	ylabel="ESV cine - ESV RT [mL]"
 	assess_utils.plot_bland_altman_axes([esv_cine], [esv_rt], ax=axes[1], labels=set_labels, colors=set_colors, ylabel=ylabel, xlabel=xlabel,
 				      				ylim=[-20,12], scale=1)
 
 	xlabel="EF [%]"
-	ylabel="EF cine - EF rt [%]"
+	ylabel="EF cine - EF RT [%]"
 	assess_utils.plot_bland_altman_axes([ef_cine], [ef_rt], ax=axes[2], labels=set_labels, colors=set_colors, ylabel=ylabel, xlabel=xlabel,
 				      				ylim=[-5,18], xticks=[50, 55, 60 , 65, 70], scale=1)
 
 	if annotate:
 		annotations = ["a", "b", "c"]
-		p_values = ["P<.001", "P=.03", "P<.001"]
+		p_values = ["P<0.001", "P=0.03", "P<0.001"]
 		for num, a in enumerate(annotations):
 			axes[num].annotate(a, xy=(-0.12,1), xycoords="axes fraction", size=20, weight="bold")
 			axes[num].text(.01, .99, p_values[num], ha='left', va='top', size=14, transform=axes[num].transAxes)
@@ -1410,7 +1410,7 @@ def write_cardiac_function_intra(out_dir, vol_dict=vol_dict_default, contour_dir
 	write_output_cardiac_function_parameters(output_file, ed_tuple_rt_stress[0], es_tuple_rt_stress[0], ef_tuple_rt_stress[0],
 					vol_dict=vol_dict, precision=1, header="Intra-observer variability of manually corrected MEDIS DL ACD")
 
-def write_cardiac_function_inter(out_dir, vol_dict=vol_dict_default[:3], contour_dir=contour_dir_default, exp_dir=end_exp_dir_default, contour_suffix="_inter"+contour_format):
+def write_cardiac_function_inter(out_dir, vol_dict=vol_dict_default[:5], contour_dir=contour_dir_default, exp_dir=end_exp_dir_default, contour_suffix="_inter"+contour_format):
 	"""
 	Write cardiac function parameters EDV, ESV and EF into files for inter-observer variability of manually corrected contours.
 	"""

@@ -1280,7 +1280,7 @@ def plot_measurement_types(vol, reverse, slice_idx, mask_mode=[], phase_mode="es
 			vmax_factor=1, DC=False,
 			titles = ["cine", "real-time MRI (rest)", "real-time MRI (stress)", "real-time MRI (max stress)"], plot=True):
 	"""
-	Visualize different measurement forms (cine, real-time rest, rt stressm rt max stress) in a combined plot with optional segmentation.
+	Visualize different measurement forms (cine, real-time rest, RT stress, RT maxstress) in a combined plot with optional segmentation.
 
 	:param str vol: Volunteer string in format vol<id>
 	:param bool reverse: Flag for reverse order of indexes of cardiac phase in contour file
@@ -1420,7 +1420,7 @@ def plot_measurement_types_axes(vol, axes, reverse, slice_idx, mask_mode=[], pha
 			vmax_factor=1, DC=False, flip_rot_mod = [-1,0],
 			titles = ["cine", "real-time MRI (rest)", "real-time MRI (stress)", "real-time MRI (max stress)"]):
 	"""
-	Visualize different measurement forms (cine, real-time rest, rt stressm rt max stress) in a combined plot with optional segmentation.
+	Visualize different measurement forms (cine, real-time rest, RT stress, RT maxstress) in a combined plot with optional segmentation.
 
 	:param str vol: Volunteer string in format vol<id>
 	:param bool reverse: Flag for reverse order of indexes of cardiac phase in contour file
